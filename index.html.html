@@ -1,0 +1,2068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAIDCALC // Raid Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0c11;
+    --panel:#141821;
+    --panel-2:#1a2029;
+    --border:#262d3a;
+    --text:#eef1f6;
+    --muted:#8b95ab;
+    --red:#ff4655;
+    --gold:#ffc33d;
+    --teal:#33d6c0;
+    --green:#4ade80;
+    --mono:'JetBrains Mono', monospace;
+    --display:'Chakra Petch', sans-serif;
+    --body:'Inter', sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{font-size:18px;}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
+  body{
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(255,70,85,0.08), transparent 40%),
+      radial-gradient(circle at 85% 100%, rgba(51,214,192,0.07), transparent 40%),
+      repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+  }
+  .wrap{max-width:1560px;margin:0 auto;padding:36px 26px 80px;}
+
+  header.hud{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
+  .brand{display:flex;align-items:baseline;gap:14px;}
+  .brand .mark{width:18px;height:18px;background:var(--red);display:inline-block;box-shadow:0 0 18px rgba(255,70,85,0.7);}
+  .brand h1{font-family:var(--display);font-weight:700;font-size:36px;letter-spacing:1.5px;margin:0;text-transform:uppercase;}
+  .brand h1 span{color:var(--gold);}
+  .brand .tag{font-family:var(--mono);font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:2.5px;}
+  .disclaimer{font-family:var(--mono);font-size:13px;color:var(--muted);max-width:440px;text-align:right;line-height:1.6;}
+
+  .status-bar{font-family:var(--mono);font-size:13.5px;padding:12px 16px;border:1px solid var(--border);background:var(--panel-2);margin-bottom:22px;display:flex;align-items:center;gap:10px;}
+  .status-dot{width:9px;height:9px;border-radius:50%;background:var(--gold);flex-shrink:0;animation:pulse 1.4s infinite;}
+  .status-dot.ok{background:var(--green);animation:none;}
+  .status-dot.err{background:var(--red);animation:none;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+  .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;}
+  @media (max-width:980px){.grid{grid-template-columns:1fr;} html{font-size:16px;}}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:24px;}
+  .panel + .panel{margin-top:20px;}
+  .eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:2.5px;text-transform:uppercase;color:var(--gold);margin:0 0 16px;display:flex;align-items:center;gap:10px;}
+  .eyebrow::before{content:'';width:8px;height:8px;background:var(--gold);display:inline-block;}
+
+  label{display:block;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);margin:18px 0 8px;}
+  label:first-of-type{margin-top:0;}
+  select,input[type=number],input[type=text]{
+    width:100%;background:var(--panel-2);border:1px solid var(--border);color:var(--text);
+    padding:12px 13px;font-family:var(--body);font-size:16px;border-radius:2px;
+  }
+  input[type=range]{width:100%;padding:0;margin:10px 0;background:transparent;}
+  select:focus,input:focus{outline:2px solid var(--red);outline-offset:1px;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .rangeval{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:6px;}
+  .rangeval b{color:var(--text);}
+
+  .typebadge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:2px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:#0a0c11;font-weight:700;margin-right:6px;margin-top:4px;}
+
+  button.primary{
+    width:100%;margin-top:22px;padding:17px;background:var(--red);color:#fff;border:none;
+    font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:1.8px;text-transform:uppercase;
+    cursor:pointer;transition:transform .08s ease, box-shadow .15s ease;
+  }
+  button.primary:hover{box-shadow:0 0 26px rgba(255,70,85,0.5);}
+  button.primary:active{transform:scale(0.98);}
+  button.secondary{
+    width:100%;margin-top:12px;padding:14px;background:transparent;color:var(--teal);border:1px solid var(--teal);
+    font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:1.2px;text-transform:uppercase;cursor:pointer;
+  }
+  button.secondary:hover{background:rgba(51,214,192,0.08);}
+  button:disabled{opacity:0.4;cursor:not-allowed;}
+
+  .hint{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:5px;}
+  .chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:150px;overflow-y:auto;padding-right:2px;}
+  .chip-list::-webkit-scrollbar{width:6px;}
+  .chip-list::-webkit-scrollbar-thumb{background:var(--border);}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:2px;cursor:pointer;transition:border-color .12s ease,color .12s ease;}
+  .chip:hover{border-color:#96D9D6;color:#96D9D6;}
+  .chip.active{border-color:var(--gold);color:var(--gold);background:rgba(255,195,61,0.08);}
+
+  /* Arena */
+  .arena{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
+  @media (max-width:700px){.arena{grid-template-columns:1fr;}}
+  .fighter{background:var(--panel);border:1px solid var(--border);padding:22px;position:relative;overflow:hidden;}
+  .fighter.boss{border-color:#3a2230;}
+  .fighter .fname{font-family:var(--display);font-weight:600;font-size:23px;text-transform:uppercase;letter-spacing:0.5px;}
+  .fighter .flabel{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;}
+  .hpbar-outer{margin-top:14px;height:24px;background:#0d0f14;border:1px solid var(--border);position:relative;}
+  .hpbar-inner{height:100%;background:linear-gradient(90deg,#3ddc84,#2bb673);transition:width .25s ease;}
+  .hpbar-inner.low{background:linear-gradient(90deg,#ffb23d,#ff8a3d);}
+  .hpbar-inner.crit{background:linear-gradient(90deg,#ff4655,#c92a3c);}
+  .hptext{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin-top:7px;display:flex;justify-content:space-between;}
+  .energybar-outer{margin-top:9px;height:9px;background:#0d0f14;border:1px solid var(--border);}
+  .energybar-inner{height:100%;background:var(--gold);transition:width .2s ease;}
+  .deaths{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin-top:12px;}
+  .deaths .skull{color:var(--red);}
+
+  .verdict{font-family:var(--display);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;font-size:16px;padding:6px 13px;display:inline-block;margin-top:12px;}
+  .verdict.win{background:rgba(74,222,128,0.12);color:var(--green);border:1px solid var(--green);}
+  .verdict.loss{background:rgba(255,70,85,0.12);color:var(--red);border:1px solid var(--red);}
+
+  .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);margin-bottom:20px;border:1px solid var(--border);}
+  .stat-cell{background:var(--panel);padding:16px 18px;}
+  .stat-cell .k{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:1.8px;color:var(--muted);}
+  .stat-cell .v{font-family:var(--display);font-size:28px;font-weight:700;margin-top:4px;}
+
+  .log{background:var(--panel);border:1px solid var(--border);height:340px;overflow-y:auto;padding:14px 18px;font-family:var(--mono);font-size:14.5px;line-height:2.05;}
+  .log::-webkit-scrollbar{width:7px;}
+  .log::-webkit-scrollbar-thumb{background:var(--border);}
+  .log .entry{border-bottom:1px dotted rgba(255,255,255,0.05);padding:4px 0;}
+  .log .t{color:var(--muted);}
+  .log .atk{color:var(--gold);}
+  .log .boss{color:var(--teal);}
+  .log .faint{color:var(--red);font-weight:700;}
+  .log .win{color:var(--green);font-weight:700;}
+  .log .dodge{color:#9aa3ff;}
+
+  /* Combat log modal */
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(5,6,9,0.82);z-index:100;padding:30px 16px;overflow-y:auto;}
+  .modal-overlay.open{display:block;}
+  .modal-box{max-width:720px;margin:0 auto;background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:26px;position:relative;}
+  .modal-close{position:absolute;top:18px;right:18px;background:transparent;border:1px solid var(--border);color:var(--muted);width:32px;height:32px;cursor:pointer;font-family:var(--mono);font-size:16px;line-height:1;}
+  .modal-close:hover{color:var(--text);border-color:var(--text);}
+  .modal-title{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:0.8px;margin:0 40px 4px 0;}
+  .modal-sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:0.6px;}
+  .logbtn{font-family:var(--mono);font-size:11.5px;background:var(--panel-2);border:1px solid var(--border);color:var(--teal);padding:5px 10px;border-radius:2px;cursor:pointer;white-space:nowrap;}
+  .logbtn:hover{border-color:var(--teal);}
+
+  .mc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14.5px;margin-top:14px;}
+  .mc-table th,.mc-table td{padding:11px 13px;border-bottom:1px solid var(--border);text-align:left;}
+  .mc-table th{color:var(--muted);font-weight:500;text-transform:uppercase;font-size:11.5px;letter-spacing:1.2px;}
+  .winbar-outer{background:#0d0f14;border:1px solid var(--border);height:14px;width:100%;}
+  .winbar-inner{background:var(--green);height:100%;}
+
+  .footnote{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:26px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hud">
+    <div class="brand">
+      <span class="mark"></span>
+      <h1>RAID<span>CALC</span></h1>
+      <span class="tag">// Raid Simulator</span>
+    </div>
+    <div class="disclaimer">Fan tool for raid analysis. Base stats, movepools and move data are loaded live from public community datasets; charge-move duration falls back to an estimate only if that data can't be reached.</div>
+  </header>
+
+  <div class="status-bar" id="statusBar">
+    <span class="status-dot" id="statusDot"></span>
+    <span id="statusText">Loading live data (PvPoke + DialgaDex)…</span>
+  </div>
+
+  <div class="grid">
+    <!-- CONFIG PANEL -->
+    <div>
+      <div class="panel">
+        <p class="eyebrow">Battle Settings</p>
+        <div class="hint">Applied uniformly to every Pokémon in the ranking below.</div>
+
+        <label for="level">Level (IV 15/15/15)</label>
+        <select id="level">
+          <option value="20">Level 20</option>
+          <option value="25">Level 25</option>
+          <option value="30">Level 30</option>
+          <option value="35">Level 35</option>
+          <option value="40">Level 40</option>
+          <option value="45">Level 45</option>
+          <option value="50" selected>Level 50</option>
+        </select>
+
+        <div id="friendshipRow">
+          <label for="friendship">Friendship Level</label>
+          <select id="friendship">
+            <option value="1">No Friend</option>
+            <option value="1.02">Good Friend</option>
+            <option value="1.05">Great Friend</option>
+            <option value="1.07">Ultra Friend</option>
+            <option value="1.1">Best Friend</option>
+            <option value="1.12" selected>Forever Friend</option>
+          </select>
+        </div>
+        <div class="hint" id="friendshipHiddenHint" style="display:none;">Friendship bonus is not applied at 1 player.</div>
+
+        <label for="weather">Weather Boost</label>
+        <select id="weather"></select>
+
+        <div class="hint">Boss charge move chance is fixed at 30% (confirmed current rate via a community-maintained config-history datamine: Niantic set this to 100% on 7 Sept 2024, then to 30% on 12 Sept 2024 — not back to the widely-assumed 50%). Real observed combat logs show the attacker's first action never lands earlier than 1.5s in (vs. the boss's first action, which can land as early as 0.5s) — that 1.5s startup delay is removed in this simulator by request, so the attacker's first action now fires immediately at raid start instead.</div>
+
+        <label for="players">Number of Players <span id="playersval" style="color:var(--text)"></span></label>
+        <input type="range" id="players" min="1" max="4" value="1">
+
+        <label style="display:flex;align-items:center;gap:8px;margin-top:18px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="bladeBoost" style="width:auto;">
+          Zacian Blade Boost active (+10% team ATK, Behemoth Blade Adventure Effect)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="shieldBoost" style="width:auto;">
+          Zamazenta Shield Boost active (+10% team DEF, Behemoth Bash Adventure Effect)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="megaBoostActive" style="width:auto;">
+          Mega/Primal partner active in party (+30% same-type damage, +10% all other damage)
+        </label>
+        <div id="megaBoostTypeRow" style="display:none;margin-top:8px;">
+          <label for="megaBoostType">Mega/Primal Partner's Type</label>
+          <select id="megaBoostType"></select>
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="partyPowerActive" style="width:auto;">
+          Party Power in use (36-point bar fills from fast-move hits at 36/n per party of n, doubles the next charged attack for everyone when full)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="dodgeChargeOnly" style="width:auto;">
+          Dodge charge moves only (reactively — only when the attacker isn't already mid-animation on its own move; a successful dodge costs the attacker 0.5s, the dodge itself)
+        </label>
+      </div>
+
+      <div class="panel">
+        <p class="eyebrow">Raid Boss</p>
+
+        <label for="bossSelect">Pokémon</label>
+        <select id="bossSelect"></select>
+
+        <label for="tier">Raid Tier</label>
+        <select id="tier">
+          <option value="t5" selected>Tier 5 · Legendary</option>
+          <option value="ultrabeast">Tier 5 · Ultra Beast</option>
+          <option value="mega">Mega Raid</option>
+          <option value="mega_legendary">Mega Raid · Legendary</option>
+        </select>
+
+        <div class="row2">
+          <div>
+            <label for="bossfast">Fast Move</label>
+            <select id="bossfast"></select>
+          </div>
+          <div>
+            <label for="bosscharge1">Charged Move</label>
+            <select id="bosscharge1"></select>
+          </div>
+        </div>
+
+        <div id="bossinfo" style="margin-top:14px;font-family:var(--mono);font-size:13px;color:var(--muted);line-height:1.7;"></div>
+      </div>
+
+      <button class="primary" id="rankBtn">Rank Every Pokémon vs This Boss</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div>
+      <div class="panel" id="top30Panel" style="display:none;">
+        <p class="eyebrow" id="top30Title">Top 30 Attackers</p>
+        <div class="hint" id="top30Hint" style="margin-bottom:10px;">&nbsp;</div>
+        <table class="mc-table">
+          <thead>
+            <tr>
+              <th title="Row rank, sorted by Estimator (fewest players needed first)">#</th>
+              <th title="Species name">Pokémon</th>
+              <th title="This Pokémon's type(s)">Type</th>
+              <th title="The fast + charge move combo used for this result — the best-performing super-effective combo found for this Pokémon">Moveset Used</th>
+              <th title="% of capped runs (6 lives max, stopped at the raid's real time limit) that defeated the boss">Win %</th>
+              <th title="This attacker's per-player theoretical damage output, extrapolated across the full raid time limit, as a % of boss HP — not damage actually dealt in a capped run, which is why strong attackers can read over 100%">Power %</th>
+              <th title="Average time to defeat the boss in an uncapped run (continues until won, not stopped at the time limit)">Time to Win</th>
+              <th title="How many players — each contributing this attacker's own per-player DPS under the current settings — would it take to solo the boss within the time limit">Estimator</th>
+              <th title="Average effective faints across all runs: whole faints, plus the fraction of max HP the finishing Pokémon had already lost by the time the boss went down">Fainted</th>
+              <th title="Average damage dealt to the boss per second">DPS</th>
+              <th title="Average number of full-team wipes (all 6 lives lost) requiring the 15s rejoin delay">Rejoins</th>
+              <th title="View a detailed example combat log for this matchup">Log</th>
+            </tr>
+          </thead>
+          <tbody id="top30Body"></tbody>
+        </table>
+      </div>
+
+      <div class="footnote">
+        Formula: DMG = ⌊0.5 × Power × (ATK/DEF) × STAB(1.2) × Effectiveness × Weather(1.2) × Friendship⌋ + 1 · No dodging assumed for any attacker, matching Pokebattler's "No Dodging" attack strategy · Multiplayer scales the team's damage against the boss.<br>
+        Matches current raid mechanics: the boss gains energy equal to 50% of damage taken (rounded up) — this is boss-specific, not something the attacker's own Pokémon gets — and the boss rolls to fire its charged move each time it has enough energy, evaluated instantly (Niantic made firing 100% guaranteed on 7 Sept 2024, then set it to 30% — not back to 50% as widely assumed — on 12 Sept 2024, confirmed via a community-maintained config-history datamine; unlike the old pre-2024 system, which planned one turn ahead and couldn't queue two charge moves back-to-back, the current system can fire charge moves consecutively if energy allows, gated only by that roll each time). 30% is the default under "Boss Charge Move Chance" as a result — this session's independent testing against real combat logs had already converged on the same value before this source was found. Real logs show the attacker's own first action never lands earlier than 1.5s in, but that startup delay is removed in this simulator by request. Combat resolves in discrete 0.5-second ticks, also confirmed by the same datamine (matches every real log timestamp checked this session).<br>
+        Every Pokémon is simulated 200 times (Monte Carlo) against the boss — figures below are averages across those 200 runs, using each Pokémon's first available fast + charged move. Estimator = players needed to defeat the boss within the raid's real 5-minute time limit, derived from the same 200-run average DPS.<br>
+        Base stats, types &amp; movepools: live from <span style="color:var(--text)">raw.githubusercontent.com/pvpoke/pvpoke</span> (community-maintained GameMaster). Move names, power/energy and real animation duration: live from <span style="color:var(--text)">DialgaDex</span> (javi-b/pokemon-resources on GitHub, sourced directly from the PokeMiners Game Master dump). The offline fallback database's movesets are hand-curated and may not be 100% legal/optimal for every entry — live data is authoritative.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="logModal">
+  <div class="modal-box">
+    <button class="modal-close" id="logModalClose" aria-label="Close">✕</button>
+    <p class="modal-title" id="logModalTitle"></p>
+    <p class="modal-sub" id="logModalSub"></p>
+    <span class="verdict" id="logModalVerdict"></span>
+    <div class="stats-strip" id="logModalStats" style="margin-top:18px;"></div>
+    <div class="log" id="logModalLog" style="margin-top:4px;"></div>
+    <p class="hint" style="margin-top:12px;margin-bottom:0;">One example battle out of the 200 simulated, chosen as the median result by Overall rating — matching Pokebattler's Monte Carlo - Gold methodology (their tooltip: "The median result based on overall rating is used for combat logs as an example").</p>
+  </div>
+</div>
+
+<script>
+/* ---------------- STATIC DATA (types, weather, CPM, tiers) ---------------- */
+const TYPE_COLORS = {
+  normal:'#A8A77A',fire:'#EE8130',water:'#6390F0',grass:'#7AC74C',electric:'#F7D02C',
+  ice:'#96D9D6',fighting:'#C22E28',poison:'#A33EA1',ground:'#E2BF65',flying:'#A98FF3',
+  psychic:'#F95587',bug:'#A6B91A',rock:'#B6A136',ghost:'#735797',dragon:'#6F35FC',
+  dark:'#705746',steel:'#B7B7CE',fairy:'#D685AD'
+};
+const TYPE_LABEL = {
+  normal:'Normal',fire:'Fire',water:'Water',grass:'Grass',electric:'Electric',
+  ice:'Ice',fighting:'Fighting',poison:'Poison',ground:'Ground',flying:'Flying',
+  psychic:'Psychic',bug:'Bug',rock:'Rock',ghost:'Ghost',dragon:'Dragon',
+  dark:'Dark',steel:'Steel',fairy:'Fairy'
+};
+const CHART = {
+  normal:{rock:0.5,steel:0.5,ghost:0},
+  fire:{grass:2,ice:2,bug:2,steel:2,fire:0.5,water:0.5,rock:0.5,dragon:0.5},
+  water:{fire:2,ground:2,rock:2,water:0.5,grass:0.5,dragon:0.5},
+  grass:{water:2,ground:2,rock:2,fire:0.5,grass:0.5,poison:0.5,flying:0.5,bug:0.5,dragon:0.5,steel:0.5},
+  electric:{water:2,flying:2,electric:0.5,grass:0.5,dragon:0.5,ground:0},
+  ice:{grass:2,ground:2,flying:2,dragon:2,fire:0.5,water:0.5,ice:0.5,steel:0.5},
+  fighting:{normal:2,ice:2,rock:2,dark:2,steel:2,poison:0.5,flying:0.5,psychic:0.5,bug:0.5,fairy:0.5,ghost:0},
+  poison:{grass:2,fairy:2,poison:0.5,ground:0.5,rock:0.5,ghost:0.5,steel:0},
+  ground:{fire:2,electric:2,poison:2,rock:2,steel:2,grass:0.5,bug:0.5,flying:0},
+  flying:{grass:2,fighting:2,bug:2,electric:0.5,rock:0.5,steel:0.5},
+  psychic:{fighting:2,poison:2,psychic:0.5,steel:0.5,dark:0},
+  bug:{grass:2,psychic:2,dark:2,fire:0.5,fighting:0.5,poison:0.5,flying:0.5,ghost:0.5,steel:0.5,fairy:0.5},
+  rock:{fire:2,ice:2,flying:2,bug:2,fighting:0.5,ground:0.5,steel:0.5},
+  ghost:{psychic:2,ghost:2,dark:0.5,normal:0},
+  dragon:{dragon:2,steel:0.5,fairy:0},
+  dark:{psychic:2,ghost:2,fighting:0.5,dark:0.5,fairy:0.5},
+  steel:{ice:2,rock:2,fairy:2,fire:0.5,water:0.5,electric:0.5,steel:0.5},
+  fairy:{fighting:2,dragon:2,dark:2,fire:0.5,poison:0.5,steel:0.5}
+};
+const WEATHER = {
+  none:{label:'No Weather Boost',types:[]},
+  sunny:{label:'☀️ Sunny / Clear',types:['grass','ground','fire']},
+  rain:{label:'🌧️ Rain',types:['water','electric','bug']},
+  partly:{label:'⛅ Partly Cloudy',types:['normal','rock']},
+  cloudy:{label:'☁️ Cloudy',types:['fairy','fighting','poison']},
+  windy:{label:'💨 Windy',types:['dragon','flying','psychic']},
+  snow:{label:'❄️ Snow',types:['ice','steel']},
+  fog:{label:'🌫️ Fog',types:['dark','ghost']}
+};
+const CPM = {20:0.5974,25:0.6612,30:0.7317,35:0.76156,40:0.79030001,45:0.81613,50:0.84029999};
+const TIERS = {
+  t5:{label:'Tier 5 · Legendary',cpm:0.79030001,hp:15000,timeLimit:300},
+  ultrabeast:{label:'Tier 5 · Ultra Beast',cpm:0.79030001,hp:15000,timeLimit:300}, // split out from Tier 5 by request — same battle stats as Legendary Tier 5, distinct only for grouping/selection purposes
+  mega:{label:'Mega Raid',cpm:0.79030001,hp:9000,timeLimit:300},
+  mega_legendary:{label:'Mega Raid · Legendary',cpm:0.79030001,hp:22500,timeLimit:300}
+};
+/* Pokebattler's documented "Overall" score weightings and goals per tier. */
+const TIER_SCORE_GOALS = {
+  t5:{powerWeight:1/3,  timeWeight:2/3,  ttwGoal:1500, powerGoal:20},
+  ultrabeast:{powerWeight:1/3, timeWeight:2/3, ttwGoal:1500, powerGoal:20},
+  mega:{powerWeight:1/3, timeWeight:2/3, ttwGoal:1500, powerGoal:20},
+  mega_legendary:{powerWeight:1/3, timeWeight:2/3, ttwGoal:1500, powerGoal:20}
+};
+const POGOAPI_STATS_URL = 'https://pogoapi.net/api/v1/pokemon_stats.json';
+const POGOAPI_MOVES_URL = 'https://pogoapi.net/api/v1/current_pokemon_moves.json'; // Niantic's live legal movepool per Pokémon
+const POGOAPI_FAST_URL = 'https://pogoapi.net/api/v1/fast_moves.json';
+const POGOAPI_CHARGED_URL = 'https://pogoapi.net/api/v1/charged_moves.json';
+const POGOAPI_TYPES_URL = 'https://pogoapi.net/api/v1/pokemon_types.json';
+const POGOAPI_EVOLUTIONS_URL = 'https://pogoapi.net/api/v1/pokemon_evolutions.json';
+const POGOAPI_MEGA_URL = 'https://pogoapi.net/api/v1/mega_pokemon.json';
+
+/* Manually curated fallback used only if the live PogoAPI fetch fails entirely. */
+/* Confirmed real damage windows (seconds from move start until damage/energy actually registers),
+ * sourced from Niantic's own GAME_MASTER data (damageWindowStartMs field). Moves not listed here
+ * fall back to the move's full duration (i.e. damage assumed to land at the end) until confirmed. */
+const DAMAGE_WINDOW = {
+  ANCIENT_POWER:2.9, BLIZZARD:1.4, BUG_BUZZ:1.8, BULLDOZE:2.6, CROSS_CHOP:0.8, DAZZLING_GLEAM:2.1,
+  DRAGON_CLAW:0.9, DRAGON_PULSE:2.05, DRILL_RUN:1.9, EARTHQUAKE:2.6, FLAMETHROWER:1.3, HURRICANE:1.0,
+  HYDRO_PUMP:1.1, ICE_BEAM:1.5, ICE_PUNCH:1.4, IRON_HEAD:1.4, MEGAHORN:1.5, PLAY_ROUGH:1.4,
+  PSYCHIC:1.5, PSYSTRIKE:1.2, ROCK_SLIDE:1.3, SHADOW_BALL:2.4, SIGNAL_BEAM:1.9, SLUDGE_BOMB:1.3,
+  SOLAR_BEAM:2.8, THUNDER:1.3, THUNDERBOLT:1.8, X_SCISSOR:1.1, STONE_EDGE:0.9,
+  DRAGON_BREATH:0.3, LOW_KICK:0.2, SHADOW_CLAW:0.05, THUNDER_SHOCK:0.2, VINE_WHIP:0.25,
+  AIR_SLASH:0.8, BULLET_PUNCH:0.4, CHARM:0.9, CONFUSION:0.5, COUNTER:0.8, DRAGON_TAIL:0.75,
+  FIRE_FANG:0.74, FROST_BREATH:0.55, HIDDEN_POWER:1.1, ICE_FANG:0.4, METAL_CLAW:0.23, MUD_SHOT:0.25,
+  POWDER_SNOW:0.85, PSYCHO_CUT:0.27, SNARL:0.75, WATERFALL:0.75,
+  AVALANCHE:1.5, BEHEMOTH_BASH:0.9, BEHEMOTH_BLADE:2.5, BRAVE_BIRD:1.0, BREAKING_SWIPE:0.47,
+  CLOSE_COMBAT:1.2, CRUNCH:1.1, CRUSH_GRIP:0.7, DRACO_METEOR:2.9, DRAGON_ASCENT:3.25,
+  DRAGON_ENERGY:1.88, DYNAMIC_PUNCH:1.0, EARTH_POWER:2.6, ENERGY_BALL:3.1, FOCUS_BLAST:3.0,
+  FOUL_PLAY:1.7, FREEZE_SHOCK:0.9, FUSION_BOLT:1.25, GLACIATE:1.5, ICE_BURN:1.8, METEOR_MASH:2.2,
+  MOONGEIST_BEAM:2.2, ORIGIN_PULSE:1.2, OUTRAGE:2.6, OVERHEAT:2.6, PRECIPICE_BLADES:1.2, SACRED_FIRE:1.1,
+  SACRED_FIRE_PLUS:1.1, SACRED_FIRE_PLUS_PLUS:1.1, // confirmed for ++ directly (1.1s-2.3s, identical to
+  // base); + assumed identical since GamePress-style sources show identical duration/animation across
+  // all three Sacred Fire tiers, not independently confirmed for + specifically
+  ROAR_OF_TIME:0.85, SPACIAL_REND:1.37, SUNSTEEL_STRIKE:2.2, SURF:1.2, WEATHER_BALL_ICE:1.25, SECRET_SWORD:1.2, DYNAMAX_CANNON:0.9, GLAIVE_RUSH:1.7,
+  FURY_CUTTER:0.2, LEAF_BLADE:1.35, AERIAL_ACE:2.0, ASTONISH:0.6, INCINERATE:0.7, MIND_BLOWN:3.0, MYSTICAL_FIRE:1.3, PYROBALL:0.9, BLAST_BURN:3.0, DARK_PULSE:1.4, ROCK_TOMB:2.0, SUPERPOWER:2.1, BRUTAL_SWING:1.3, PAYBACK:0.9, FLASH_CANNON:1.4, NIGHT_SLASH:1.1, ICY_WIND:2.2, MOONBLAST:2.3, GYRO_BALL:3.2, GRASS_KNOT:1.6, POUND:0.2, WATER_GUN:0.3, SCRATCH:0.3, BULLET_SEED:0.8, CHARGE_BEAM:0.8, SEED_BOMB:1.1, MAGMA_STORM:1.3, LIQUIDATION:2.0, EMBER:0.6, POISON_JAB:0.4, HEX:0.8, POISON_STING:0.3, CUT:0.3, WING_ATTACK:0.8, PECK:0.5, GUST:0.9, TAKE_DOWN:0.8, QUICK_ATTACK:0.5, ACID:0.6, TACKLE:0.3,
+  BUG_BITE:0.25, INFESTATION:0.75, STRUGGLE_BUG:1.2, BUG_BUZZ:1.8, SILVER_WIND:1.5, FELL_STINGER:1.6, LUNGE:2.5,
+  LEECH_LIFE:1.15, BITE:0.3, FEINT_ATTACK:0.85, SUCKER_PUNCH:0.1
+};
+/** Normalizes a move identifier to the ALL_CAPS_UNDERSCORE key format DAMAGE_WINDOW uses.
+ * Fallback-dataset moves already come in as IDs like 'ICE_FANG' (a no-op here). Live-fetched
+ * moves set moveId to the display Name instead (e.g. 'Ice Fang') — without this normalization,
+ * every DAMAGE_WINDOW lookup for a live-fetched move silently missed and fell back to that
+ * move's full duration, meaning the whole damage-window mechanic was never actually applying
+ * to any live-fetched Pokémon (the overwhelming majority of the roster). */
+function normalizeMoveKey(id){
+  return String(id).toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+}
+/** Time from move start until damage/energy actually registers. Falls back to the move's full
+ * duration (current approximation) if not yet confirmed. */
+function damageWindowSec(moveId, fullDuration){
+  const key = normalizeMoveKey(moveId);
+  return DAMAGE_WINDOW[key] !== undefined ? DAMAGE_WINDOW[key] : fullDuration;
+}
+const CHARGE_DURATION_OVERRIDES = {
+  DYNAMIC_PUNCH:2.5, CROSS_CHOP:1.5, SUBMISSION:2.0, CLOSE_COMBAT:2.5, FOCUS_BLAST:3.5,
+  PSYSTRIKE:2.5, SHADOW_BALL:3.0, PSYCHIC:3.0,
+  OUTRAGE:4.0, DRAGON_CLAW:1.5, DRACO_METEOR:3.5, SPACIAL_REND:2.5, ROAR_OF_TIME:2.0, GLAIVE_RUSH:2.0, BREAKING_SWIPE:1.0,
+  ANCIENT_POWER:3.5, ROCK_SLIDE:2.5, STONE_EDGE:2.5, ROCK_BLAST:2.0,
+  METEOR_MASH:2.5, IRON_HEAD:2.0, FLASH_CANNON:2.5,
+  EARTH_POWER:3.5, EARTHQUAKE:3.5, DRILL_RUN:3.0, BULLDOZE:3.5,
+  PLAY_ROUGH:3.0, DAZZLING_GLEAM:3.5, MOONBLAST:4.0,
+  OVERHEAT:4.0, FIRE_BLAST:4.0, BLAST_BURN:3.5, FLAMETHROWER:2.0, MIND_BLOWN:4.0, MYSTICAL_FIRE:2.0,
+  HYDRO_PUMP:3.5, ORIGIN_PULSE:1.5, SURF:1.5, HYDRO_CANNON:2.0, BLIZZARD:3.0, ICE_BEAM:3.5,
+  PRECIPICE_BLADES:1.5, SOLAR_BEAM:5.0, FRENZY_PLANT:2.5,
+  HYPER_BEAM:4.0, HURRICANE:2.5, BRAVE_BIRD:2.0, SKY_ATTACK:2.0,
+  SLUDGE_BOMB:2.5, SLUDGE_WAVE:3.0, GUNK_SHOT:3.0,
+  NIGHT_SLASH:2.0, FOUL_PLAY:2.0, DARK_PULSE:3.0, CRUNCH:3.0,
+  WILD_CHARGE:2.5, THUNDER:2.5, THUNDERBOLT:2.5, DISCHARGE:2.5,
+  X_SCISSOR:1.5, MEGAHORN:2.0, BUG_BUZZ:3.5, GYRO_BALL:3.5, ROCK_TOMB:3.0,
+  AVALANCHE:2.5, SIGNAL_BEAM:3.0, ICE_PUNCH:2.0, FREEZE_SHOCK:1.5, ICE_BURN:2.0,
+  BEHEMOTH_BLADE:3.5, BEHEMOTH_BASH:1.5, MOONGEIST_BEAM:3.0, SUNSTEEL_STRIKE:3.0, GLACIATE:2.5, DYNAMAX_CANNON:1.5,
+  CRUSH_GRIP:1.8, DRAGON_ENERGY:3.3, SECRET_SWORD:2.0, DRAGON_ASCENT:3.5, WEATHER_BALL_ICE:1.5
+};
+
+/**
+ * Rare signature/fusion-exclusive moves that generic move-data APIs are known to sometimes
+ * omit (they're not part of the standard catch/TM move pool, so some data pipelines skip
+ * them entirely). Patched in directly with real confirmed PvE stats so the affected Pokémon
+ * always have their actual best move available, regardless of what PogoAPI returns.
+ * Format matches the parsed move shape: {type, power, energy (cost), durationSec}.
+ */
+const MANUAL_MOVE_PATCHES = {
+  'Freeze Shock':    { type:'ice',   power:160, energy:100, durationSec:1.5 },  // Black Kyurem signature
+  'Ice Burn':        { type:'ice',   power:90,  energy:50,  durationSec:2.0 }, // White Kyurem signature
+  'Behemoth Blade':  { type:'steel', power:200, energy:100, durationSec:3.5 }, // Zacian Crowned Sword signature
+  'Behemoth Bash':   { type:'steel', power:125, energy:50,  durationSec:1.5 }, // Zamazenta Crowned Shield signature
+  'Moongeist Beam':  { type:'ghost', power:230, energy:100, durationSec:3.0 }, // Dawn Wings Necrozma signature
+  'Sunsteel Strike': { type:'steel', power:230, energy:100, durationSec:3.0 }, // Dusk Mane Necrozma signature
+  'Glaciate':        { type:'ice',   power:160, energy:100, durationSec:2.5 }, // Kyurem signature (added Dec 2022)
+  'Dynamax Cannon':  { type:'dragon',power:215, energy:100, durationSec:1.5 }, // Eternatus signature (added 2025)
+  'Crush Grip':      { type:'normal',  power:210, energy:100, durationSec:2.0 }, // Regigigas signature
+  'Dragon Energy':   { type:'dragon',  power:165, energy:50,  durationSec:3.5 }, // Regidrago signature
+  'Glaive Rush':     { type:'dragon',  power:105, energy:50,  durationSec:2.0 }, // Baxcalibur signature
+  'Secret Sword':    { type:'fighting',power:120, energy:50,  durationSec:2.0 }, // Keldeo (Resolute) signature
+  'Dragon Ascent':   { type:'flying',  power:140, energy:50,  durationSec:3.5 }  // Rayquaza signature
+};
+/** Ensures a Pokémon's chargedMoves includes a specific move name if it's meant to have it. */
+function ensureMoveOn(entry, moveName){
+  if(entry && !entry.chargedMoves.includes(moveName)) entry.chargedMoves.push(moveName);
+}
+/** Ensures a Pokémon's fastMoves includes a specific move name if it's meant to have it. */
+function ensureFastMoveOn(entry, moveName){
+  if(entry && !entry.fastMoves.includes(moveName)) entry.fastMoves.push(moveName);
+}
+
+/* ---------------- LIVE DATA (PogoAPI primary, PokeAPI typing gap-filler) ---------------- */
+const GM = { ready:false, pokemon:[], moves:{}, byId:{} };
+let lastTotalSims = 0; // total runSim() calls made during the most recent "Rank Every Pokémon" pass
+
+function prettifyMoveId(id){
+  return id.split('_').map(w => w.charAt(0)+w.slice(1).toLowerCase()).join(' ');
+}
+function moveNameSync(id){ return (GM.moves[id] && GM.moves[id].name) || prettifyMoveId(id); }
+function speciesNameSync(id){ return (GM.byId[id] && GM.byId[id].speciesName) || id; }
+
+function roundToHalfSecond(sec){ return Math.round(sec*2)/2; }
+function chargeDuration(move){
+  if(typeof move.durationSec === 'number') return move.durationSec; // real value straight from PogoAPI
+  if(CHARGE_DURATION_OVERRIDES[move.moveId] !== undefined) return CHARGE_DURATION_OVERRIDES[move.moveId];
+  const est = 1.2 + (move.energy||35)*0.03 + (move.power||60)*0.007;
+  return roundToHalfSecond(Math.max(1.5, Math.min(4.0, est)));
+}
+function fastDuration(move){
+  if(typeof move.durationSec === 'number') return move.durationSec;
+  return roundToHalfSecond((move.cooldown||1000)/1000);
+}
+
+/** Gap-filler: fetches typing for a single species from PokeAPI when PogoAPI's type list has no entry for it. */
+async function fetchTypesFromPokeApi(speciesNameSlug){
+  try{
+    const res = await fetch(`https://pokeapi.co/api/v2/pokemon/${speciesNameSlug}`);
+    if(!res.ok) return null;
+    const data = await res.json();
+    return data.types.map(t => t.type.name);
+  } catch(e){ return null; }
+}
+
+// Legendary/Mythical status, sourced from PokeAPI's pokemon-species endpoint (is_legendary /
+// is_mythical) rather than a hand-maintained name list. Keyed by National Dex number since that's
+// shared across all forms of a species (regional forms, White/Black Kyurem, etc. all correctly
+// inherit their base species' status this way). Populated asynchronously in the background after
+// initial load — see fetchLegendaryStatusInBackground() — so it starts empty and fills in over
+// the following seconds; bossAutoTier() only auto-assigns Tier 5 once a given ID's status is known.
+const LEGENDARY_IDS = new Set();
+const MYTHICAL_IDS = new Set(); // tracked separately for the status line, both count as "legendary" for tiering
+const legendaryStatusChecked = new Set(); // IDs we've already resolved (true or false), to avoid re-fetching
+async function fetchLegendaryStatusInBackground(pokemonIds, onProgress){
+  const ids = Array.from(pokemonIds).filter(id => id && !legendaryStatusChecked.has(id));
+  const BATCH_SIZE = 25;
+  for(let i=0; i<ids.length; i+=BATCH_SIZE){
+    const batch = ids.slice(i, i+BATCH_SIZE);
+    await Promise.all(batch.map(async id => {
+      try{
+        const res = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${id}`);
+        if(res.ok){
+          const data = await res.json();
+          legendaryStatusChecked.add(id);
+          if(data.is_legendary) LEGENDARY_IDS.add(id);
+          if(data.is_mythical) MYTHICAL_IDS.add(id);
+        } else {
+          legendaryStatusChecked.add(id); // treat as "checked, not legendary" rather than retrying forever
+        }
+      } catch(e){ /* leave unresolved — will simply not auto-tier this one */ }
+    }));
+    if(onProgress) onProgress(Math.min(i+BATCH_SIZE, ids.length), ids.length);
+  }
+}
+function isLegendaryPokemonId(pokemonId){
+  return LEGENDARY_IDS.has(pokemonId) || MYTHICAL_IDS.has(pokemonId);
+}
+
+async function loadGameMaster(){
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  try{
+    const [statsRes, movesRes, fastRes, chargedRes, typesRes] = await Promise.all([
+      fetch(POGOAPI_STATS_URL), fetch(POGOAPI_MOVES_URL), fetch(POGOAPI_FAST_URL),
+      fetch(POGOAPI_CHARGED_URL), fetch(POGOAPI_TYPES_URL)
+    ]);
+    if(!statsRes.ok || !movesRes.ok || !fastRes.ok || !chargedRes.ok || !typesRes.ok) throw new Error('HTTP error from PogoAPI');
+    const [statsList, movesList, fastList, chargedList, typesList] = await Promise.all([
+      statsRes.json(), movesRes.json(), fastRes.json(), chargedRes.json(), typesRes.json()
+    ]);
+
+    // Evolutions — fetched separately and non-fatally: if this one endpoint fails, the whole
+    // live data load shouldn't fail with it, since it only powers the "final stage only" filter.
+    const canEvolveIds = new Set();
+    try{
+      const evoRes = await fetch(POGOAPI_EVOLUTIONS_URL);
+      if(evoRes.ok){
+        const evoList = await evoRes.json();
+        (evoList||[]).forEach(e => {
+          if(e && typeof e.pokemon_id !== 'undefined' && Array.isArray(e.evolutions) && e.evolutions.length){
+            canEvolveIds.add(e.pokemon_id);
+          }
+        });
+      }
+    } catch(e){ /* fully-evolved filter just won't be available — not a fatal issue */ }
+
+    // Move data — keyed directly by move name (PogoAPI/current_pokemon_moves both use plain English names).
+    const moves = {};
+    (fastList||[]).forEach(m => {
+      if(!m || typeof m.name !== 'string') return;
+      moves[m.name] = { moveId:m.name, name:m.name, type:(m.type||'').toLowerCase(), power:m.power, energyGain:m.energy_delta, durationSec:(m.duration||1000)/1000 };
+    });
+    (chargedList||[]).forEach(m => {
+      if(!m || typeof m.name !== 'string') return;
+      moves[m.name] = { moveId:m.name, name:m.name, type:(m.type||'').toLowerCase(), power:m.power, energy:Math.abs(m.energy_delta||0), durationSec:(m.duration||2000)/1000 };
+    });
+
+    // Base stats keyed by "pokemon_id|form" (pokemon_stats.json has one entry per costume/event
+    // form too, e.g. Bulbasaur's "Fall_2019" costume — matching by name alone would risk grabbing
+    // a costume's stats instead of the normal form's). Falls back to any entry for that id if the
+    // exact form isn't found, preferring a "Normal"-form entry when there's a choice.
+    const statsByKey = {};
+    const statsByIdFallback = {};
+    (statsList||[]).forEach(s => {
+      if(!s || typeof s.pokemon_name !== 'string' || typeof s.pokemon_id === 'undefined') return;
+      const stats = { atk:parseInt(s.base_attack,10)||0, def:parseInt(s.base_defense,10)||0, hp:parseInt(s.base_stamina,10)||0 };
+      const form = s.form || 'Normal';
+      statsByKey[`${s.pokemon_id}|${form}`] = stats;
+      if(!statsByIdFallback[s.pokemon_id] || form === 'Normal'){
+        statsByIdFallback[s.pokemon_id] = stats;
+      }
+    });
+
+    // Typing — same id+form matching approach as stats, for the same reason.
+    const typesByKey = {};
+    const typesByIdFallback = {};
+    (typesList||[]).forEach(t => {
+      if(!t || typeof t.pokemon_name !== 'string' || typeof t.pokemon_id === 'undefined' || !Array.isArray(t.type)) return;
+      const types = t.type.map(x => (x||'').toLowerCase());
+      const form = t.form || 'Normal';
+      typesByKey[`${t.pokemon_id}|${form}`] = types;
+      if(!typesByIdFallback[t.pokemon_id] || form === 'Normal'){
+        typesByIdFallback[t.pokemon_id] = types;
+      }
+    });
+
+    const pokemon = [];
+    const needsTypeGapFill = [];
+    const unresolvedMoveNames = new Set();
+    const movepoolByPokemonId = {}; // pokemon_id -> {fastMoves, chargedMoves} of its Normal form, for Mega lookup
+    (movesList||[]).forEach(p => {
+      if(!p || typeof p.pokemon_name !== 'string' || typeof p.pokemon_id === 'undefined') return;
+      const allFastRefs = [...(p.fast_moves||[]), ...(p.elite_fast_moves||[])];
+      const allChargeRefs = [...(p.charged_moves||[]), ...(p.elite_charged_moves||[])];
+      allFastRefs.forEach(m => { if(!moves[m]) unresolvedMoveNames.add(m); });
+      allChargeRefs.forEach(m => { if(!moves[m] && m !== 'Struggle') unresolvedMoveNames.add(m); });
+      const fast = allFastRefs.filter(m => moves[m]);
+      const charge = allChargeRefs.filter(m => moves[m] && m !== 'Struggle');
+      if(!fast.length || !charge.length) return;
+      const form = p.form || 'Normal';
+      if(/(19|20)\d{2}/.test(form)) return; // costume/event form tagged with a year — skip, cosmetic only
+      const nameLower = p.pokemon_name.toLowerCase();
+      if(nameLower === 'chien-pao' || nameLower === 'chien_pao') return; // not actually released yet
+      if(nameLower === 'darmanitan' && /zen/i.test(form) && /galar/i.test(form)) return; // not actually released yet
+      if(nameLower === 'calyrex' && /(shadow|ice)[\s_-]?rider/i.test(form)) return; // not actually released yet
+      if(/eternamax/i.test(form) || /eternamax/i.test(nameLower)) return; // event-only raid boss form, never obtainable/usable as a player attacker
+      const key = `${p.pokemon_id}|${form}`;
+      const stats = statsByKey[key] || statsByIdFallback[p.pokemon_id];
+      if(!stats || (!stats.atk && !stats.def && !stats.hp)) return; // no usable base stats for this entry — skip rather than guess
+      const formSuffix = (form !== 'Normal') ? `_${form}` : '';
+      const speciesId = `p${p.pokemon_id}${formSuffix}`.toLowerCase();
+      const speciesName = (form !== 'Normal') ? `${p.pokemon_name} (${form})` : p.pokemon_name;
+      const types = typesByKey[key] || typesByIdFallback[p.pokemon_id];
+      const eliteFastRefs = (p.elite_fast_moves||[]).filter(m => moves[m]);
+      const eliteChargeRefs = (p.elite_charged_moves||[]).filter(m => moves[m] && m !== 'Struggle');
+      const entry = { speciesId, speciesName, pokemonId: p.pokemon_id, types: types || null, baseStats: stats, fastMoves: fast, chargedMoves: charge, released:true, isFinalStage: !canEvolveIds.has(p.pokemon_id), eliteFastMoves: eliteFastRefs, eliteChargedMoves: eliteChargeRefs };
+      if(!types) needsTypeGapFill.push(entry);
+      pokemon.push(entry);
+      if(form === 'Normal' || !movepoolByPokemonId[p.pokemon_id]){
+        movepoolByPokemonId[p.pokemon_id] = { fastMoves: fast, chargedMoves: charge };
+      }
+    });
+    if(unresolvedMoveNames.size){
+      console.warn(`[RaidCalc] ${unresolvedMoveNames.size} move name(s) referenced in movepools but missing from fast_moves.json/charged_moves.json (silently dropped from those Pokémon's options):`, Array.from(unresolvedMoveNames));
+    }
+
+    // Patch in known signature/fusion-exclusive moves that PogoAPI's generic move lists
+    // sometimes omit, and make sure the specific Pokémon known to have them do.
+    Object.entries(MANUAL_MOVE_PATCHES).forEach(([name, data]) => {
+      moves[name] = { moveId:name, name, ...data };
+    });
+    pokemon.forEach(p => {
+      const n = p.speciesName.toLowerCase();
+      if(n.includes('kyurem') && n.includes('black')) ensureMoveOn(p, 'Freeze Shock');
+      if(n.includes('kyurem') && n.includes('white')) ensureMoveOn(p, 'Ice Burn');
+      if(n.includes('zacian') && n.includes('crowned')) ensureMoveOn(p, 'Behemoth Blade');
+      if(n.includes('zamazenta') && n.includes('crowned')) ensureMoveOn(p, 'Behemoth Bash');
+      if(n.includes('necrozma') && (n.includes('dusk') || n.includes('mane'))) ensureMoveOn(p, 'Sunsteel Strike');
+      if(n.includes('necrozma') && (n.includes('dawn') || n.includes('wings'))) ensureMoveOn(p, 'Moongeist Beam');
+      if(n === 'kyurem') ensureMoveOn(p, 'Glaciate');
+      if(n.includes('eternatus')) ensureMoveOn(p, 'Dynamax Cannon');
+      if(n.includes('regigigas')) ensureMoveOn(p, 'Crush Grip');
+      if(n.includes('regidrago')) ensureMoveOn(p, 'Dragon Energy');
+      if(n.includes('keldeo') && n.includes('resolute')) ensureMoveOn(p, 'Secret Sword');
+      if(n.includes('baxcalibur')) ensureMoveOn(p, 'Glaive Rush');
+      if(n.includes('rayquaza')) ensureMoveOn(p, 'Dragon Ascent');
+      if(n === 'mewtwo') ensureFastMoveOn(p, 'Counter');
+      if(n.includes('blaziken')) ensureMoveOn(p, 'Aura Sphere'); // added to Blaziken & Mega Blaziken Dec 2025
+    });
+    // Mewtwo's Mega forms borrow their movepool from base Mewtwo (movepoolByPokemonId) —
+    // patch it there too so Mega X/Y also get Counter, whether built from mega_pokemon.json
+    // below or via the gap-fill fallback further down.
+    if(movepoolByPokemonId[150] && !movepoolByPokemonId[150].fastMoves.includes('Counter')){
+      movepoolByPokemonId[150].fastMoves.push('Counter');
+    }
+
+    // Mega Pokémon come from their own dedicated endpoint, not current_pokemon_moves.json —
+    // fetched non-fatally, since a failure here shouldn't break the whole live data load.
+    try{
+      const megaRes = await fetch(POGOAPI_MEGA_URL);
+      if(megaRes.ok){
+        const megaList = await megaRes.json();
+        (megaList||[]).forEach(m => {
+          if(!m || !m.stats || typeof m.pokemon_id === 'undefined' || typeof m.mega_name !== 'string') return;
+          // Mega forms use the same movepool as their base (Normal-form) species.
+          const base = movepoolByPokemonId[m.pokemon_id];
+          if(!base || !base.fastMoves.length || !base.chargedMoves.length) return;
+          const form = m.form || 'Normal';
+          const speciesId = `p${m.pokemon_id}_mega${form!=='Normal' ? '_'+form.toLowerCase() : ''}`;
+          pokemon.push({
+            speciesId, speciesName: m.mega_name, pokemonId: m.pokemon_id,
+            types: (m.type||[]).map(t => (t||'').toLowerCase()),
+            baseStats: { atk:m.stats.base_attack, def:m.stats.base_defense, hp:m.stats.base_stamina },
+            fastMoves: base.fastMoves, chargedMoves: base.chargedMoves,
+            released:true, isFinalStage:true, isMegaForm:true // mega forms have no further evolution
+          });
+        });
+      }
+    } catch(e){ /* mega forms just won't be available — not a fatal issue */ }
+
+    // Gap-fill for very recently-released Mega forms that PogoAPI's mega_pokemon.json may not
+    // yet include (community-maintained API, can lag behind brand-new releases). Only injects
+    // if genuinely missing from the live-fetched roster — doesn't override live data if present.
+    const megaGapFill = [
+      { speciesId:'p150_mega_x', speciesName:'Mewtwo (Mega X)', pokemonId:150, types:['psychic','fighting'], baseStats:{atk:399,def:215,hp:228} },
+      { speciesId:'p150_mega_y', speciesName:'Mewtwo (Mega Y)', pokemonId:150, types:['psychic'], baseStats:{atk:413,def:223,hp:228} },
+      // Confirmed released (verified via web search, not PogoAPI) — Pokémon Legends: Z-A's new Mega
+      // Evolutions, progressively added to Pokémon GO's "Super Mega Raid" events throughout 2026.
+      { speciesId:'p149_mega', speciesName:'Dragonite (Mega)', pokemonId:149, types:['dragon','flying'], baseStats:{atk:299,def:255,hp:209} },
+      { speciesId:'p71_mega', speciesName:'Victreebel (Mega)', pokemonId:71, types:['grass','poison'], baseStats:{atk:265,def:181,hp:190} },
+      { speciesId:'p687_mega', speciesName:'Malamar (Mega)', pokemonId:687, types:['dark','psychic'], baseStats:{atk:208,def:222,hp:200} },
+      { speciesId:'p870_mega', speciesName:'Falinks (Mega)', pokemonId:870, types:['fighting'], baseStats:{atk:267,def:229,hp:163} },
+      { speciesId:'p227_mega', speciesName:'Skarmory (Mega)', pokemonId:227, types:['steel','flying'], baseStats:{atk:273,def:228,hp:163} },
+      // Both pure Electric-type — confirmed via multiple sources, correcting an earlier internal
+      // error that had X listed with an incorrect Fighting secondary typing.
+      { speciesId:'p26_mega_x', speciesName:'Raichu (Mega X)', pokemonId:26, types:['electric'], baseStats:{atk:277,def:203,hp:155} },
+      { speciesId:'p26_mega_y', speciesName:'Raichu (Mega Y)', pokemonId:26, types:['electric'], baseStats:{atk:339,def:157,hp:155} },
+      // Not yet live (confirmed debut: 22 Aug 2026, Starmie Super Mega Raid Day) — added ahead of
+      // release by request. ATK/DEF/HP (276/229/155) as given by the user directly, correcting an
+      // earlier mix-up where this session's own web research had ATK and DEF transposed and HP
+      // wrong (inferred rather than sourced). Still worth re-verifying once it actually goes live,
+      // same as any pre-release figure.
+      { speciesId:'p121_mega', speciesName:'Starmie (Mega)', pokemonId:121, types:['water','psychic'], baseStats:{atk:276,def:229,hp:155} }
+    ];
+    megaGapFill.forEach(gap => {
+      const alreadyPresent = pokemon.some(p => p.speciesName === gap.speciesName || p.speciesId === gap.speciesId);
+      if(alreadyPresent) return;
+      const base = movepoolByPokemonId[gap.pokemonId];
+      if(!base || !base.fastMoves.length || !base.chargedMoves.length) return; // base Mewtwo itself must be present to borrow its movepool
+      pokemon.push({
+        speciesId: gap.speciesId, speciesName: gap.speciesName, pokemonId: gap.pokemonId, types: gap.types, baseStats: gap.baseStats,
+        fastMoves: base.fastMoves, chargedMoves: base.chargedMoves, released:true, isFinalStage:true, isMegaForm:true
+      });
+    });
+
+    // Stat corrections for entries known to have unreliable data even when present (verified against
+    // the confirmed real CP formula — e.g. Eternamax's ATK/DEF are swapped in some public sources,
+    // and this discrepancy may have propagated into live data too).
+    const statCorrections = [
+      { match:p => p.speciesName === 'Eternatus', baseStats:{atk:278,def:192,hp:268} }
+    ];
+    pokemon.forEach(p => {
+      statCorrections.forEach(fix => {
+        if(fix.match(p)){
+          const before = {...p.baseStats};
+          p.baseStats = fix.baseStats;
+        }
+      });
+    });
+
+    // Movepool gap-fill: add a specific real, legal move to a specific species' movepool if PogoAPI's
+    // live data is missing it (community-maintained, can lag — same rationale as the type/Mega
+    // gap-fills above). Only adds if genuinely absent; never removes or reorders existing moves.
+    const movepoolGapFill = [
+      { speciesName:'Blacephalon', kind:'chargedMoves', moveId:'MIND_BLOWN' }, // very recently added move (per this session's research, added to the game in late Dec 2025) — real, own signature-adjacent charge move
+      { speciesName:'Cinderace', kind:'chargedMoves', moveId:'PYROBALL' } // real Community Day-exclusive signature move
+    ];
+    movepoolGapFill.forEach(fix => {
+      const p = pokemon.find(pp => pp.speciesName === fix.speciesName);
+      if(p && Array.isArray(p[fix.kind]) && !p[fix.kind].includes(fix.moveId)){
+        p[fix.kind] = [...p[fix.kind], fix.moveId];
+      }
+    });
+
+    // Move-stats gap-fill: ensure a specific real move has its power/energy/duration defined even
+    // if PogoAPI's live fast_moves.json/charged_moves.json is missing or incomplete for it (same
+    // rationale as the other gap-fills above — only fills in if genuinely absent, never overrides
+    // real live data). Without this, adding a move to a Pokémon's movepool (see movepoolGapFill
+    // above) without also guaranteeing its stats exist could crash damage calculation outright.
+    const moveStatsGapFill = {
+      MIND_BLOWN: { type:'fire', power:130, energy:33, durationSec:4.0 }, // matches this file's existing fallback-dataset value
+      PYROBALL: { type:'fire', power:150, energy:100, durationSec:2.0 } // confirmed via web search this session (Dittobase, cross-checked across two of their pages)
+    };
+    Object.entries(moveStatsGapFill).forEach(([moveId, stats]) => {
+      if(!moves[moveId]) moves[moveId] = { moveId, ...stats };
+    });
+
+    if(pokemon.length === 0){
+      throw new Error(`Parsed 0 usable Pokémon from live data (moves matched: ${Object.keys(moves).length}, stat entries: ${Object.keys(statsByKey).length}) — check the browser console for raw samples.`);
+    }
+
+    GM.moves = moves;
+    GM.pokemon = pokemon;
+    GM.byId = {};
+    pokemon.forEach(p => GM.byId[p.speciesId] = p);
+    GM.ready = true;
+    dot.className = 'status-dot ok';
+    text.textContent = `✓ Live data loaded from PogoAPI — ${pokemon.length.toLocaleString('en-US')} Pokémon, ${Object.keys(moves).length} moves` + (needsTypeGapFill.length ? `, patching typing for ${needsTypeGapFill.length} via PokeAPI…` : '');
+    onDataReady();
+
+    // Patch missing typing in the background via PokeAPI (small number expected — most entries come from the bulk PogoAPI type list).
+    if(needsTypeGapFill.length){
+      Promise.all(needsTypeGapFill.map(async entry => {
+        const slug = entry.speciesName.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'');
+        const types = await fetchTypesFromPokeApi(slug);
+        if(types) entry.types = types;
+        else GM.pokemon = GM.pokemon.filter(p => p !== entry); // drop entries we can never type correctly
+      })).then(() => {
+        GM.byId = {};
+        GM.pokemon.forEach(p => GM.byId[p.speciesId] = p);
+        text.textContent = `✓ Live data loaded from PogoAPI (+ PokeAPI typing patch) — ${GM.pokemon.length.toLocaleString('en-US')} Pokémon, ${Object.keys(moves).length} moves`;
+      });
+    }
+
+    // Fetch confirmed Legendary/Mythical status from PokeAPI in the background, for Tier 5
+    // auto-assignment (bossAutoTier). Runs after the app is already usable — doesn't block anything.
+    const uniquePokemonIds = new Set(GM.pokemon.map(p => p.pokemonId).filter(Boolean));
+    fetchLegendaryStatusInBackground(uniquePokemonIds, (done, total) => {
+      text.textContent = `✓ Live data loaded from PogoAPI — checking Legendary status via PokeAPI (${done.toLocaleString('en-US')}/${total.toLocaleString('en-US')})…`;
+    }).then(() => {
+      text.textContent = `✓ Live data loaded from PogoAPI — ${GM.pokemon.length.toLocaleString('en-US')} Pokémon, ${Object.keys(moves).length} moves (Legendary status confirmed via PokeAPI)`;
+      // Rebuild the boss dropdown's groupings now that real status is known (some entries may
+      // move from the Tier 3 fallback group into Tier 5), then re-apply auto-tier for whichever
+      // boss is currently selected.
+      buildBossDropdown();
+      if(selectedBossId && GM.byId[selectedBossId]){
+        const autoTier = bossAutoTier(GM.byId[selectedBossId]);
+        if(autoTier){ $('tier').value = autoTier; updateBossInfo(); }
+      }
+    });
+  } catch(e){
+    GM.ready = false;
+    loadFallback();
+    dot.className = 'status-dot err';
+    text.textContent = `⚠ Live data unreachable — using embedded fallback database (${GM.pokemon.length} Pokémon, incl. legendaries & Mega forms). This roster is far smaller than the full live one. Reason: ` + (e.message||'network error');
+    onDataReady();
+  }
+}
+
+function loadFallback(){
+  const moves = {};
+  const fastDefs = {
+    COUNTER:{type:'fighting',power:13,energyGain:9,cooldown:1000},
+    PSYCHO_CUT:{type:'psychic',power:4,energyGain:7,cooldown:500},
+    MUD_SHOT:{type:'ground',power:4,energyGain:6,cooldown:500},
+    DRAGON_TAIL:{type:'dragon',power:14,energyGain:8,cooldown:1000},
+    BULLET_PUNCH:{type:'steel',power:10,energyGain:11,cooldown:1000},
+    FIRE_FANG:{type:'fire',power:13,energyGain:9,cooldown:1000},
+    ASTONISH:{type:'ghost',power:7,energyGain:13,cooldown:1000},
+    INCINERATE:{type:'fire',power:32,energyGain:22,cooldown:2500},
+    WATERFALL:{type:'water',power:13,energyGain:7,cooldown:1000},
+    CHARM:{type:'fairy',power:20,energyGain:11,cooldown:1500},
+    DRAGON_BREATH:{type:'dragon',power:6,energyGain:4,cooldown:500},
+    SNARL:{type:'dark',power:11,energyGain:13,cooldown:1000},
+    SHADOW_CLAW:{type:'ghost',power:6,energyGain:4,cooldown:500},
+    AIR_SLASH:{type:'flying',power:12,energyGain:8,cooldown:1000},
+    THUNDER_SHOCK:{type:'electric',power:4,energyGain:7,cooldown:500},
+    POWDER_SNOW:{type:'ice',power:6,energyGain:15,cooldown:1000},
+    FROST_BREATH:{type:'ice',power:11,energyGain:9,cooldown:1000},
+    CONFUSION:{type:'psychic',power:19,energyGain:14,cooldown:1500},
+    METAL_CLAW:{type:'steel',power:6,energyGain:6,cooldown:500},
+    VINE_WHIP:{type:'grass',power:6,energyGain:5,cooldown:500},
+    HIDDEN_POWER:{type:'normal',power:15,energyGain:10,cooldown:1500},
+    LOW_KICK:{type:'fighting',power:5,energyGain:5,cooldown:500},
+    ICE_FANG:{type:'ice',power:12,energyGain:20,cooldown:1500},
+    STEEL_WING:{type:'steel',power:14,energyGain:8,cooldown:1000},
+    SMACK_DOWN:{type:'rock',power:13,energyGain:7,cooldown:1000},
+    IRON_TAIL:{type:'steel',power:14,energyGain:6,cooldown:1000},
+    BITE:{type:'dark',power:6,energyGain:4,cooldown:500},
+    QUICK_ATTACK:{type:'normal',power:10,energyGain:13,cooldown:1000},
+    BULLET_SEED:{type:'grass',power:7,energyGain:13,cooldown:1000},
+    CHARGE_BEAM:{type:'electric',power:7,energyGain:14,cooldown:1000},
+    FIRE_SPIN:{type:'fire',power:13,energyGain:9,cooldown:1000},
+    LEAFAGE:{type:'grass',power:6,energyGain:4,cooldown:500},
+    VOLT_SWITCH:{type:'electric',power:13,energyGain:20,cooldown:1500},
+    THUNDER_FANG:{type:'electric',power:10,energyGain:13,cooldown:1000},
+    EXTRASENSORY:{type:'psychic',power:11,energyGain:11,cooldown:1000},
+    ZEN_HEADBUTT:{type:'psychic',power:11,energyGain:9,cooldown:1000},
+    KARATE_CHOP:{type:'fighting',power:10,energyGain:13,cooldown:1000},
+    SUCKER_PUNCH:{type:'dark',power:5,energyGain:6,cooldown:700},
+    EMBER:{type:'fire',power:10,energyGain:10,cooldown:1000},
+    ROCK_SMASH:{type:'fighting',power:17,energyGain:12,cooldown:1500},
+    PECK:{type:'flying',power:10,energyGain:10,cooldown:1000},
+    WING_ATTACK:{type:'flying',power:10,energyGain:11,cooldown:1000},
+    GUST:{type:'flying',power:25,energyGain:20,cooldown:1500},
+    DOUBLE_KICK:{type:'fighting',power:10,energyGain:13,cooldown:1000},
+    TACKLE:{type:'normal',power:5,energyGain:5,cooldown:500},
+    LICK:{type:'ghost',power:5,energyGain:6,cooldown:500}, // corrected — was 6/6 (back-calculated from an indirect table), confirmed directly as 5/6
+    FAIRY_WIND:{type:'fairy',power:9,energyGain:13,cooldown:1000},
+    FEINT_ATTACK:{type:'dark',power:11,energyGain:10,cooldown:1000},
+    CUT:{type:'normal',power:5,energyGain:5,cooldown:500},
+    HEX:{type:'ghost',power:8,energyGain:13,cooldown:1000},
+    ICE_SHARD:{type:'ice',power:10,energyGain:10,cooldown:1000},
+    INFESTATION:{type:'bug',power:9,energyGain:13,cooldown:1000},
+    POISON_STING:{type:'poison',power:4,energyGain:6,cooldown:500},
+    WATER_SHURIKEN:{type:'water',power:9,energyGain:14,cooldown:1000},
+    STRUGGLE_BUG:{type:'bug',power:15,energyGain:15,cooldown:1500},
+    BUBBLE:{type:'water',power:10,energyGain:12,cooldown:1000},
+    SAND_ATTACK:{type:'ground',power:4,energyGain:7,cooldown:500},
+    METAL_SOUND:{type:'steel',power:4,energyGain:6,cooldown:500},
+    YAWN:{type:'normal',power:0,energyGain:13,cooldown:1500},
+    GEOMANCY:{type:'fairy',power:20,energyGain:14,cooldown:1500},
+    PRESENT:{type:'normal',power:6,energyGain:23,cooldown:1500},
+    SPLASH:{type:'water',power:0,energyGain:17,cooldown:1500},
+    MUD_SLAP:{type:'ground',power:19,energyGain:13,cooldown:1500},
+    LOCK_ON:{type:'normal',power:2,energyGain:10,cooldown:500},
+    ROCK_THROW:{type:'rock',power:13,energyGain:8,cooldown:1000},
+    POUND:{type:'normal',power:6,energyGain:5,cooldown:500},
+    WATER_GUN:{type:'water',power:5,energyGain:5,cooldown:500},
+    TAKE_DOWN:{type:'normal',power:7,energyGain:8,cooldown:1000},
+    SCRATCH:{type:'normal',power:6,energyGain:4,cooldown:500},
+    RAZOR_LEAF:{type:'grass',power:13,energyGain:7,cooldown:1000},
+    ACID:{type:'poison',power:11,energyGain:10,cooldown:1000},
+    POISON_JAB:{type:'poison',power:13,energyGain:9,cooldown:1000},
+    BUG_BITE:{type:'bug',power:5,energyGain:6,cooldown:500}, // matches this file's existing BUG_BITE damage-window entry (0.25)
+    SPARK:{type:'electric',power:6,energyGain:9,cooldown:900}, // NOTE: less rigorously confirmed than most of this session's values — no clean current citation found; from well-established general knowledge
+    MAGICAL_LEAF:{type:'grass',power:17,energyGain:17,cooldown:1500},
+    FURY_CUTTER:{type:'bug',power:4,energyGain:8,cooldown:500}
+  };
+  const chargeDefs = {
+    DYNAMIC_PUNCH:{type:'fighting',power:85,energy:50},
+    CROSS_CHOP:{type:'fighting',power:50,energy:50},
+    PSYSTRIKE:{type:'psychic',power:95,energy:50},
+    SHADOW_BALL:{type:'ghost',power:100,energy:50},
+    OUTRAGE:{type:'dragon',power:110,energy:50},
+    ANCIENT_POWER:{type:'rock',power:70,energy:33},
+    METEOR_MASH:{type:'steel',power:100,energy:50},
+    EARTH_POWER:{type:'ground',power:100,energy:50},
+    DRILL_RUN:{type:'ground',power:85,energy:50},
+    ROCK_SLIDE:{type:'rock',power:75,energy:50},
+    CLOSE_COMBAT:{type:'fighting',power:105,energy:100},
+    PLAY_ROUGH:{type:'fairy',power:90,energy:50},
+    OVERHEAT:{type:'fire',power:160,energy:100},
+    MIND_BLOWN:{type:'fire',power:130,energy:33},
+    MYSTICAL_FIRE:{type:'fire',power:60,energy:33},
+    ORIGIN_PULSE:{type:'water',power:120,energy:100},
+    SURF:{type:'water',power:60,energy:50},
+    PRECIPICE_BLADES:{type:'ground',power:120,energy:100},
+    SOLAR_BEAM:{type:'grass',power:180,energy:100},
+    IRON_HEAD:{type:'steel',power:60,energy:50},
+    ROAR_OF_TIME:{type:'dragon',power:160,energy:100},
+    DAZZLING_GLEAM:{type:'fairy',power:100,energy:50},
+    MOONBLAST:{type:'fairy',power:130,energy:100},
+    AVALANCHE:{type:'ice',power:85,energy:50},
+    ICY_WIND:{type:'ice',power:65,energy:33},
+    TRIPLE_AXEL:{type:'ice',power:60,energy:33},
+    BUBBLE_BEAM:{type:'water',power:45,energy:33},
+    AQUA_JET:{type:'water',power:45,energy:33},
+    BRINE:{type:'water',power:65,energy:50},
+    SCALD:{type:'water',power:75,energy:50},
+    CRABHAMMER:{type:'water',power:85,energy:50},
+    SILVER_WIND:{type:'bug',power:65,energy:33},
+    GYRO_BALL:{type:'steel',power:85,energy:50},
+    LUNGE:{type:'bug',power:55,energy:33},
+    MUD_BOMB:{type:'ground',power:60,energy:33},
+    SAND_TOMB:{type:'ground',power:60,energy:33},
+    DOOM_DESIRE:{type:'steel',power:65,energy:33},
+    MAGNET_BOMB:{type:'steel',power:75,energy:33},
+    MIRROR_SHOT:{type:'steel',power:50,energy:33},
+    DOUBLE_IRON_BASH:{type:'steel',power:70,energy:33},
+    BLIZZARD:{type:'ice',power:130,energy:100},
+    ICE_BEAM:{type:'ice',power:95,energy:50},
+    ICE_PUNCH:{type:'ice',power:50,energy:33},
+    BULLDOZE:{type:'ground',power:80,energy:50},
+    HYDRO_PUMP:{type:'water',power:135,energy:100},
+    WEATHER_BALL_ICE:{type:'ice',power:55,energy:33},
+    ENERGY_BALL:{type:'grass',power:90,energy:50},
+    SIGNAL_BEAM:{type:'bug',power:75,energy:50},
+    CRUNCH:{type:'dark',power:65,energy:33},
+    FOCUS_BLAST:{type:'fighting',power:140,energy:100},
+    FOUL_PLAY:{type:'dark',power:70,energy:50},
+    PAYBACK:{type:'dark',power:95,energy:100},
+    AERIAL_ACE:{type:'flying',power:55,energy:33},
+    NIGHT_SLASH:{type:'dark',power:45,energy:33},
+    DRACO_METEOR:{type:'dragon',power:150,energy:100},
+    DRAGON_CLAW:{type:'dragon',power:45,energy:33},
+    DRAGON_PULSE:{type:'dragon',power:90,energy:50},
+    SPACIAL_REND:{type:'dragon',power:95,energy:50}, // corrected — was 160/100, but confirmed real value is 95 base power (114 with STAB included) for 50 energy
+    AQUA_TAIL:{type:'water',power:50,energy:33},
+    GLAIVE_RUSH:{type:'dragon',power:105,energy:50},
+    BREAKING_SWIPE:{type:'dragon',power:45,energy:33},
+    EARTHQUAKE:{type:'ground',power:140,energy:100},
+    THUNDERBOLT:{type:'electric',power:80,energy:50},
+    FUSION_BOLT:{type:'electric',power:140,energy:100},
+    FLAMETHROWER:{type:'fire',power:65,energy:50},
+    THUNDER:{type:'electric',power:100,energy:100},
+    PSYCHIC:{type:'psychic',power:95,energy:50},
+    FREEZE_SHOCK:{type:'ice',power:160,energy:100},
+    ICE_BURN:{type:'ice',power:90,energy:50},
+    BEHEMOTH_BLADE:{type:'steel',power:200,energy:100},
+    BEHEMOTH_BASH:{type:'steel',power:125,energy:50},
+    SLUDGE_BOMB:{type:'poison',power:85,energy:50},
+    MOONGEIST_BEAM:{type:'ghost',power:230,energy:100},
+    SUNSTEEL_STRIKE:{type:'steel',power:230,energy:100},
+    GLACIATE:{type:'ice',power:160,energy:100},
+    HURRICANE:{type:'flying',power:105,energy:100},
+    BRAVE_BIRD:{type:'flying',power:130,energy:100},
+    X_SCISSOR:{type:'bug',power:45,energy:33},
+    MEGAHORN:{type:'bug',power:105,energy:100},
+    BUG_BUZZ:{type:'bug',power:95,energy:50},
+    DRAGON_ASCENT:{type:'flying',power:140,energy:50},
+    DYNAMAX_CANNON:{type:'dragon',power:215,energy:100},
+    // Best-effort estimates only — could not confirm exact power/energy via search, unlike moves above.
+    CRUSH_GRIP:{type:'normal',power:210,energy:100},
+    DRAGON_ENERGY:{type:'dragon',power:155,energy:50},
+    SECRET_SWORD:{type:'fighting',power:120,energy:50},
+    FLASH_CANNON:{type:'steel',power:100,energy:100},
+    SKY_ATTACK:{type:'flying',power:80,energy:50},
+    BRUTAL_SWING:{type:'dark',power:65,energy:33},
+    STONE_EDGE:{type:'rock',power:105,energy:100},
+    FIRE_BLAST:{type:'fire',power:140,energy:100},
+    WILD_CHARGE:{type:'electric',power:90,energy:50},
+    HEAVY_SLAM:{type:'steel',power:70,energy:50},
+    SUPERPOWER:{type:'fighting',power:85,energy:50},
+    METEOR_BEAM:{type:'rock',power:140,energy:100}, // Elite TM move — real, only excluded from raid boss selection, still a legal attacker option
+    SLUDGE_WAVE:{type:'poison',power:105,energy:100},
+    POWER_GEM:{type:'rock',power:80,energy:50},
+    FIRE_PUNCH:{type:'fire',power:50,energy:33},
+    DRAIN_PUNCH:{type:'fighting',power:50,energy:33},
+    THUNDER_PUNCH:{type:'electric',power:50,energy:33},
+    POWER_UP_PUNCH:{type:'fighting',power:50,energy:33},
+    BLAST_BURN:{type:'fire',power:120,energy:50}, // fixing a bookkeeping gap — confirmed and window added earlier this session, but power/energy/duration were never actually written to this table
+    GIGA_IMPACT:{type:'normal',power:200,energy:100},
+    HYPER_BEAM:{type:'normal',power:150,energy:100},
+    HEAT_WAVE:{type:'fire',power:95,energy:100},
+    AURA_SPHERE:{type:'fighting',power:100,energy:50},
+    DIG:{type:'ground',power:100,energy:50},
+    HIGH_JUMP_KICK:{type:'fighting',power:90,energy:100},
+    FLAME_CHARGE:{type:'fire',power:70,energy:33},
+    FLAME_WHEEL:{type:'fire',power:55,energy:50},
+    BLAZE_KICK:{type:'fire',power:40,energy:33},
+    ROCK_TOMB:{type:'rock',power:65,energy:50},
+    ROCK_BLAST:{type:'rock',power:50,energy:33},
+    HORN_ATTACK:{type:'normal',power:45,energy:33},
+    FLYING_PRESS:{type:'fighting',power:115,energy:50},
+    STOMP:{type:'normal',power:50,energy:50},
+    HORN_DRILL:{type:'normal',power:9000,energy:25}, // real — OHKO-style implementation matching the main-series "instant KO" mechanic
+    TWISTER:{type:'dragon',power:50,energy:33},
+    VISE_GRIP:{type:'normal',power:35,energy:33},
+    TRI_ATTACK:{type:'normal',power:75,energy:50},
+    SWIFT:{type:'normal',power:65,energy:50},
+    SUBMISSION:{type:'fighting',power:55,energy:50},
+    SHADOW_PUNCH:{type:'ghost',power:35,energy:33},
+    ZAP_CANNON:{type:'electric',power:140,energy:100},
+    PSYSHOCK:{type:'psychic',power:60,energy:33},
+    SACRED_FIRE:{type:'fire',power:120,energy:100},
+    ROCK_WRECKER:{type:'rock',power:110,energy:50},
+    SEED_BOMB:{type:'grass',power:55,energy:33},
+    PETAL_BLIZZARD:{type:'grass',power:110,energy:100},
+    MEGA_DRAIN:{type:'grass',power:25,energy:50},
+    GIGA_DRAIN:{type:'grass',power:50,energy:100},
+    LEAF_STORM:{type:'grass',power:130,energy:100},
+    SEED_FLARE:{type:'grass',power:115,energy:100},
+    TRAILBLAZE:{type:'grass',power:65,energy:50},
+    FLOWER_TRICK:{type:'grass',power:75,energy:33},
+    DRUM_BEATING:{type:'grass',power:115,energy:33},
+    BOOMBURST:{type:'normal',power:150,energy:100},
+    HIGH_HORSEPOWER:{type:'ground',power:105,energy:100},
+    WRAP:{type:'normal',power:25,energy:33},
+    GIGATON_HAMMER:{type:'steel',power:300,energy:100},
+    MAGMA_STORM:{type:'fire',power:75,energy:33},
+    FLAME_BURST:{type:'fire',power:70,energy:50},
+    WEATHER_BALL_FIRE:{type:'fire',power:55,energy:33},
+    V_CREATE:{type:'fire',power:105,energy:33},
+    FUSION_FLARE:{type:'fire',power:140,energy:100},
+    TORCH_SONG:{type:'fire',power:100,energy:50},
+    SCORCHING_SANDS:{type:'ground',power:90,energy:50},
+    CLANGING_SCALES:{type:'dragon',power:120,energy:100},
+    LIQUIDATION:{type:'water',power:70,energy:33},
+    OCTAZOOKA:{type:'water',power:55,energy:50},
+    RAZOR_SHELL:{type:'water',power:55,energy:33},
+    AQUA_STEP:{type:'water',power:55,energy:33},
+    CHILLING_WATER:{type:'water',power:65,energy:33},
+    DIVE:{type:'water',power:70,energy:33},
+    PSYCHIC_FANGS:{type:'psychic',power:25,energy:33},
+    RAGE_FIST:{type:'ghost',power:100,energy:50},
+    NIGHT_SHADE:{type:'ghost',power:60,energy:50},
+    DARKEST_LARIAT:{type:'dark',power:80,energy:50},
+    LOW_SWEEP:{type:'fighting',power:40,energy:33},
+    HEART_STAMP:{type:'psychic',power:40,energy:33}, // confirmed real move data, but currently unused — no Pokémon has this in its movepool
+    ICICLE_SPEAR:{type:'ice',power:55,energy:33},
+    OMINOUS_WIND:{type:'ghost',power:55,energy:33},
+    POLTERGEIST:{type:'ghost',power:140,energy:100},
+    SPIRIT_SHACKLE:{type:'ghost',power:70,energy:33},
+    SHADOW_BONE:{type:'ghost',power:85,energy:50},
+    SHADOW_FORCE:{type:'ghost',power:140,energy:100},
+    NATURES_MADNESS:{type:'fairy',power:90,energy:50},
+    THUNDER_CAGE:{type:'electric',power:220,energy:100},
+    UPPER_HAND:{type:'fighting',power:50,energy:33},
+    WILDBOLT_STORM:{type:'electric',power:150,energy:100},
+    PARABOLIC_CHARGE:{type:'electric',power:70,energy:50},
+    FUTURE_SIGHT:{type:'psychic',power:115,energy:100},
+    WATER_PULSE:{type:'water',power:65,energy:50},
+    HYDRO_CANNON:{type:'water',power:90,energy:50},
+    SNIPE_SHOT:{type:'water',power:100,energy:33},
+    MUDDY_WATER:{type:'water',power:45,energy:33},
+    GRASS_KNOT:{type:'grass',power:90,energy:50},
+    FRENZY_PLANT:{type:'grass',power:100,energy:50}, // Community Day / event-exclusive move — real, only excluded from raid boss selection, still a legal attacker option
+    ACID_SPRAY:{type:'poison',power:20,energy:45},
+    LEAF_TORNADO:{type:'grass',power:45,energy:33},
+    LEAF_BLADE:{type:'grass',power:70,energy:33},
+    FELL_STINGER:{type:'bug',power:45,energy:33},
+    GUNK_SHOT:{type:'poison',power:130,energy:100},
+    DISCHARGE:{type:'electric',power:65,energy:33},
+    // NOTE: the following four are less rigorously confirmed than most of this session's values —
+    // no clean current citation found despite searching; from well-established general knowledge.
+    POWER_WHIP:{type:'grass',power:90,energy:50},
+    BODY_SLAM:{type:'normal',power:50,energy:33}, // corrected — was 55/33 (flagged earlier as unconfirmed general knowledge); confirmed via Vigoroth's exact DPS/DPE figures (25 DPS, 1.52 DPE at 2.0s CD -> 50 power, 33 energy)
+    BRICK_BREAK:{type:'fighting',power:40,energy:33},
+    DRILL_PECK:{type:'flying',power:70,energy:33},
+    DARK_PULSE:{type:'dark',power:80,energy:50}, // fixing a bookkeeping gap — window was confirmed earlier this session but power/energy/duration were never actually added
+    SACRED_SWORD:{type:'fighting',power:50,energy:33} // corrected — was 60/33 (flagged last time as unconfirmed general knowledge); now confirmed via db.pokemongohub.net
+  };
+  Object.entries(fastDefs).forEach(([id,d]) => moves[id] = {moveId:id,name:moveNameSync(id),...d});
+  Object.entries(chargeDefs).forEach(([id,d]) => moves[id] = {moveId:id,name:moveNameSync(id),...d});
+  GM.moves = moves;
+  // Fallback-dataset Mega Dex numbers, needed only for the small set of species that are also the
+  // Legendary Mega/Primal exceptions (MEGA_LEGENDARY_DEX_IDS) — safe to name-match here specifically
+  // because this dataset's naming is our own and consistent, unlike PogoAPI's live data. Same
+  // reasoning for the Ultra Beast Dex numbers, needed for the Tier 5 / Ultra Beast split.
+  const FALLBACK_MEGA_DEX_IDS = { latias:380, latios:381, kyogre:382, groudon:383, rayquaza:384, mewtwo:150 };
+  const FALLBACK_UB_DEX_IDS = { nihilego:793, buzzwole:794, pheromosa:795, xurkitree:796, celesteela:797, kartana:798, guzzlord:799, stakataka:805, blacephalon:806 };
+  const mk = (id,name,types,base,fast,charge) => {
+    const isMegaForm = /\(mega( x| y)?\)|\(primal\)/i.test(name);
+    const baseKey = Object.keys(FALLBACK_MEGA_DEX_IDS).find(k => id.startsWith(k+'_') || id===k);
+    const pokemonId = isMegaForm && baseKey ? FALLBACK_MEGA_DEX_IDS[baseKey] : FALLBACK_UB_DEX_IDS[id];
+    return {speciesId:id,speciesName:name,pokemonId,types,baseStats:base,fastMoves:fast,chargedMoves:charge,released:true,isFinalStage:true,isMegaForm,eliteFastMoves:[],eliteChargedMoves:[]};
+  };
+  GM.pokemon = [
+    mk('mewtwo','Mewtwo',['psychic'],{atk:300,def:182,hp:214},['PSYCHO_CUT','CONFUSION','COUNTER'],['PSYSTRIKE','SHADOW_BALL','FOCUS_BLAST','ICE_BEAM']),
+    mk('rayquaza','Rayquaza',['dragon','flying'],{atk:284,def:170,hp:213},['DRAGON_TAIL','AIR_SLASH'],['OUTRAGE','ANCIENT_POWER','DRAGON_ASCENT']),
+    mk('metagross','Metagross',['steel','psychic'],{atk:257,def:228,hp:190},['BULLET_PUNCH'],['METEOR_MASH','EARTHQUAKE']),
+    mk('machamp','Machamp',['fighting'],{atk:234,def:159,hp:207},['COUNTER'],['DYNAMIC_PUNCH','CROSS_CHOP','CLOSE_COMBAT','ROCK_SLIDE']),
+    mk('garchomp','Garchomp',['dragon','ground'],{atk:261,def:193,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE']),
+    mk('excadrill','Excadrill',['ground','steel'],{atk:255,def:129,hp:200},['MUD_SHOT'],['DRILL_RUN','ROCK_SLIDE','EARTHQUAKE']),
+    mk('zacian_hero','Zacian (Hero)',['fairy'],{atk:275,def:194,hp:200},['SNARL','FIRE_FANG','METAL_CLAW'],['CLOSE_COMBAT','PLAY_ROUGH','WILD_CHARGE']),
+    mk('zacian_crowned','Zacian (Crowned Sword)',['fairy','steel'],{atk:332,def:244,hp:200},['METAL_CLAW'],['BEHEMOTH_BLADE','CLOSE_COMBAT']),
+    mk('kyogre','Kyogre',['water'],{atk:270,def:184,hp:205},['WATERFALL'],['ORIGIN_PULSE','SURF','HYDRO_PUMP','BLIZZARD']),
+    mk('groudon','Groudon',['ground'],{atk:270,def:187,hp:213},['MUD_SHOT'],['PRECIPICE_BLADES','SOLAR_BEAM','FIRE_FANG']),
+    mk('dialga','Dialga',['steel','dragon'],{atk:275,def:211,hp:205},['DRAGON_BREATH','METAL_CLAW'],['IRON_HEAD','THUNDER','DRACO_METEOR']),
+    mk('dialga_origin','Dialga (Origin)',['steel','dragon'],{atk:275,def:236,hp:205},['METAL_CLAW','DRAGON_BREATH'],['ROAR_OF_TIME','IRON_HEAD']),
+    mk('togekiss','Togekiss',['fairy','flying'],{atk:225,def:217,hp:209},['CHARM','AIR_SLASH'],['DAZZLING_GLEAM','ANCIENT_POWER','FLAMETHROWER']),
+    mk('lugia','Lugia',['psychic','flying'],{atk:193,def:323,hp:235},['AIR_SLASH'],['SHADOW_BALL','ANCIENT_POWER','FOCUS_BLAST']),
+    mk('ho_oh','Ho-Oh',['fire','flying'],{atk:273,def:296,hp:218},['FIRE_FANG'],['OVERHEAT','ANCIENT_POWER','SOLAR_BEAM']),
+    mk('giratina_origin','Giratina (Origin)',['ghost','dragon'],{atk:225,def:187,hp:284},['SHADOW_CLAW'],['SHADOW_BALL','OUTRAGE','DRACO_METEOR']),
+    // Additional legendaries / mythicals
+    mk('zapdos','Zapdos',['electric','flying'],{atk:253,def:188,hp:207},['THUNDER_SHOCK'],['THUNDERBOLT','ANCIENT_POWER']),
+    mk('moltres','Moltres',['fire','flying'],{atk:251,def:181,hp:207},['FIRE_FANG'],['OVERHEAT','ANCIENT_POWER']),
+    mk('raikou','Raikou',['electric'],{atk:241,def:195,hp:207},['THUNDER_SHOCK'],['THUNDER','THUNDERBOLT','SHADOW_BALL']),
+    mk('entei','Entei',['fire'],{atk:235,def:171,hp:239},['FIRE_FANG'],['OVERHEAT','FLAMETHROWER']),
+    mk('suicune','Suicune',['water'],{atk:180,def:235,hp:225},['WATERFALL'],['HYDRO_PUMP','ICE_BEAM']),
+    mk('latios','Latios',['dragon','psychic'],{atk:268,def:212,hp:190},['DRAGON_BREATH'],['DRACO_METEOR','PSYCHIC']),
+    mk('latias','Latias',['dragon','psychic'],{atk:233,def:242,hp:190},['DRAGON_BREATH'],['DRACO_METEOR','PSYCHIC']),
+    mk('zekrom','Zekrom',['dragon','electric'],{atk:275,def:211,hp:205},['DRAGON_BREATH','CHARGE_BEAM'],['OUTRAGE','FUSION_BOLT','WILD_CHARGE','CRUNCH','FLASH_CANNON']),
+    mk('palkia','Palkia',['water','dragon'],{atk:280,def:215,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL']),
+    mk('palkia_origin','Palkia (Origin)',['water','dragon'],{atk:286,def:223,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL','SPACIAL_REND']),
+    mk('xerneas','Xerneas',['fairy'],{atk:279,def:214,hp:207},['CHARM','GEOMANCY'],['DAZZLING_GLEAM','PLAY_ROUGH','MOONBLAST']),
+    mk('yveltal','Yveltal',['dark','flying'],{atk:275,def:184,hp:213},['SNARL'],['FOUL_PLAY','FOCUS_BLAST']),
+    mk('solgaleo','Solgaleo',['psychic','steel'],{atk:260,def:229,hp:207},['PSYCHO_CUT'],['IRON_HEAD','FOCUS_BLAST']),
+    mk('lunala','Lunala',['psychic','ghost'],{atk:262,def:196,hp:225},['SHADOW_CLAW'],['SHADOW_BALL','PSYCHIC']),
+    mk('necrozma','Necrozma',['psychic'],{atk:233,def:205,hp:205},['PSYCHO_CUT'],['PSYCHIC','FOCUS_BLAST']),
+    mk('necrozma_dusk_mane','Necrozma (Dusk Mane)',['psychic','steel'],{atk:233,def:212,hp:214},['SHADOW_CLAW','PSYCHO_CUT'],['SUNSTEEL_STRIKE','IRON_HEAD']),
+    mk('necrozma_dawn_wings','Necrozma (Dawn Wings)',['psychic','ghost'],{atk:233,def:207,hp:214},['SHADOW_CLAW','PSYCHO_CUT'],['MOONGEIST_BEAM','SHADOW_BALL']),
+    mk('regigigas','Regigigas',['normal'],{atk:238,def:200,hp:190},['HIDDEN_POWER','SHADOW_CLAW'],['CRUSH_GRIP','FOCUS_BLAST']),
+    (() => {
+      const p = mk('blacephalon','Blacephalon',['fire','ghost'],{atk:315,def:148,hp:142},['ASTONISH','INCINERATE'],['SHADOW_BALL','OVERHEAT','MYSTICAL_FIRE','MIND_BLOWN']);
+      p.eliteChargedMoves = ['MIND_BLOWN']; // legacy — confirmed by user, reverting my earlier misread of a news article
+      return p;
+    })(),
+    (() => {
+      const p = mk('baxcalibur','Baxcalibur',['dragon','ice'],{atk:254,def:168,hp:229},['ICE_FANG','DRAGON_BREATH'],['AVALANCHE','BLIZZARD','ICY_WIND','DRAGON_CLAW','OUTRAGE','GLAIVE_RUSH']);
+      p.eliteChargedMoves = ['GLAIVE_RUSH']; // legacy — Community Day exclusive move
+      return p;
+    })(),
+    (() => {
+      const p = mk('baxcalibur_mega','Baxcalibur (Mega)',['dragon','ice'],{atk:227,def:251,hp:229},['ICE_FANG','DRAGON_BREATH'],['AVALANCHE','BLIZZARD','ICY_WIND','DRAGON_CLAW','OUTRAGE','GLAIVE_RUSH']);
+      p.eliteChargedMoves = ['GLAIVE_RUSH']; // legacy — Community Day exclusive move
+      return p;
+    })(),
+    mk('regidrago','Regidrago',['dragon'],{atk:224,def:130,hp:257},['DRAGON_BREATH'],['DRAGON_ENERGY','OUTRAGE']),
+    mk('keldeo_resolute','Keldeo (Resolute)',['water','fighting'],{atk:229,def:190,hp:216},['LOW_KICK','WATERFALL'],['SECRET_SWORD','HYDRO_PUMP']),
+    // Newly-released Mega Evolutions (2026), verified against PokeBase cross-references
+    mk('raichu_mega_x','Raichu (Mega X)',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK'],['WILD_CHARGE','THUNDERBOLT']),
+    mk('raichu_mega_y','Raichu (Mega Y)',['electric'],{atk:339,def:157,hp:155},['THUNDER_SHOCK'],['WILD_CHARGE','THUNDERBOLT']),
+    mk('mewtwo_mega_x','Mewtwo (Mega X)',['psychic','fighting'],{atk:399,def:215,hp:228},['PSYCHO_CUT','COUNTER'],['PSYSTRIKE','CLOSE_COMBAT']),
+    mk('victreebel_mega','Victreebel (Mega)',['grass','poison'],{atk:265,def:181,hp:190},['RAZOR_LEAF','MAGICAL_LEAF','ACID'],['SLUDGE_BOMB','SOLAR_BEAM','LEAF_BLADE','ACID_SPRAY','LEAF_TORNADO']),
+    mk('dragonite_mega','Dragonite (Mega)',['dragon','flying'],{atk:299,def:255,hp:209},['DRAGON_BREATH'],['OUTRAGE','DRACO_METEOR']),
+    mk('malamar_mega','Malamar (Mega)',['dark','psychic'],{atk:208,def:222,hp:200},['PSYCHO_CUT'],['FOUL_PLAY','PSYCHIC']),
+    mk('falinks_mega','Falinks (Mega)',['fighting'],{atk:267,def:229,hp:163},['COUNTER'],['CLOSE_COMBAT','CROSS_CHOP']),
+    mk('skarmory_mega','Skarmory (Mega)',['steel','flying'],{atk:273,def:228,hp:163},['AIR_SLASH','STEEL_WING'],['FLASH_CANNON','BRAVE_BIRD','SKY_ATTACK']),
+    mk('starmie_mega','Starmie (Mega)',['water','psychic'],{atk:229,def:155,hp:155},['WATERFALL'],['HYDRO_PUMP','PSYCHIC']),
+    mk('zamazenta_hero','Zamazenta (Hero)',['fighting'],{atk:263,def:263,hp:210},['SNARL','ICE_FANG','QUICK_ATTACK','METAL_CLAW'],['CLOSE_COMBAT','CRUNCH']),
+    mk('zamazenta_crowned','Zamazenta (Crowned Shield)',['fighting','steel'],{atk:250,def:292,hp:192},['METAL_CLAW'],['BEHEMOTH_BASH','CLOSE_COMBAT']),
+    mk('eternatus','Eternatus',['poison','dragon'],{atk:278,def:192,hp:268},['DRAGON_TAIL'],['DYNAMAX_CANNON','DRACO_METEOR','FOCUS_BLAST']),
+    mk('kyurem_black','Kyurem (Black)',['dragon','ice'],{atk:279,def:207,hp:245},['DRAGON_BREATH'],['FREEZE_SHOCK','OUTRAGE','BLIZZARD']),
+    mk('kyurem_white','Kyurem (White)',['dragon','ice'],{atk:310,def:183,hp:245},['DRAGON_BREATH','ICE_FANG'],['ICE_BURN','DRACO_METEOR','BLIZZARD']),
+    // Mega-evolved Pokémon
+    mk('rayquaza_mega','Rayquaza (Mega)',['dragon','flying'],{atk:377,def:210,hp:227},['DRAGON_TAIL'],['OUTRAGE','ANCIENT_POWER','BREAKING_SWIPE','DRAGON_ASCENT']),
+    mk('mewtwo_mega_y','Mewtwo (Mega Y)',['psychic'],{atk:413,def:223,hp:228},['PSYCHO_CUT','COUNTER'],['PSYSTRIKE','FOCUS_BLAST']),
+    mk('charizard_mega_x','Charizard (Mega X)',['fire','dragon'],{atk:273,def:213,hp:186},['DRAGON_BREATH'],['DRACO_METEOR','CRUNCH']),
+    mk('charizard_mega_y','Charizard (Mega Y)',['fire','flying'],{atk:319,def:212,hp:186},['FIRE_FANG'],['OVERHEAT','SOLAR_BEAM']),
+    mk('garchomp_mega','Garchomp (Mega)',['dragon','ground'],{atk:337,def:241,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE']),
+    mk('metagross_mega','Metagross (Mega)',['steel','psychic'],{atk:338,def:264,hp:190},['BULLET_PUNCH'],['METEOR_MASH','EARTHQUAKE']),
+    mk('gyarados_mega','Gyarados (Mega)',['water','dark'],{atk:237,def:206,hp:216},['WATERFALL'],['CRUNCH','HYDRO_PUMP']),
+    mk('tyranitar_mega','Tyranitar (Mega)',['rock','dark'],{atk:297,def:222,hp:225},['BITE','DRAGON_BREATH','IRON_TAIL','SMACK_DOWN'],['STONE_EDGE','FIRE_BLAST','CRUNCH','BRUTAL_SWING']),
+    mk('latios_mega','Latios (Mega)',['dragon','psychic'],{atk:319,def:240,hp:190},['DRAGON_BREATH'],['DRACO_METEOR','PSYCHIC']),
+    // Fully evolved Ice-type Pokémon
+    mk('weavile','Weavile',['dark','ice'],{atk:246,def:103,hp:172},['FROST_BREATH'],['AVALANCHE','FOUL_PLAY','ICE_PUNCH']),
+    mk('glaceon','Glaceon',['ice'],{atk:238,def:205,hp:136},['FROST_BREATH'],['AVALANCHE','ICE_BEAM']),
+    mk('mamoswine','Mamoswine',['ice','ground'],{atk:247,def:146,hp:242},['POWDER_SNOW'],['AVALANCHE','BULLDOZE','ICE_PUNCH']),
+    mk('kyurem','Kyurem',['dragon','ice'],{atk:246,def:170,hp:245},['DRAGON_BREATH'],['GLACIATE','DRACO_METEOR','BLIZZARD']),
+    (() => {
+      const p = mk('articuno','Articuno',['ice','flying'],{atk:192,def:249,hp:207},['FROST_BREATH','ICE_SHARD','POWDER_SNOW'],['ICE_BEAM','ANCIENT_POWER','BLIZZARD','ICY_WIND','HURRICANE']);
+      p.eliteFastMoves = ['POWDER_SNOW']; // legacy — original launch fast move, no longer normally obtainable
+      p.eliteChargedMoves = ['HURRICANE']; // legacy — Elite Charge TM / special event only
+      return p;
+    })(),
+    mk('aurorus','Aurorus',['rock','ice'],{atk:166,def:155,hp:216},['POWDER_SNOW'],['ANCIENT_POWER','BLIZZARD']), // not a raid boss (ex-Tier 3) — attacker roster only
+    mk('avalugg','Avalugg',['ice'],{atk:134,def:190,hp:225},['POWDER_SNOW'],['AVALANCHE','CRUNCH']), // not a raid boss (ex-Tier 3) — attacker roster only
+    mk('beartic','Beartic',['ice'],{atk:233,def:152,hp:216},['POWDER_SNOW','CHARM'],['ICE_PUNCH','PLAY_ROUGH']), // not a raid boss (ex-Tier 3) — attacker roster only; stats corrected (was atk:181, real is 233) and CHARM added (confirmed part of its best moveset) while restoring
+    mk('azelf','Azelf',['psychic'],{atk:270,def:151,hp:181},['CONFUSION','EXTRASENSORY'],['FUTURE_SIGHT','FIRE_BLAST','SWIFT']),
+    mk('walrein','Walrein',['ice','water'],{atk:182,def:176,hp:242},['POWDER_SNOW'],['BLIZZARD','EARTHQUAKE']),
+    mk('abomasnow','Abomasnow',['grass','ice'],{atk:173,def:186,hp:207},['POWDER_SNOW'],['WEATHER_BALL_ICE','ENERGY_BALL']),
+    mk('abomasnow_mega','Abomasnow (Mega)',['grass','ice'],{atk:240,def:191,hp:207},['POWDER_SNOW'],['WEATHER_BALL_ICE','ENERGY_BALL']),
+    mk('froslass','Froslass',['ice','ghost'],{atk:161,def:166,hp:137},['POWDER_SNOW'],['AVALANCHE','SHADOW_BALL']),
+    mk('cloyster','Cloyster',['water','ice'],{atk:186,def:256,hp:137},['FROST_BREATH'],['AVALANCHE','HYDRO_PUMP']),
+    mk('lapras','Lapras',['water','ice'],{atk:165,def:180,hp:277},['FROST_BREATH'],['BLIZZARD','ICE_BEAM']),
+    mk('ninetales_alolan','Ninetales (Alolan)',['ice','fairy'],{atk:170,def:193,hp:177},['POWDER_SNOW'],['BLIZZARD','DAZZLING_GLEAM']),
+    mk('sandslash_alolan','Sandslash (Alolan)',['ice','steel'],{atk:177,def:195,hp:181},['POWDER_SNOW'],['BLIZZARD','IRON_HEAD']),
+    mk('vanilluxe','Vanilluxe',['ice'],{atk:201,def:150,hp:181},['FROST_BREATH'],['BLIZZARD','SIGNAL_BEAM']),
+    mk('regice','Regice',['ice'],{atk:159,def:209,hp:190},['FROST_BREATH'],['BLIZZARD','FOCUS_BLAST']),
+    mk('jynx','Jynx',['ice','psychic'],{atk:177,def:115,hp:146},['FROST_BREATH'],['ICE_PUNCH','FOCUS_BLAST']),
+    mk('gigalith','Gigalith',['rock'],{atk:226,def:201,hp:198},['MUD_SLAP','SMACK_DOWN','LOCK_ON'],['ROCK_SLIDE','SOLAR_BEAM','HEAVY_SLAM','SUPERPOWER','METEOR_BEAM']),
+    mk('glimmora','Glimmora',['rock','poison'],{atk:246,def:177,hp:195},['ROCK_THROW','SMACK_DOWN'],['POWER_GEM','DAZZLING_GLEAM','SLUDGE_WAVE','METEOR_BEAM']),
+    mk('inteleon','Inteleon',['water'],{atk:262,def:142,hp:172},['POUND','WATER_GUN'],['SHADOW_BALL','WATER_PULSE','SURF','HYDRO_CANNON','SNIPE_SHOT']),
+    mk('tatsugiri','Tatsugiri',['dragon','water'],{atk:226,def:166,hp:169},['TAKE_DOWN','WATER_GUN'],['SURF','MUDDY_WATER','OUTRAGE','HYDRO_PUMP']),
+    mk('rillaboom','Rillaboom',['grass'],{atk:239,def:168,hp:225},['SCRATCH','RAZOR_LEAF'],['EARTH_POWER','ENERGY_BALL','GRASS_KNOT','FRENZY_PLANT']),
+    // Ultra Beasts, added by request. Poipole and Naganadel deliberately excluded (Poipole is
+    // Special-Research-only, matching the NEVER_RAID_BOSS_NAMES exclusion elsewhere in this file;
+    // Naganadel only evolves from it, so isn't independently raid-obtainable either).
+    mk('nihilego','Nihilego',['rock','poison'],{atk:249,def:210,hp:240},['ACID','POISON_JAB'],['SLUDGE_BOMB','ROCK_SLIDE','POWER_GEM','GUNK_SHOT']),
+    mk('buzzwole','Buzzwole',['bug','fighting'],{atk:236,def:196,hp:216},['COUNTER'],['SUPERPOWER','POISON_JAB','FELL_STINGER','DYNAMIC_PUNCH']),
+    mk('pheromosa','Pheromosa',['bug','fighting'],{atk:316,def:85,hp:174},['BUG_BITE','LOW_KICK'],['BUG_BUZZ','FOCUS_BLAST']),
+    mk('xurkitree','Xurkitree',['electric'],{atk:330,def:144,hp:195},['THUNDER_SHOCK','SPARK'],['DISCHARGE','THUNDER','POWER_WHIP','DAZZLING_GLEAM']),
+    mk('celesteela','Celesteela',['steel','flying'],{atk:207,def:199,hp:219},['AIR_SLASH','SMACK_DOWN'],['HEAVY_SLAM','BODY_SLAM','IRON_HEAD']),
+    mk('kartana','Kartana',['grass','steel'],{atk:323,def:182,hp:139},['FURY_CUTTER','AIR_SLASH','RAZOR_LEAF'],['AERIAL_ACE','NIGHT_SLASH','X_SCISSOR','LEAF_BLADE','SACRED_SWORD']),
+    mk('guzzlord','Guzzlord',['dark','dragon'],{atk:188,def:99,hp:440},['SNARL','DRAGON_TAIL'],['DRAGON_CLAW','SLUDGE_BOMB','CRUNCH','BRUTAL_SWING']),
+    mk('stakataka','Stakataka',['rock','steel'],{atk:213,def:298,hp:156},['TAKE_DOWN','ROCK_THROW'],['STONE_EDGE','FLASH_CANNON']),
+    mk('vigoroth','Vigoroth',['normal'],{atk:159,def:145,hp:190},['SCRATCH','COUNTER'],['BODY_SLAM','BRICK_BREAK','BULLDOZE','ROCK_SLIDE']),
+    mk('gengar','Gengar',['ghost','poison'],{atk:261,def:149,hp:155},['SUCKER_PUNCH','LICK','SHADOW_CLAW','HEX'],['DARK_PULSE','SHADOW_BALL','SLUDGE_BOMB','SLUDGE_WAVE','PSYCHIC','FOCUS_BLAST']),
+    mk('greninja','Greninja',['water','dark'],{atk:223,def:152,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN','AERIAL_ACE'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON']),
+    mk('magnezone','Magnezone',['electric','steel'],{atk:238,def:205,hp:172},['SPARK','CHARGE_BEAM','VOLT_SWITCH'],['WILD_CHARGE','MIRROR_SHOT','FLASH_CANNON']),
+    mk('hitmonchan','Hitmonchan',['fighting'],{atk:193,def:197,hp:137},['COUNTER','BULLET_PUNCH'],['FIRE_PUNCH','THUNDER_PUNCH','ICE_PUNCH','CLOSE_COMBAT','POWER_UP_PUNCH','BRICK_BREAK']),
+    mk('lucario','Lucario',['fighting','steel'],{atk:236,def:144,hp:172},['COUNTER','BULLET_PUNCH'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK']),
+    mk('emboar','Emboar',['fire','fighting'],{atk:235,def:127,hp:242},['LOW_KICK','EMBER'],['HEAT_WAVE','ROCK_SLIDE','FOCUS_BLAST','FLAME_CHARGE','BLAST_BURN']),
+    mk('rhyperior','Rhyperior',['ground','rock'],{atk:241,def:190,hp:251},['MUD_SHOT','SMACK_DOWN'],['ROCK_WRECKER','EARTHQUAKE','STONE_EDGE','SURF','SUPERPOWER']),
+    mk('heatran','Heatran',['fire','steel'],{atk:251,def:213,hp:209},['FIRE_SPIN','BUG_BITE'],['FIRE_BLAST','IRON_HEAD','STONE_EDGE','FLAMETHROWER','EARTH_POWER','MAGMA_STORM']),
+    mk('incineroar','Incineroar',['fire','dark'],{atk:214,def:175,hp:216},['SNARL','DOUBLE_KICK','FIRE_FANG'],['DARK_PULSE','BRUTAL_SWING','DARKEST_LARIAT','FIRE_BLAST','BLAST_BURN','BLAZE_KICK'])
+  ];
+  GM.byId = {};
+  GM.pokemon.forEach(p => GM.byId[p.speciesId] = p);
+}
+
+/* ---------------- HELPERS ---------------- */
+function typeBadges(types){
+  return types.filter(t => t && t !== 'none').map(t =>
+    `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${TYPE_LABEL[t]||t}</span>`
+  ).join('');
+}
+function realTypes(types){ return (types||[]).filter(t => t && t !== 'none'); }
+function multiplier(atkType, defTypes){
+  let m=1;
+  defTypes.forEach(dt=>{
+    const val = CHART[atkType] ? CHART[atkType][dt] : undefined;
+    if(val===2) m*=1.6;
+    else if(val===0.5) m*=0.625;
+    else if(val===0) m*=0.390625;
+  });
+  return m;
+}
+function statsFor(base, cpm){
+  return {
+    atk:(base.atk+15)*cpm,
+    def:(base.def+15)*cpm,
+    hp:Math.floor(((base.hp||150)+15)*cpm)
+  };
+}
+function calcDamage(power, atk, def, stab, eff, weatherMult, friendship){
+  return Math.floor(0.5*power*(atk/def)*stab*eff*weatherMult*(friendship||1))+1;
+}
+/** Combined Zacian Blade Boost (+10% flat) and Mega/Primal partner boost (+30% same-type, +10% other) multiplier. */
+function partyBoostMultiplier(moveType, cfg){
+  let mult = 1;
+  if(cfg.bladeBoost) mult *= 1.1;
+  if(cfg.megaBoostActive) mult *= (cfg.megaBoostTypes && cfg.megaBoostTypes.includes(moveType)) ? 1.3 : 1.1;
+  return mult;
+}
+function fmtTime(s){
+  return `${s.toFixed(1)}s`;
+}
+
+/* ---------------- UI POPULATE ---------------- */
+const $ = id=>document.getElementById(id);
+let selectedBossId = null;
+const FIXED_DODGE_SKILL = 0; // matches Pokebattler's default "No Dodging" attack strategy
+
+// Species names (lowercase, base-form) treated as Legendary/Mythical/Ultra Beast for auto-tier
+// purposes — used as a fallback ONLY when PokeAPI's confirmed status isn't available yet for a
+// given Pokémon (still loading in the background, or no pokemonId present — e.g. the fallback
+// dataset). Matched against the species name with any parenthetical form suffix stripped, so
+// regional/other forms of the same species (e.g. "Landorus (Therian)") still match correctly.
+const LEGENDARY_NAMES_FALLBACK = new Set([
+  'articuno','zapdos','moltres','mewtwo','mew','raikou','entei','suicune','lugia','ho-oh','celebi',
+  'regirock','regice','registeel','latias','latios','kyogre','groudon','rayquaza','jirachi','deoxys',
+  'uxie','mesprit','azelf','dialga','palkia','heatran','regigigas','giratina','cresselia','phione',
+  'manaphy','darkrai','shaymin','arceus','victini','cobalion','terrakion','virizion','tornadus',
+  'thundurus','reshiram','zekrom','landorus','kyurem','keldeo','meloetta','genesect','xerneas',
+  'yveltal','zygarde','diancie','hoopa','volcanion','tapu koko','tapu lele','tapu bulu','tapu fini',
+  'cosmog','cosmoem','solgaleo','lunala','necrozma','magearna','marshadow','zeraora','nihilego',
+  'buzzwole','pheromosa','xurkitree','celesteela','kartana','guzzlord','poipole','naganadel',
+  'stakataka','blacephalon','zacian','zamazenta','eternatus','kubfu','urshifu','zarude','regieleki',
+  'regidrago','glastrier','spectrier','calyrex','enamorus','wo-chien','chien-pao','ting-lu','chi-yu',
+  'koraidon','miraidon','walking wake','iron leaves','ogerpon','terapagos','pecharunt'
+]);
+function isLegendaryName(speciesName){
+  const base = speciesName.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').trim();
+  return LEGENDARY_NAMES_FALLBACK.has(base);
+}
+/** True if p is confirmed (or, absent confirmation yet, presumed via the fallback name list)
+ * Legendary/Mythical. Prefers PokeAPI's is_legendary/is_mythical (fetched in the background,
+ * keyed by National Dex number) once available for this specific Pokémon; falls back to the
+ * name list otherwise, so auto-tiering still works immediately at load and for the ~80-species
+ * fallback dataset (which has no pokemonId to look up at all). */
+function isLegendary(p){
+  if(p.pokemonId && legendaryStatusChecked.has(p.pokemonId)) return isLegendaryPokemonId(p.pokemonId);
+  return isLegendaryName(p.speciesName);
+}
+// Mega/Primal forms are tagged isMegaForm:true directly where they're built (from PogoAPI's
+// dedicated mega_pokemon.json endpoint, not name-matched here) — far more reliable than string-
+// matching speciesName, since PogoAPI's naming convention for these turned out to be inconsistent
+// between species (confirmed directly from the live dropdown: Primal forms use a "Primal " prefix,
+// "Primal Groudon", not "Groudon (Primal)"). Within Mega/Primal forms, the seven Legendary
+// exceptions are identified by National Dex number instead of name for the same reason.
+const MEGA_LEGENDARY_DEX_IDS = new Set([380,381,382,383,384,150]); // Latias, Latios, Kyogre, Groudon, Rayquaza, Mewtwo
+// Legendary/Mythical species confirmed (via Bulbapedia's Special Research page, which explicitly
+// lists these as obtainable ONLY through Special Research — i.e. never released as an actual raid
+// boss) to have no real-world raid-boss history, despite otherwise qualifying for Tier 5 by
+// species status. Kept deliberately conservative and sourced from one specific citation rather
+// than general memory, unlike the broader legendary-status list — this is a genuinely harder,
+// constantly-shifting dataset (raid rotations change monthly) that doesn't have a clean API the
+// way core combat mechanics do, so treat this as best-effort rather than independently verified
+// the way the rest of this simulator's constants are. Hoopa is form-specific: (Confined) has never
+// been a raid boss, but (Unbound) has, so only the exact "(confined)" form is excluded.
+const NEVER_RAID_BOSS_NAMES = new Set([
+  'mew','celebi','jirachi','shaymin','victini','keldeo','meloetta','zygarde','diancie',
+  'volcanion','cosmog','marshadow','poipole','kubfu','zarude','hoopa (confined)'
+]);
+function isNeverRaidBoss(speciesName){
+  const name = speciesName.toLowerCase();
+  if(NEVER_RAID_BOSS_NAMES.has(name)) return true;
+  const base = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
+  return NEVER_RAID_BOSS_NAMES.has(base) && !name.includes('(unbound)'); // e.g. bare "Zygarde" forms, but never override an explicit non-excluded form like Hoopa (Unbound)
+}
+// Explicitly excluded by request, regardless of category or raid-boss history. Split into exact
+// matches (a single specific form only, e.g. just Galarian Articuno — base/Shadow Articuno etc.
+// stay) and prefix matches (every variant of that species, e.g. all 18 Arceus types, all Silvally
+// types, both Urshifu styles, every Ogerpon mask, every Shadow form). Shadow forms are inferred
+// from a "(S)" suffix (e.g. "Raikou (S)", seen directly in the live dropdown) — reasonably confident
+// given it's a standard abbreviation and Shadow raids are a real, documented mechanic, but this
+// wasn't independently confirmed against PogoAPI's own documentation the way most of this project's
+// constants were, so flag it if any non-Shadow Pokémon turns out to end in a literal "(S)". Mega
+// Diancie (dex 719) is excluded by ID rather than name, for the same naming-inconsistency reason as
+// the Legendary Mega exceptions above.
+const USER_EXCLUDED_EXACT = new Set([
+  'articuno (galarian)','moltres (galarian)','zapdos (galarian)','manaphy','melmetal',
+  'zeraora','koraidon (apex)','okidogi','pecharunt','phione','spectrier',
+  'mewtwo (a)','mewtwo (armored)','mewtwo (armor)' // "Mewtwo (A)" — matching multiple possible
+  // live-name variants for Armored Mewtwo defensively, same reasoning as the Primal/Mega naming
+  // inconsistency found earlier this session — unconfirmed which exact string PogoAPI uses.
+]);
+const USER_EXCLUDED_PREFIX = ['arceus','calyrex','chi-yu','fezandipiti','glastrier','munkidori',
+  'miraidon','silvally','ting-lu','urshifu','wo-chien','ogerpon','eternatus'];
+function isUserExcluded(p){
+  const name = p.speciesName.toLowerCase();
+  if(p.isMegaForm && p.pokemonId === 719) return true; // Mega Diancie
+  if(USER_EXCLUDED_EXACT.has(name)) return true;
+  if(/\(s\)$/i.test(name)) return true; // Shadow form
+  return USER_EXCLUDED_PREFIX.some(prefix => name === prefix || name.startsWith(prefix + ' '));
+}
+// Ultra Beast National Dex numbers — used to split "Tier 5 · Ultra Beast" out from plain "Tier 5 ·
+// Legendary" by request. Poipole (803) and Naganadel (804) are included here for completeness but
+// never actually reach this check in practice, since isUserExcluded() already filters them out
+// earlier in bossAutoTier (Poipole is Special-Research-only; Naganadel only evolves from it).
+const ULTRA_BEAST_DEX_IDS = new Set([793,794,795,796,797,798,799,803,804,805,806]);
+function bossAutoTier(p){
+  if(isUserExcluded(p)) return null;
+  if(p.isMegaForm) return MEGA_LEGENDARY_DEX_IDS.has(p.pokemonId) ? 'mega_legendary' : 'mega';
+  // Ultra Beasts checked independently of isLegendary()/PokeAPI's is_legendary flag — PokeAPI treats
+  // "Ultra Beast" as its own separate Pokédex category, distinct from Legendary/Mythical, so once the
+  // background PokeAPI status fetch resolves for these species it would correctly report false for
+  // both flags and silently exclude them if this were nested inside the isLegendary() branch (as it
+  // originally was) — confirmed as the actual cause of Ultra Beasts disappearing from the dropdown.
+  if(ULTRA_BEAST_DEX_IDS.has(p.pokemonId)) return isNeverRaidBoss(p.speciesName) ? null : 'ultrabeast';
+  if(isLegendary(p)) return isNeverRaidBoss(p.speciesName) ? null : 't5';
+  return null; // no auto-assignment — leave whatever tier is currently selected
+}
+
+function onDataReady(){
+  buildBossDropdown();
+  $('weather').innerHTML = Object.entries(WEATHER).map(([k,w])=>`<option value="${k}">${w.label}</option>`).join('');
+  $('megaBoostType').innerHTML = '<option value="rayquaza">Mega Rayquaza (Dragon + Flying + Psychic)</option>' +
+    '<option value="primal_kyogre">Primal Kyogre (Water + Electric + Bug)</option>' +
+    '<option value="primal_groudon">Primal Groudon (Fire + Grass + Ground)</option>' +
+    Object.entries(TYPE_LABEL).map(([k,label]) => `<option value="${k}">${label}</option>`).join('');
+
+  const defaultBoss = GM.byId['rayquaza'] ? 'rayquaza' : bossDropdownRoster()[0].speciesId;
+  selectBoss(defaultBoss);
+  $('bossSelect').value = defaultBoss;
+
+  $('rankBtn').disabled = false;
+}
+
+/** Raid bosses eligible to appear at all: fully evolved only (raid bosses are never pre-evolutions
+ * in the real game), excluding Pikachu/Spinda entirely (base form and every costume/pattern variant
+ * — neither is a real raid boss and both have enough cosmetic forms to clutter the list), and —
+ * since Tier 3 was removed — only Pokémon that actually resolve to one of the three remaining
+ * categories (Tier 5, Mega, Mega · Legendary) via bossAutoTier(); anything that would have fallen
+ * into the old Tier 3 bucket (an ordinary, non-Legendary, non-Mega Pokémon) is excluded entirely. */
+function bossDropdownRoster(){
+  return GM.pokemon.filter(p => {
+    if(p.isFinalStage === false) return false;
+    const base = p.speciesName.toLowerCase().replace(/\s*\([^)]*\)\s*/g, '').trim();
+    if(base.startsWith('pikachu') || base.startsWith('spinda')) return false; // covers every costume
+    // (parenthetical) and spot-pattern (e.g. "Spinda #1", no parens) variant, not just the base form
+    return bossAutoTier(p) !== null;
+  });
+}
+
+/** Builds the single Pokémon <select>, grouped into the four remaining raid categories via
+ * bossAutoTier(): Legendary/Mythical -> Tier 5, Ultra Beast -> its own split-out group, Mega/Primal
+ * -> Mega, the specific Legendary Mega/Primal exceptions -> Mega · Legendary. Re-run after the
+ * background PokeAPI legendary-status fetch resolves, since bossAutoTier's answer for a given
+ * Pokémon can change once its real status is confirmed (starts on the fallback name list, may move
+ * in/out of Tier 5, which also changes bossDropdownRoster()'s membership since a non-Legendary/
+ * non-Mega Pokémon is excluded from the roster entirely now). */
+function buildBossDropdown(){
+  const prevSelection = $('bossSelect').value || selectedBossId;
+  const groups = { t5: [], ultrabeast: [], mega: [], mega_legendary: [] };
+  bossDropdownRoster().forEach(p => { groups[bossAutoTier(p)].push(p); });
+  const groupLabels = { t5:'Tier 5 · Legendary', ultrabeast:'Tier 5 · Ultra Beast', mega:'Mega Raid', mega_legendary:'Mega Raid · Legendary' };
+  $('bossSelect').innerHTML = ['t5','ultrabeast','mega','mega_legendary'].map(key => {
+    const opts = groups[key]
+      .sort((a,b) => a.speciesName.localeCompare(b.speciesName))
+      .map(p => `<option value="${p.speciesId}">${p.speciesName}</option>`).join('');
+    return opts ? `<optgroup label="${groupLabels[key]} (${groups[key].length})">${opts}</optgroup>` : '';
+  }).join('');
+  if(prevSelection && GM.byId[prevSelection]) $('bossSelect').value = prevSelection;
+}
+
+function selectBoss(id){
+  const p = GM.byId[id];
+  if(!p) return;
+  selectedBossId = id;
+  const autoTier = bossAutoTier(p);
+  if(autoTier) $('tier').value = autoTier;
+  renderBossMoves(p);
+  updateBossInfo();
+}
+function renderBossMoves(p){
+  const keepFast = $('bossfast').value, keepC1 = $('bosscharge1').value;
+  const eliteFast = new Set(p.eliteFastMoves||[]);
+  const eliteCharge = new Set(p.eliteChargedMoves||[]);
+  const bossFastOptions = p.fastMoves.filter(m => !eliteFast.has(m));
+  const bossChargeOptions = p.chargedMoves.filter(c => c !== 'STRUGGLE' && !eliteCharge.has(c));
+  $('bossfast').innerHTML = bossFastOptions.map(id => {
+    const m = GM.moves[id];
+    return `<option value="${id}">${moveNameSync(id)} (${TYPE_LABEL[m?m.type:'normal']||''})</option>`;
+  }).join('');
+  const chargeOpts = bossChargeOptions.map(id => {
+    const m = GM.moves[id];
+    return `<option value="${id}">${moveNameSync(id)} (${TYPE_LABEL[m?m.type:'normal']||''})</option>`;
+  }).join('');
+  $('bosscharge1').innerHTML = chargeOpts;
+  if(bossFastOptions.includes(keepFast)) $('bossfast').value = keepFast;
+  if(bossChargeOptions.includes(keepC1)) $('bosscharge1').value = keepC1;
+}
+/** Real raid boss CP formula (verified exact match to Pokebattler's stated 49,808 for T5 Rayquaza):
+ * uses unscaled base ATK/DEF (not CPM-scaled) with the raid's actual battle HP as the third term. */
+function bossCP(base, raidHP){
+  return Math.floor((base.atk+15) * Math.sqrt(base.def+15) * Math.sqrt(raidHP) / 10);
+}
+function updateBossInfo(){
+  const p = GM.byId[selectedBossId];
+  if(!p) return;
+  const t = TIERS[$('tier').value];
+  const scaled = statsFor(p.baseStats, t.cpm);
+  const cp = bossCP(p.baseStats, t.hp);
+  $('bossinfo').innerHTML = `${typeBadges(p.types)}<br>CP: ${cp.toLocaleString('en-US')}<br>HP: ${t.hp.toLocaleString('en-US')} (${t.label})<br>ATK ${Math.round(scaled.atk)} · DEF ${Math.round(scaled.def)} <span class="hint">(base ${p.baseStats.atk}/${p.baseStats.def} × CPM ${t.cpm.toFixed(4)})</span>`;
+}
+
+$('bossSelect').addEventListener('change', () => {
+  selectBoss($('bossSelect').value);
+});
+$('tier').addEventListener('change', updateBossInfo);
+function updateFriendshipVisibility(){
+  const solo = parseInt($('players').value,10) === 1;
+  $('friendshipRow').style.display = solo ? 'none' : '';
+  $('friendshipHiddenHint').style.display = solo ? '' : 'none';
+}
+$('players').addEventListener('input', ()=> { $('playersval').textContent = $('players').value; updateFriendshipVisibility(); });
+updateFriendshipVisibility();
+$('megaBoostActive').addEventListener('change', () => {
+  $('megaBoostTypeRow').style.display = $('megaBoostActive').checked ? '' : 'none';
+});
+$('playersval').textContent = $('players').value;
+$('rankBtn').disabled = true;
+$('rankBtn').disabled = true;
+
+/* ---------------- SIMULATION CORE ---------------- */
+// Discrete 0.5s-turn architecture (replaces the old continuous-time aReady/bReady event queue).
+// Confirmed twice over: first against real timestamped combat logs this session (every move's own
+// duration, the boss's fast-move selection delay, its charge-move selection delay, the individual
+// faint/swap delay, and the full-wipe/revive delay all land exactly on the 0.5s grid), then directly
+// via a community-maintained config-history datamine listing "Turn Time [s]: 0.5" as a tracked raid
+// AI parameter (effective since the 12 Sept 2024 update) — so this isn't just a well-fitting
+// approximation, it's the actual documented tick rate.
+// Both sides compute their action each tick against PRE-TICK state and apply the results together —
+// neither can preempt or cancel the other. This replaces the old "whichever is ready first goes,
+// the other waits" ordering, which was an artifact of continuous time forcing a false sequencing
+// between what are really two independent, simultaneous action streams (confirmed by real logs
+// showing the boss and attacker landing hits at the exact same timestamp). It also naturally
+// supersedes the old interrupt/damage-window mechanic — since both sides already act on their own
+// independent per-tick schedule regardless of how long the other's move takes, there's no longer a
+// scenario where one side's long animation blocks the other from acting during it.
+const TURN_SEC = 0.5;
+// Boss charge-move roll chance. Confirmed via a community-maintained config-history datamine:
+// Niantic set this to 100% on 7 Sept 2024, then to 30% on 12 Sept 2024 (not back to the widely
+// assumed 50%) — no evidence of any change since. Fixed, not user-configurable.
+const BOSS_CHARGE_CHANCE = 0.3;
+function toTurns(sec){ return Math.max(1, Math.round(sec/TURN_SEC)); }
+
+function runSim(cfg, rng){
+  rng = rng || Math.random;
+  const needLog = !!cfg.needLog; // most callers (moveset screening, solo-DPS pass, capped win-rate
+  // pass) only ever read timeSec/dps/win/deaths — never the log — so building log text for those is
+  // pure waste at scale (thousands of calls). Only evaluateCombo's example-run pass sets this true.
+  const a = GM.byId[cfg.attackerId];
+  const b = GM.byId[cfg.bossId];
+  const fastA = GM.moves[cfg.fastId], chargeA = GM.moves[cfg.chargeId];
+  const fastB = GM.moves[cfg.bossFastId];
+  const chargeB1 = GM.moves[cfg.bossCharge1Id];
+  const cpm = CPM[cfg.level];
+  const tier = TIERS[cfg.tier];
+
+  const aTypes = realTypes(a.types), bTypes = realTypes(b.types);
+  const aStats = statsFor(a.baseStats, cpm);
+  if(cfg.shieldBoost) aStats.def *= 1.1;
+  const bStats = statsFor(b.baseStats, tier.cpm);
+  const bossHPmax = tier.hp;
+
+  const fastADurSec = fastDuration(fastA), chargeADurSec = chargeDuration(chargeA);
+  const fastBDurSec = fastDuration(fastB), chargeBDurSec = chargeDuration(chargeB1);
+  const fastATurns = toTurns(fastADurSec), chargeATurns = toTurns(chargeADurSec);
+  const fastBTurns = toTurns(fastBDurSec);
+
+  const weatherTypes = WEATHER[cfg.weather].types;
+  const wMult = t => weatherTypes.includes(t) ? 1.2 : 1;
+
+  // Per-move STAB, type-effectiveness, weather multiplier, and damage-window seconds are all
+  // constant for the whole simulation (types/weather never change mid-fight) — hoisted out of the
+  // hot loop instead of recomputed on every single cast, which otherwise means a full multiplier()
+  // scan (iterates the defender's type list) and an Array.includes() call every time any move
+  // lands, potentially thousands of times per run.
+  const chargeA_stab = aTypes.includes(chargeA.type)?1.2:1, chargeA_eff = multiplier(chargeA.type, bTypes), chargeA_wm = wMult(chargeA.type);
+  const fastA_stab = aTypes.includes(fastA.type)?1.2:1, fastA_eff = multiplier(fastA.type, bTypes), fastA_wm = wMult(fastA.type);
+  const chargeB_stab = bTypes.includes(chargeB1.type)?1.2:1, chargeB_eff = multiplier(chargeB1.type, aTypes), chargeB_wm = wMult(chargeB1.type);
+  const fastB_stab = bTypes.includes(fastB.type)?1.2:1, fastB_eff = multiplier(fastB.type, aTypes), fastB_wm = wMult(fastB.type);
+  const chargeA_window = damageWindowSec(chargeA.moveId, chargeADurSec), fastA_window = damageWindowSec(fastA.moveId, fastADurSec);
+  const chargeB_window = damageWindowSec(chargeB1.moveId, chargeBDurSec), fastB_window = damageWindowSec(fastB.moveId, fastBDurSec);
+  const chargeA_name = moveNameSync(chargeA.moveId), fastA_name = moveNameSync(fastA.moveId);
+  const chargeB_name = moveNameSync(chargeB1.moveId), fastB_name = moveNameSync(fastB.moveId);
+  const boss_name = speciesNameSync(b.speciesId);
+  const chargeA_partyBoost = partyBoostMultiplier(chargeA.type, cfg), fastA_partyBoost = partyBoostMultiplier(fastA.type, cfg);
+  const friendshipMult = parseFloat(cfg.friendship);
+
+  let aHP = aStats.hp, aEnergy=0, teamDeaths=0, totalDeaths=0, revives=0;
+  let bHP = bossHPmax, bEnergy=0;
+  let partyPowerBar = 0; // real mechanic, multiplayer only — see the Party Power comment further below
+  const ATTACKER_START_DELAY_SEC = 0; // removed by request — real observed logs show the attacker's
+  // very first hit never lands earlier than 1.5s in (see the mechanics hint text above), but the
+  // simulator now starts the attacker's first action immediately at raid start instead. Applies once,
+  // at raid start only (not the separately-confirmed 2.5s/15s faint-swap and wipe-revive delays below).
+  let aBusy = toTurns(ATTACKER_START_DELAY_SEC), bBusy=0; // turns remaining until each side is ready to pick a new action
+  let aDowntimeTurns=0;         // turns remaining before attacker returns from a faint/wipe
+  // In-flight actions awaiting their damage window. Each pending stores BOTH a discrete processTurn
+  // (the tick our turn-based loop actually applies it on — real time rounded UP to the next 0.5s
+  // tick, since we can only apply effects at tick boundaries) AND a precise, un-rounded landSec (the
+  // real elapsed-seconds moment its damage genuinely registers). The processTurn governs WHEN we
+  // evaluate it in the loop; landSec is what actually decides nulling, compared directly against
+  // the precise landSec of whatever hit killed the caster — never against rounded turn counts. This
+  // matters because two windows that round to the same tick can still have a real, decisive order
+  // (e.g. Ice Burn's real 1.8s window vs. a fast hit landing at 1.6s real time both may fall in the
+  // same discrete tick, but 1.6 < 1.8 is what actually determines the outcome).
+  let aPending = null, bPending = null;
+  // Precise real-second timestamp of whatever hit most recently dropped the attacker to 0 HP, since
+  // its own life began (reset on every respawn) — null if the attacker hasn't died yet this life.
+  // Only the attacker's own pending charge/fast move can be nulled by this; per confirmed behavior,
+  // the boss side has no equivalent — if the attacker's damage drops the boss to 0 HP, the fight
+  // simply ends immediately, with no need to track whether the boss's own cast "would have" landed.
+  let aDeathLandSec = null;
+  let t_=0;
+  let totalDmgToBoss=0;
+  const log=[];
+  const REVIVE_REJOIN_SEC = 15; // reduced by request — real observed logs confirmed 17.5s
+  const FAINT_SWAP_SEC = 2.5;     // confirmed real value
+  const FAINT_SWAP_TURNS = toTurns(FAINT_SWAP_SEC), WIPE_TURNS = toTurns(REVIVE_REJOIN_SEC);
+  const MAXTIME = cfg.capped ? tier.timeLimit : 1800; // capped mode: stop at the real raid time limit
+  const MAXTURNS = toTurns(MAXTIME);
+  let turn = 0;
+
+  while(turn < MAXTURNS && bHP>0 && !(cfg.capped && teamDeaths>=6)){
+    turn++;
+    t_ = turn*TURN_SEC;
+    if(aDowntimeTurns > 0) aDowntimeTurns--;
+    else if(aBusy > 0) aBusy--;
+    if(bBusy > 0) bBusy--;
+
+    const aReadyNowPreDodge = aDowntimeTurns===0 && aBusy===0;
+    let dodgeUsedThisTick = false; // set below if a reactive charge-move dodge fires — blocks the
+    // attacker's own aReadyNow action later this same tick, since it's now spending this window
+    // on the dodge instead (aReadyNowPreDodge was computed before we knew that).
+    const bReadyNow = bBusy===0;
+
+    // Resolve any IN-FLIGHT action (selected on an earlier tick) whose processTurn arrives this
+    // tick FIRST, before either side is allowed to start a new action — otherwise a move whose
+    // window rounds up to the same tick as its own full-duration completion would have its pending
+    // reference overwritten before ever resolving. Boss resolves first, so that if it kills the
+    // attacker this exact tick, the attacker's own same-tick pending resolution (just below) sees
+    // the correct, up-to-date aDeathLandSec.
+    if(bPending && turn>=bPending.processTurn){
+      if(bPending.dmg > 0){
+        let d = bPending.dmg, dodged=false;
+        if(cfg.dodgeChargeOnly){
+          // Reactive "dodge charge moves only" strategy: the attacker only dodges a boss charge
+          // move, and only if it's actually free to react right now — i.e. not itself mid-animation
+          // on its own fast/charge move (a real collision would mean the attacker's hands are tied
+          // up finishing its own move and it physically can't also tap to dodge in time). A
+          // successful dodge costs the attacker 0.5s (1 turn) — the dodge animation itself, and
+          // nothing beyond that (the extra "wasted" 0.5s after the dodge was removed by request).
+          if(bPending.isCharge && aReadyNowPreDodge){
+            d = Math.ceil(d*0.25); dodged=true;
+            aBusy = Math.max(aBusy, 1); dodgeUsedThisTick = true;
+          }
+        } else if(rng()*100 < cfg.dodge){
+          d = Math.ceil(d*0.25); dodged=true;
+        }
+        aHP -= d; aEnergy = Math.min(100, aEnergy + Math.ceil(d*0.5));
+        if(aHP<=0 && aDeathLandSec===null) aDeathLandSec = bPending.landSec;
+        if(needLog) log.push({t:t_, side: dodged?'dodge':'boss', text: dodged?`Dodged! ${bPending.logText.replace(/→ \d+ damage/, `→ only ${d} damage`)}`:bPending.logText});
+      }
+      bPending = null;
+    }
+    if(aPending && turn>=aPending.processTurn){
+      const nulled = aDeathLandSec !== null && aDeathLandSec < aPending.landSec;
+      if(!nulled){
+        bHP -= aPending.dmg; totalDmgToBoss += aPending.dmg; bEnergy = Math.min(100, bEnergy + Math.ceil(aPending.dmg*0.5));
+        if(needLog) log.push({t:t_, side:'atk', text:aPending.logText});
+      } else {
+        if(needLog) log.push({t:t_, side:'atk', text:`Your team fainted before the attack landed — no damage`});
+      }
+      aPending = null;
+    }
+    const aReadyNow = aReadyNowPreDodge && !dodgeUsedThisTick;
+
+    // Both sides compute their action against pre-tick state — neither can preempt or cancel the
+    // other's NEW action this tick.
+    if(aReadyNow){
+      let dmg, windowSec, moveTurns, logText, chargeUsed=false, fastGain=0;
+      if(aEnergy>=chargeA.energy){
+        dmg = calcDamage(chargeA.power, aStats.atk, bStats.def, chargeA_stab, chargeA_eff, chargeA_wm, friendshipMult);
+        dmg = Math.floor(dmg * chargeA_partyBoost);
+        // Party Power (real mechanic, multiplayer only, opt-in via the "Party Power in use" toggle
+        // — players>1 alone does NOT imply a party is actually using it): a shared 36-point bar
+        // fills from the whole party's fast-move hits, at a rate of 36/n hits to fill it (n = party
+        // size, max 4) — i.e. each fast hit contributes n points, capped at 36 (no overflow/
+        // carryover past a full bar — extra fast hits while already at 36 don't stack toward a
+        // second charge). Once full, the party's NEXT charged attack lands at double damage for
+        // every member simultaneously, then the bar resets fully to 0 (not -=36) and must fill from
+        // scratch again. The double is applied to the already-floored per-hit damage (2× a whole
+        // number, not 2× before flooring), matching how it's actually computed in-game — then scaled
+        // by cfg.players as normal, since every member's own next charge move benefits at once, not
+        // just one attacker's.
+        let partyPowered = false;
+        if(cfg.partyPowerActive && cfg.players > 1 && partyPowerBar >= 36){ dmg = dmg * 2; partyPowerBar = 0; partyPowered = true; }
+        dmg = dmg * cfg.players;
+        moveTurns = chargeATurns; windowSec = chargeA_window;
+        if(needLog) logText = `Your team uses ${chargeA_name}${partyPowered ? ' (Party Power!)' : ''} → ${dmg} damage`;
+        chargeUsed = true;
+      } else {
+        dmg = calcDamage(fastA.power, aStats.atk, bStats.def, fastA_stab, fastA_eff, fastA_wm, friendshipMult);
+        dmg = Math.floor(dmg * fastA_partyBoost);
+        dmg = dmg * cfg.players;
+        if(cfg.partyPowerActive && cfg.players > 1) partyPowerBar = Math.min(36, partyPowerBar + cfg.players);
+        moveTurns = fastATurns; windowSec = fastA_window;
+        if(needLog) logText = `${fastA_name} hits → ${dmg} damage`;
+        fastGain = (fastA.energyGain||fastA.energy||0);
+      }
+      aBusy = moveTurns;
+      if(chargeUsed) aEnergy -= chargeA.energy; else aEnergy = Math.min(100, aEnergy + fastGain); // spent/gained immediately regardless of outcome
+      aPending = { processTurn: turn + Math.max(0, Math.ceil(windowSec/TURN_SEC)), landSec: t_ + windowSec, dmg, logText };
+    }
+
+    if(bReadyNow){
+      const whiff = aDowntimeTurns > 0; // no target present — boss still acts (and can still spend energy) but deals no damage
+      const canCharge = bEnergy>=chargeB1.energy && rng() < BOSS_CHARGE_CHANCE;
+      let dmg, windowSec, moveTurns, logText;
+      if(canCharge){
+        dmg = whiff ? 0 : calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1);
+        const selectionTurns = 1; // fixed 0.5s selection delay before the move's own animation starts
+        moveTurns = selectionTurns + toTurns(chargeBDurSec);
+        windowSec = whiff ? (moveTurns*TURN_SEC) : chargeB_window;
+        if(needLog && !whiff) logText = `${boss_name} uses ${chargeB_name} → ${dmg} damage`;
+        bEnergy -= chargeB1.energy; // energy is spent even on a whiff
+      } else {
+        dmg = whiff ? 0 : calcDamage(fastB.power, bStats.atk, aStats.def, fastB_stab, fastB_eff, fastB_wm, 1);
+        const selectionSec = (rng()<0.5 ? 1.5 : 2.0); // real random 1.5-or-2.0s selection delay
+        moveTurns = toTurns(selectionSec) + fastBTurns;
+        windowSec = whiff ? (moveTurns*TURN_SEC) : fastB_window;
+        if(needLog && !whiff) logText = `${fastB_name} hits → ${dmg} damage`;
+        bEnergy = Math.min(100, bEnergy + (fastB.energyGain||fastB.energy||0));
+      }
+      bBusy = moveTurns;
+      bPending = { processTurn: turn + Math.max(0, Math.ceil(windowSec/TURN_SEC)), landSec: t_ + windowSec, dmg, logText, isCharge: canCharge };
+    }
+
+    if(bHP<=0){
+      bHP=0;
+      bPending = null; // the boss's own still-open cast (if any) is simply discarded — the fight is over
+      if(needLog) log.push({t:t_, side:'win', text:`Boss defeated!`});
+      break;
+    }
+
+    if(aDowntimeTurns===0 && aHP<=0){
+      teamDeaths++; totalDeaths++;
+      if(cfg.capped && teamDeaths>=6){
+        if(needLog) log.push({t:t_, side:'faint', text:`Team wiped (6/6) — no more Pokémon left.`});
+        aHP = 0;
+      } else if(teamDeaths>=6){
+        revives++;
+        if(needLog){
+          log.push({t:t_, side:'faint', text:`Team wiped (6/6) — reviving & rejoining…`});
+          log.push({t:t_ + REVIVE_REJOIN_SEC, side:'faint', text:`Back in battle with a fresh team.`});
+        }
+        aDowntimeTurns = WIPE_TURNS;
+        teamDeaths = 0;
+        aHP = aStats.hp; aEnergy = 0; aBusy = 0; aPending = null; aDeathLandSec = null;
+      } else {
+        if(needLog) log.push({t:t_, side:'faint', text:`Pokémon fainted (${teamDeaths}/6 this round)`});
+        aDowntimeTurns = FAINT_SWAP_TURNS;
+        aHP = aStats.hp; aEnergy = 0; aBusy = 0; aPending = null; aDeathLandSec = null;
+      }
+    }
+  }
+
+  log.sort((a,b) => a.t - b.t);
+  const win = bHP<=0;
+  const timeout = t_>=MAXTIME && bHP>0;
+  return {
+    win, timeout, deaths: totalDeaths, revives, timeSec: t_, log,
+    bossHPmax, bossHPleft: Math.max(0,bHP),
+    aMaxHP: aStats.hp, aHPleft: Math.max(0,aHP),
+    dps: totalDmgToBoss / Math.max(t_,0.01),
+    powerPct: (totalDmgToBoss / bossHPmax) * 100
+  };
+}
+
+/* ---------------- GLOBAL CONFIG ---------------- */
+const MEGA_RAYQUAZA_BOOST_TYPES = ['dragon','flying','psychic'];
+// Primal Kyogre and Primal Groudon are the same kind of exception as Mega Rayquaza — real mechanic,
+// confirmed via LeekDuck (official Niantic-partnered news source) and cross-checked against three
+// independent community sources: each covers 3 types instead of the usual 1-2 from its own typing.
+const PRIMAL_KYOGRE_BOOST_TYPES = ['water','electric','bug'];
+const PRIMAL_GROUDON_BOOST_TYPES = ['fire','grass','ground'];
+function readGlobalConfig(){
+  const players = parseInt($('players').value,10);
+  const megaBoostSpecialTypes = { rayquaza: MEGA_RAYQUAZA_BOOST_TYPES, primal_kyogre: PRIMAL_KYOGRE_BOOST_TYPES, primal_groudon: PRIMAL_GROUDON_BOOST_TYPES };
+  return {
+    level: $('level').value,
+    friendship: players === 1 ? '1' : $('friendship').value,
+    weather: $('weather').value,
+    players: players,
+    dodge: FIXED_DODGE_SKILL,
+    bossId: selectedBossId,
+    tier: $('tier').value,
+    bossFastId: $('bossfast').value,
+    bossCharge1Id: $('bosscharge1').value,
+    bladeBoost: $('bladeBoost').checked,
+    shieldBoost: $('shieldBoost').checked,
+    megaBoostActive: $('megaBoostActive').checked,
+    partyPowerActive: $('partyPowerActive').checked,
+    dodgeChargeOnly: $('dodgeChargeOnly').checked,
+    megaBoostTypes: megaBoostSpecialTypes[$('megaBoostType').value] || [$('megaBoostType').value]
+  };
+}
+
+/* ---------------- RANK EVERY POKÉMON (200-run Monte Carlo each) ---------------- */
+$('rankBtn').addEventListener('click', ()=>{
+  if(!selectedBossId){ return; }
+  const btn = $('rankBtn');
+  const originalLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = `Screening movesets for ${GM.pokemon.length.toLocaleString('en-US')} Pokémon, then confirming each best combo with 200 runs…`;
+  $('top30Panel').style.display='none';
+  setTimeout(() => {
+    const results = rankAllAttackers();
+    renderTop30(results);
+    btn.disabled = false;
+    btn.textContent = originalLabel;
+  }, 20);
+});
+
+/**
+ * For every released Pokémon, screens every legal fast+charged moveset combo that includes at
+ * least one genuinely super-effective move against the boss (weather-boosted-neutral doesn't
+ * qualify a combo on its own) with a quick 30-run sample each, keeps the best-performing combo,
+ * then runs a full 200-run Monte Carlo on that combo — approximating Pokebattler's "every
+ * possible moveset simulated, best moveset kept" methodology without the combinatorial cost of
+ * 200 runs per combo.
+ * The boss's own moveset is varied per simulation when "Vary boss moveset" is checked.
+ */
+function rankAllAttackers(){
+  const baseCfg = readGlobalConfig();
+  const tier = TIERS[baseCfg.tier];
+  const goals = TIER_SCORE_GOALS[baseCfg.tier];
+  const N = 200;
+  const SOLO_N = 30;
+  const CAPPED_N = 20;
+  const results = [];
+  let totalSims = 0;
+
+  const boss = GM.byId[baseCfg.bossId];
+  const bossTypes = realTypes(boss.types);
+
+  /** True if this specific fast+charge combo has at least one genuinely super-effective move
+   * (multiplier > 1) against the boss — weather-boosted-neutral doesn't qualify a combo here,
+   * only real super effectiveness does. */
+  function comboIsSuperEffective(fastId, chargeId){
+    const fm = GM.moves[fastId], cm = GM.moves[chargeId];
+    if(!fm || !cm) return false;
+    return multiplier(fm.type, bossTypes) > 1 || multiplier(cm.type, bossTypes) > 1;
+  }
+
+  /** Runs a full N-run Monte Carlo for one attacker+combo and reduces it to the dominant-cluster
+   * ("typical") stats — see the long comment this replaced for why the dominant cluster, not a
+   * plain mean, is used. Returns null only if somehow every run throws (shouldn't happen). */
+  function evaluateCombo(cfg){
+    const cfgWithLog = {...cfg, needLog:true}; // the only caller that reads the log — screening,
+    // solo-DPS, and capped win-rate passes never do, so they default to skipping log construction.
+    const allRuns = [];
+    for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog)); totalSims++; }
+
+    const faintGroups = {};
+    allRuns.forEach(r => { (faintGroups[r.deaths] = faintGroups[r.deaths] || []).push(r); });
+    const modalFaintCount = Object.keys(faintGroups).reduce((best, k) =>
+      faintGroups[k].length > faintGroups[best].length ? k : best, Object.keys(faintGroups)[0]);
+    const modalRuns = faintGroups[modalFaintCount];
+    const M = modalRuns.length;
+    const modalTimeSorted = [...modalRuns].sort((a,b) => a.timeSec - b.timeSec);
+    const typicalTimeSec = modalTimeSorted[Math.floor(M/2)].timeSec;
+    const totalDps = modalRuns.reduce((s,r) => s+r.dps, 0);
+    const totalRevives = modalRuns.reduce((s,r) => s+r.revives, 0);
+    const totalDeaths = modalRuns.reduce((s,r) => s+r.deaths, 0);
+    const totalHPleft = modalRuns.reduce((s,r) => s+r.aHPleft, 0);
+    const aMaxHP = modalRuns[0].aMaxHP;
+    const timeoutRate = allRuns.filter(r => r.timeout).length / N; // measured against the full sample
+
+    // Pick a representative example battle for the combat-log view: score every run in the
+    // dominant cluster the same way Overall is scored (Power vs. goal, Time vs. goal) and take
+    // the median by that score — matching Pokebattler's "median result based on overall rating
+    // is used for combat logs as an example" (Monte Carlo - Gold tooltip). Deliberately uncapped,
+    // unlike the display Overall below — for a fast solo clear, every winning run's Power%/
+    // Time-to-Win already blow past goals.powerGoal/ttwGoal (those goals are calibrated for
+    // Pokebattler's much larger theoretical Power%), so capping at 100 would tie every winning
+    // run at the same score and make "median" pick an arbitrary run instead of a real one.
+    const scoredRuns = modalRuns.map(r => {
+      const powerScore = (r.powerPct / goals.powerGoal) * 100;
+      const timeScore = (goals.ttwGoal / Math.max(r.timeSec, 0.01)) * 100;
+      return { r, score: goals.powerWeight*powerScore + goals.timeWeight*timeScore };
+    }).sort((a,b) => a.score - b.score);
+    const exampleRun = scoredRuns[Math.floor(scoredRuns.length/2)].r;
+
+    const avgDeaths = totalDeaths/M;
+    const avgHPleft = totalHPleft/M;
+    // "Effective" deaths, factoring in the finishing Pokémon's remaining HP: a full faint counts as
+    // 1.0 as before, plus the fraction of its max HP the surviving finisher had already burned through
+    // by the time the boss went down (e.g. finishing at 30% HP adds another 0.70 "partial death").
+    // Gives a more granular sense of how close the run actually was, not just the whole-number faint
+    // count. Displayed to 2 decimal places per request.
+    const avgDeathsWithHP = avgDeaths + (aMaxHP - avgHPleft)/aMaxHP;
+
+    return {
+      typicalTimeSec, avgDps: totalDps/M, avgRevives: totalRevives/M, avgDeaths: avgDeathsWithHP, timeoutRate,
+      exampleLog: exampleRun.log, exampleWin: exampleRun.win,
+      exampleTimeSec: exampleRun.timeSec, exampleDeaths: exampleRun.deaths,
+      exampleRevives: exampleRun.revives, exampleBossHPleft: exampleRun.bossHPleft,
+      exampleBossHPmax: exampleRun.bossHPmax
+    };
+  }
+
+  // Attacker-list exclusions by request — not offered as attacker options regardless of how good
+  // their simulated stats might look. Ho-Oh (Shadow) matched defensively across possible live-data
+  // naming variants, same reasoning as elsewhere in this file. Wishiwashi matched by prefix (covers
+  // both School and Solo Form, since only a base name was given). Palafin (Hero) matched exactly —
+  // Palafin (Zero) was not excluded and stays available.
+  const ATTACKER_EXCLUDED_EXACT = new Set(['ho-oh (s)','ho-oh (shadow)','palafin (hero)','okidogi','lugia (s)','lugia (shadow)']);
+  const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori'];
+  function isAttackerExcluded(speciesName){
+    const name = speciesName.toLowerCase();
+    if(ATTACKER_EXCLUDED_EXACT.has(name)) return true;
+    return ATTACKER_EXCLUDED_PREFIX.some(prefix => name === prefix || name.startsWith(prefix + ' '));
+  }
+
+  GM.pokemon.forEach(p => {
+    if(p.isFinalStage === false) return; // not fully evolved — always outclassed by its own final form, so skip it
+    if(isAttackerExcluded(p.speciesName)) return;
+    const fastOptions = p.fastMoves;
+    const chargeOptions = p.chargedMoves.filter(c => c !== 'STRUGGLE');
+    if(!fastOptions.length || !chargeOptions.length) return;
+
+    // Screen every super-effective combo with a quick 30-run sample each, then run the full
+    // 200-run Monte Carlo only on the winning combo — faster than running all 200 on every
+    // combo, at some risk of occasionally misranking two very close options by chance.
+    const SCREEN_N = 30;
+    let bestCombo = null, bestScreenTime = Infinity;
+    fastOptions.forEach(fastId => {
+      chargeOptions.forEach(chargeId => {
+        if(!comboIsSuperEffective(fastId, chargeId)) return; // only super-effective combos are considered at all
+        const cfg = {...baseCfg, attackerId: p.speciesId, fastId, chargeId};
+        let t = 0;
+        for(let i=0;i<SCREEN_N;i++){ t += runSim(cfg).timeSec; totalSims++; }
+        const avg = t/SCREEN_N;
+        if(avg < bestScreenTime){ bestScreenTime = avg; bestCombo = {fastId, chargeId}; }
+      });
+    });
+    if(!bestCombo) return; // no super-effective combo available for this Pokémon at all
+
+    const cfg = {...baseCfg, attackerId: p.speciesId, fastId: bestCombo.fastId, chargeId: bestCombo.chargeId};
+    const bestStats = evaluateCombo(cfg);
+
+    results.push({
+      speciesId: p.speciesId,
+      name: speciesNameSync(p.speciesId),
+      types: p.types,
+      fastId: bestCombo.fastId,
+      chargeId: bestCombo.chargeId,
+      fastName: moveNameSync(bestCombo.fastId),
+      chargeName: moveNameSync(bestCombo.chargeId),
+      avgTimeSec: bestStats.typicalTimeSec,
+      avgDps: bestStats.avgDps,
+      avgRevives: bestStats.avgRevives,
+      avgDeaths: bestStats.avgDeaths,
+      timeoutRate: bestStats.timeoutRate,
+      exampleLog: bestStats.exampleLog,
+      exampleWin: bestStats.exampleWin,
+      exampleTimeSec: bestStats.exampleTimeSec,
+      exampleDeaths: bestStats.exampleDeaths,
+      exampleRevives: bestStats.exampleRevives,
+      exampleBossHPleft: bestStats.exampleBossHPleft,
+      exampleBossHPmax: bestStats.exampleBossHPmax
+    });
+  });
+  results.sort((a,b) => a.avgTimeSec - b.avgTimeSec);
+  const top30 = results.slice(0, 30);
+
+  // Estimator and Power% reflect the ACTUAL configured party's per-player efficiency — changed by
+  // request. Simulated WITH the real "Number of Players" count and Party Power setting (so the
+  // shared Party Power bar fills and pays out exactly like a real party of that size would — that
+  // mechanic is genuinely multiplayer and can't be reproduced by simulating one isolated player),
+  // but the resulting total party DPS is then divided back down by player count before being used
+  // in the Estimator/Power% formulas. This answers "how many players, each contributing what my
+  // attacker actually contributes under these conditions, would it take" — headcount, not party
+  // count — so 2 players don't mechanically halve the Estimator just from being counted as one bigger
+  // unit; it only moves if Party Power (or another party-dependent effect) changes each player's own
+  // per-player efficiency. The DPS column elsewhere stays at the full party total, unaffected.
+  // Win% (Pokebattler definition) uses a capped run: 6 lives, no revives beyond that, stopped
+  // at the raid's real time limit — a genuinely different scenario from the "continues until
+  // win" Time to Win above, so it needs its own dedicated pass.
+  top30.forEach(r => {
+    const soloCfg = {...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
+    let partyDps = 0;
+    for(let i=0;i<SOLO_N;i++){ partyDps += runSim(soloCfg).dps; totalSims++; }
+    partyDps /= SOLO_N;
+    const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
+    r.soloDps = perPlayerDps;
+    r.estimator = tier.hp / (perPlayerDps * tier.timeLimit);
+    // Power%: this attacker's (per-player) un-capped theoretical damage output extrapolated across the
+    // full raid time limit, as a % of boss HP — NOT the actual damage dealt in a real (boss-HP-capped)
+    // run, which is why strong attackers read >100%. Derived straight from the same per-player DPS
+    // used for Estimator (Power% == 100/Estimator by construction).
+    r.powerPct = (perPlayerDps * tier.timeLimit / tier.hp) * 100;
+
+    const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
+    let wins=0;
+    for(let i=0;i<CAPPED_N;i++){
+      const cr = runSim(cappedCfg);
+      totalSims++;
+      if(cr.win) wins++;
+    }
+    r.winPct = (wins/CAPPED_N)*100;
+    // r.avgDeaths is left as-is from the uncapped run above — the true total faint count across
+    // the whole fight (which can exceed 6 if the team wipes and revives more than once), not
+    // artificially capped at 6 just because that's what this separate capped-run pass measures.
+  });
+
+  top30.sort((a,b) => a.estimator - b.estimator); // match Pokebattler: ranked by Estimator
+  lastTotalSims = totalSims;
+  return top30;
+}
+
+function renderTop30(results){
+  const bossName = speciesNameSync(selectedBossId);
+  const tierLabel = TIERS[$('tier').value].label;
+  $('top30Title').textContent = `Top 30 Attackers vs ${bossName} (${tierLabel})`;
+  const finalStageCount = GM.pokemon.filter(p => p.isFinalStage !== false).length;
+  $('top30Hint').textContent = `Screened every legal fast+charged moveset combo with a 30-run sample for fully-evolved Pokémon with at least one genuinely super-effective move against this boss (pre-evolutions, off-type attackers, and weather-boosted-neutral-only combos skipped), ran a full 200-run Monte Carlo on each one's best combo, then computed Power% (per-player un-capped DPS × raid time limit ÷ boss HP — theoretical, can exceed 100%) and Win% (a separate capped run: 6 lives, no more revives, stopped at the raid's real time limit) — matching Pokebattler's metric definitions. Ranked by Estimator. Total simulations run: ${lastTotalSims.toLocaleString('en-US')}.`;
+  $('top30Body').innerHTML = results.map((r,i) => `
+    <tr>
+      <td>${i+1}</td>
+      <td>${r.name}</td>
+      <td>${typeBadges(r.types)}</td>
+      <td>${r.fastName} / ${r.chargeName}</td>
+      <td>${r.winPct.toFixed(1)}%</td>
+      <td>${r.powerPct.toFixed(1)}%</td>
+      <td>${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</td>
+      <td>${r.estimator.toFixed(2)}</td>
+      <td>💀×${r.avgDeaths.toFixed(2)}</td>
+      <td>${r.avgDps.toFixed(2)}</td>
+      <td>${Math.round(r.avgRevives)}</td>
+      <td><button class="logbtn" data-logidx="${i}">View</button></td>
+    </tr>
+  `).join('');
+  $('top30Panel').style.display='block';
+  $('top30Panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+  currentTop30Results = results;
+}
+
+let currentTop30Results = [];
+document.addEventListener('click', e => {
+  const btn = e.target.closest('[data-logidx]');
+  if(btn){ openCombatLog(currentTop30Results[parseInt(btn.dataset.logidx,10)]); return; }
+  if(e.target.id === 'logModalClose' || e.target.id === 'logModal'){ closeCombatLog(); }
+});
+function openCombatLog(r){
+  if(!r || !r.exampleLog) return;
+  const bossName = speciesNameSync(selectedBossId);
+  $('logModalTitle').textContent = `${r.name} vs ${bossName}`;
+  $('logModalSub').textContent = `${r.fastName} / ${r.chargeName} — 1 of 200 simulated runs (median by Overall rating)`;
+  const verdict = $('logModalVerdict');
+  verdict.textContent = r.exampleWin ? 'Win' : 'Loss';
+  verdict.className = 'verdict ' + (r.exampleWin ? 'win' : 'loss');
+  $('logModalStats').innerHTML = `
+    <div class="stat-cell"><div class="k">Time to Win</div><div class="v">${fmtTime(r.exampleTimeSec)}</div></div>
+    <div class="stat-cell"><div class="k">Fainted</div><div class="v">💀×${r.exampleDeaths}</div></div>
+    <div class="stat-cell"><div class="k">Rejoins</div><div class="v">${r.exampleRevives}</div></div>
+    <div class="stat-cell"><div class="k">Boss HP Left</div><div class="v">${Math.round(r.exampleBossHPleft).toLocaleString('en-US')}/${Math.round(r.exampleBossHPmax).toLocaleString('en-US')}</div></div>
+  `;
+  $('logModalLog').innerHTML = r.exampleLog.map(entry => `
+    <div class="entry ${entry.side}"><span class="t">${entry.t.toFixed(1)}s</span> — ${entry.text}</div>
+  `).join('');
+  $('logModal').classList.add('open');
+}
+function closeCombatLog(){
+  $('logModal').classList.remove('open');
+}
+
+loadGameMaster();
+</script>
+</body>
+</html>
