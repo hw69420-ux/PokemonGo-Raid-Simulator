@@ -199,34 +199,34 @@
         <label for="weather">Weather Boost</label>
         <select id="weather"></select>
 
-        <div class="hint">Boss charge move chance is fixed at 30% (confirmed current rate via a community-maintained config-history datamine: Niantic set this to 100% on 7 Sept 2024, then to 30% on 12 Sept 2024 — not back to the widely-assumed 50%). Real observed combat logs show the attacker's first action never lands earlier than 1.5s in (vs. the boss's first action, which can land as early as 0.5s) — that 1.5s startup delay is removed in this simulator by request, so the attacker's first action now fires immediately at raid start instead.</div>
-
         <label for="players">Number of Players <span id="playersval" style="color:var(--text)"></span></label>
         <input type="range" id="players" min="1" max="4" value="1">
 
         <label style="display:flex;align-items:center;gap:8px;margin-top:18px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="bladeBoost" style="width:auto;">
-          Zacian Blade Boost active (+10% team ATK, Behemoth Blade Adventure Effect)
+          Zacian Blade boost (+10% damage)
         </label>
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="shieldBoost" style="width:auto;">
-          Zamazenta Shield Boost active (+10% team DEF, Behemoth Bash Adventure Effect)
+          Zamazenta shield boost (+10% defense)
         </label>
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="megaBoostActive" style="width:auto;">
-          Mega/Primal partner active in party (+30% same-type damage, +10% all other damage)
+          Primal boost (+30% STAB bonus, +10% otherwise)
         </label>
         <div id="megaBoostTypeRow" style="display:none;margin-top:8px;">
           <label for="megaBoostType">Mega/Primal Partner's Type</label>
           <select id="megaBoostType"></select>
         </div>
+        <div id="partyPowerRow">
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="partyPowerActive" style="width:auto;">
           Party Power in use (36-point bar fills from fast-move hits at 36/n per party of n, doubles the next charged attack for everyone when full)
         </label>
+        </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="dodgeChargeOnly" style="width:auto;">
-          Dodge charge moves only (reactively — only when the attacker isn't already mid-animation on its own move; a successful dodge costs the attacker 0.5s, the dodge itself)
+          Dodge charge moves only (reactively — only when the attacker isn't already mid-animation on its own move)
         </label>
       </div>
 
@@ -289,9 +289,8 @@
 
       <div class="footnote">
         Formula: DMG = ⌊0.5 × Power × (ATK/DEF) × STAB(1.2) × Effectiveness × Weather(1.2) × Friendship⌋ + 1 · No dodging assumed for any attacker, matching Pokebattler's "No Dodging" attack strategy · Multiplayer scales the team's damage against the boss.<br>
-        Matches current raid mechanics: the boss gains energy equal to 50% of damage taken (rounded up) — this is boss-specific, not something the attacker's own Pokémon gets — and the boss rolls to fire its charged move each time it has enough energy, evaluated instantly (Niantic made firing 100% guaranteed on 7 Sept 2024, then set it to 30% — not back to 50% as widely assumed — on 12 Sept 2024, confirmed via a community-maintained config-history datamine; unlike the old pre-2024 system, which planned one turn ahead and couldn't queue two charge moves back-to-back, the current system can fire charge moves consecutively if energy allows, gated only by that roll each time). 30% is the default under "Boss Charge Move Chance" as a result — this session's independent testing against real combat logs had already converged on the same value before this source was found. Real logs show the attacker's own first action never lands earlier than 1.5s in, but that startup delay is removed in this simulator by request. Combat resolves in discrete 0.5-second ticks, also confirmed by the same datamine (matches every real log timestamp checked this session).<br>
-        Every Pokémon is simulated 200 times (Monte Carlo) against the boss — figures below are averages across those 200 runs, using each Pokémon's first available fast + charged move. Estimator = players needed to defeat the boss within the raid's real 5-minute time limit, derived from the same 200-run average DPS.<br>
-        Base stats, types &amp; movepools: live from <span style="color:var(--text)">raw.githubusercontent.com/pvpoke/pvpoke</span> (community-maintained GameMaster). Move names, power/energy and real animation duration: live from <span style="color:var(--text)">DialgaDex</span> (javi-b/pokemon-resources on GitHub, sourced directly from the PokeMiners Game Master dump). The offline fallback database's movesets are hand-curated and may not be 100% legal/optimal for every entry — live data is authoritative.
+        Matches current raid mechanics: the boss gains energy equal to 50% of damage taken (rounded up).<br>
+        Every Pokémon is simulated 200 times (Monte Carlo) against the boss — figures below are averages across those 200 runs, using each Pokémon's first available fast + charged move. Estimator = players needed to defeat the boss within the raid's real 5-minute time limit, derived from the same 200-run average DPS.
       </div>
     </div>
   </div>
@@ -398,7 +397,7 @@ const DAMAGE_WINDOW = {
   // base); + assumed identical since GamePress-style sources show identical duration/animation across
   // all three Sacred Fire tiers, not independently confirmed for + specifically
   ROAR_OF_TIME:0.85, SPACIAL_REND:1.37, SUNSTEEL_STRIKE:2.2, SURF:1.2, WEATHER_BALL_ICE:1.25, SECRET_SWORD:1.2, DYNAMAX_CANNON:0.9, GLAIVE_RUSH:1.7,
-  FURY_CUTTER:0.2, LEAF_BLADE:1.35, AERIAL_ACE:2.0, ASTONISH:0.6, INCINERATE:0.7, MIND_BLOWN:3.0, MYSTICAL_FIRE:1.3, PYROBALL:0.9, BLAST_BURN:3.0, DARK_PULSE:1.4, ROCK_TOMB:2.0, SUPERPOWER:2.1, BRUTAL_SWING:1.3, PAYBACK:0.9, FLASH_CANNON:1.4, NIGHT_SLASH:1.1, ICY_WIND:2.2, MOONBLAST:2.3, GYRO_BALL:3.2, GRASS_KNOT:1.6, POUND:0.2, WATER_GUN:0.3, SCRATCH:0.3, BULLET_SEED:0.8, CHARGE_BEAM:0.8, SEED_BOMB:1.1, MAGMA_STORM:1.3, LIQUIDATION:2.0, EMBER:0.6, POISON_JAB:0.4, HEX:0.8, POISON_STING:0.3, CUT:0.3, WING_ATTACK:0.8, PECK:0.5, GUST:0.9, TAKE_DOWN:0.8, QUICK_ATTACK:0.5, ACID:0.6, TACKLE:0.3,
+  FURY_CUTTER:0.2, LEAF_BLADE:1.35, AERIAL_ACE:2.0, ASTONISH:0.6, INCINERATE:0.7, MIND_BLOWN:3.0, MYSTICAL_FIRE:1.3, PYROBALL:0.9, BLAST_BURN:3.0, DARK_PULSE:1.4, ROCK_TOMB:2.0, SUPERPOWER:2.1, BRUTAL_SWING:1.3, PAYBACK:0.9, FLASH_CANNON:1.4, NIGHT_SLASH:1.1, ICY_WIND:2.2, MOONBLAST:2.3, GYRO_BALL:3.2, GRASS_KNOT:1.6, POUND:0.2, WATER_GUN:0.3, SCRATCH:0.3, BULLET_SEED:0.8, CHARGE_BEAM:0.8, SEED_BOMB:1.1, MAGMA_STORM:1.3, LIQUIDATION:2.0, EMBER:0.6, POISON_JAB:0.4, HEX:0.8, POISON_STING:0.3, CUT:0.3, WING_ATTACK:0.8, PECK:0.5, GUST:0.9, TAKE_DOWN:0.8, QUICK_ATTACK:0.5, ACID:0.6, TACKLE:0.3, AEROBLAST:3.3, FLY:1.4, MIST_BALL:1.2, LOCK_ON:0.4, METEOR_BEAM:1.1,
   BUG_BITE:0.25, INFESTATION:0.75, STRUGGLE_BUG:1.2, BUG_BUZZ:1.8, SILVER_WIND:1.5, FELL_STINGER:1.6, LUNGE:2.5,
   LEECH_LIFE:1.15, BITE:0.3, FEINT_ATTACK:0.85, SUCKER_PUNCH:0.1
 };
@@ -417,25 +416,37 @@ function damageWindowSec(moveId, fullDuration){
   const key = normalizeMoveKey(moveId);
   return DAMAGE_WINDOW[key] !== undefined ? DAMAGE_WINDOW[key] : fullDuration;
 }
+// Confirmed real charge-move animation durations (seconds), sourced from db.pokemongohub.net and
+// cross-checked against multiple independent sources across this project. Alphabetized for easy
+// lookup/maintenance. Checked before live API data (see chargeDuration() below) since PogoAPI is a
+// community-maintained mirror that can lag behind real game updates for individual moves. Anything
+// not listed here falls through to live API duration, then a rough estimate — see chargeDuration().
 const CHARGE_DURATION_OVERRIDES = {
-  DYNAMIC_PUNCH:2.5, CROSS_CHOP:1.5, SUBMISSION:2.0, CLOSE_COMBAT:2.5, FOCUS_BLAST:3.5,
-  PSYSTRIKE:2.5, SHADOW_BALL:3.0, PSYCHIC:3.0,
-  OUTRAGE:4.0, DRAGON_CLAW:1.5, DRACO_METEOR:3.5, SPACIAL_REND:2.5, ROAR_OF_TIME:2.0, GLAIVE_RUSH:2.0, BREAKING_SWIPE:1.0,
-  ANCIENT_POWER:3.5, ROCK_SLIDE:2.5, STONE_EDGE:2.5, ROCK_BLAST:2.0,
-  METEOR_MASH:2.5, IRON_HEAD:2.0, FLASH_CANNON:2.5,
-  EARTH_POWER:3.5, EARTHQUAKE:3.5, DRILL_RUN:3.0, BULLDOZE:3.5,
-  PLAY_ROUGH:3.0, DAZZLING_GLEAM:3.5, MOONBLAST:4.0,
-  OVERHEAT:4.0, FIRE_BLAST:4.0, BLAST_BURN:3.5, FLAMETHROWER:2.0, MIND_BLOWN:4.0, MYSTICAL_FIRE:2.0,
-  HYDRO_PUMP:3.5, ORIGIN_PULSE:1.5, SURF:1.5, HYDRO_CANNON:2.0, BLIZZARD:3.0, ICE_BEAM:3.5,
-  PRECIPICE_BLADES:1.5, SOLAR_BEAM:5.0, FRENZY_PLANT:2.5,
-  HYPER_BEAM:4.0, HURRICANE:2.5, BRAVE_BIRD:2.0, SKY_ATTACK:2.0,
-  SLUDGE_BOMB:2.5, SLUDGE_WAVE:3.0, GUNK_SHOT:3.0,
-  NIGHT_SLASH:2.0, FOUL_PLAY:2.0, DARK_PULSE:3.0, CRUNCH:3.0,
-  WILD_CHARGE:2.5, THUNDER:2.5, THUNDERBOLT:2.5, DISCHARGE:2.5,
-  X_SCISSOR:1.5, MEGAHORN:2.0, BUG_BUZZ:3.5, GYRO_BALL:3.5, ROCK_TOMB:3.0,
-  AVALANCHE:2.5, SIGNAL_BEAM:3.0, ICE_PUNCH:2.0, FREEZE_SHOCK:1.5, ICE_BURN:2.0,
-  BEHEMOTH_BLADE:3.5, BEHEMOTH_BASH:1.5, MOONGEIST_BEAM:3.0, SUNSTEEL_STRIKE:3.0, GLACIATE:2.5, DYNAMAX_CANNON:1.5,
-  CRUSH_GRIP:1.8, DRAGON_ENERGY:3.3, SECRET_SWORD:2.0, DRAGON_ASCENT:3.5, WEATHER_BALL_ICE:1.5
+  AERIAL_ACE:2.4, ANCIENT_POWER:3.5, ACID_SPRAY:3.0, AEROBLAST:3.5, AIR_CUTTER:2.5, AQUA_JET:2.5, AQUA_STEP:3.5, AQUA_TAIL:2.0, AURA_SPHERE:2.0, AURORA_BEAM:3.5,
+  AVALANCHE:2.5, BEHEMOTH_BASH:1.5, BEHEMOTH_BLADE:3.5, BLAST_BURN:3.5, BLAZE_KICK:1.0, BLIZZARD:3.0, BODY_SLAM:2.0,
+  BRAVE_BIRD:2.0, BREAKING_SWIPE:1.0, BRICK_BREAK:1.5, BRINE:2.5, BRUTAL_SWING:2.0, BUBBLE_BEAM:2.0,
+  BUG_BUZZ:3.5, BULLDOZE:3.5, CHILLING_WATER:3.5, CLOSE_COMBAT:2.5, CRABHAMMER:2.0, CROSS_CHOP:1.5,
+  CRUNCH:3.0, CRUSH_GRIP:1.8, DARKEST_LARIAT:2.0, DARK_PULSE:3.0, DAZZLING_GLEAM:3.5, DIG:4.5,
+  DISCHARGE:2.5, DIVE:3.3, DRACO_METEOR:3.5, DRAGON_ASCENT:3.5, DRAGON_CLAW:1.5, DRAGON_ENERGY:3.3,
+  DRAGON_PULSE:3.6, DRAIN_PUNCH:2.5, DRILL_PECK:2.5, DRILL_RUN:3.0, DRUM_BEATING:4.5, DYNAMAX_CANNON:1.5, DYNAMIC_PUNCH:2.5,
+  EARTHQUAKE:3.5, EARTH_POWER:3.5, ENERGY_BALL:4.0, FEATHER_DANCE:3.0, FELL_STINGER:2.0, FIRE_BLAST:4.0, FIRE_PUNCH:2.0, FLAMETHROWER:2.0,
+  FLAME_BURST:2.5, FLAME_CHARGE:4.0, FLAME_WHEEL:2.5, FLASH_CANNON:2.5, FLOWER_TRICK:3.0, FLY:2.0, FLYING_PRESS:2.5,
+  FOCUS_BLAST:3.5, FOUL_PLAY:2.0, FREEZE_SHOCK:1.5, FRENZY_PLANT:2.5, FUSION_BOLT:2.0, FUSION_FLARE:2.0, FUTURE_SIGHT:2.5,
+  GIGA_DRAIN:4.0, GIGA_IMPACT:4.5, GLACIATE:2.5, GLAIVE_RUSH:2.0, GRASS_KNOT:2.5, GUNK_SHOT:3.0, GYRO_BALL:3.5,
+  HEAT_WAVE:3.0, HEAVY_SLAM:2.0, HIGH_HORSEPOWER:1.5, HIGH_JUMP_KICK:1.5, HURRICANE:2.5, HYDRO_CANNON:2.0, HYDRO_PUMP:3.5,
+  HYPER_BEAM:4.0, ICE_BEAM:3.5, ICE_BURN:2.0, ICE_PUNCH:2.0, ICY_WIND:3.5, IRON_HEAD:2.0, LEAF_BLADE:2.5,
+  LEAF_TORNADO:3.0, LIQUIDATION:3.0, LOW_SWEEP:2.0, LUNGE:3.0, LUSTER_PURGE:1.5, MAGMA_STORM:2.5, MEGAHORN:2.0, MEGA_DRAIN:2.5, MIRROR_SHOT:2.5,
+  METEOR_BEAM:2.0, METEOR_MASH:2.5, MIND_BLOWN:4.0, MIST_BALL:2.0, MOONBLAST:4.0, MOONGEIST_BEAM:3.0, MUDDY_WATER:2.0,
+  MUD_BOMB:2.5, MYSTICAL_FIRE:2.0, NIGHT_SLASH:2.0, OBLIVION_WING:2.0, OCTAZOOKA:2.5, OMINOUS_WIND:2.5, ORIGIN_PULSE:1.5, OUTRAGE:4.0,
+  OVERHEAT:4.0, PARABOLIC_CHARGE:3.0, PETAL_BLIZZARD:2.5, PLAY_ROUGH:3.0, POWER_GEM:3.0, POWER_UP_PUNCH:2.0, PSYBEAM:3.0, PSYCHIC_FANGS:1.0,
+  POWER_WHIP:2.5, PRECIPICE_BLADES:1.5, PSYCHIC:3.0, PSYSTRIKE:2.5, RAZOR_SHELL:1.5, ROAR_OF_TIME:2.0,
+  ROCK_BLAST:2.0, ROCK_SLIDE:2.5, ROCK_TOMB:3.0, ROCK_WRECKER:3.5, SACRED_FIRE:2.5, SACRED_SWORD:1.0, SAND_TOMB:4.0,
+  SCALD:3.5, SCORCHING_SANDS:3.0, SECRET_SWORD:2.0, SEED_BOMB:2.0, SEED_FLARE:2.5, SHADOW_BALL:3.0, SHADOW_FORCE:2.0,
+  SIGNAL_BEAM:3.0, SKY_ATTACK:2.0, SLUDGE_BOMB:2.5, SLUDGE_WAVE:3.0, SNIPE_SHOT:3.5, SOLAR_BEAM:5.0,
+  SPACIAL_REND:2.5, STONE_EDGE:2.5, SUBMISSION:2.0, SUNSTEEL_STRIKE:3.0, SUPERPOWER:3.0, SURF:1.5, SWIFT:3.0,
+  THUNDER:2.5, THUNDERBOLT:2.5, THUNDER_CAGE:3.5, THUNDER_PUNCH:2.0, TORCH_SONG:3.5, TRAILBLAZE:2.0,
+  TWISTER:3.0, UPPER_HAND:2.0, V_CREATE:3.0, VISE_GRIP:2.0, WATER_PULSE:3.0, WEATHER_BALL_ICE:1.5, WILDBOLT_STORM:2.5,
+  WILD_CHARGE:2.5, X_SCISSOR:1.5, ZAP_CANNON:3.5
 };
 
 /**
@@ -481,8 +492,17 @@ function speciesNameSync(id){ return (GM.byId[id] && GM.byId[id].speciesName) ||
 
 function roundToHalfSecond(sec){ return Math.round(sec*2)/2; }
 function chargeDuration(move){
+  // Personally-verified overrides take precedence over live API durationSec — PogoAPI is a
+  // community-maintained mirror and can lag behind real game data for specific moves; every entry
+  // in CHARGE_DURATION_OVERRIDES has been individually cross-checked against db.pokemongohub.net
+  // this session, so it's treated as more reliable than an unverified live duration where the two
+  // might disagree. Falls through to live API duration, then the estimate, for anything unverified.
+  // Uses normalizeMoveKey() since live-fetched moves set moveId to the display name (e.g. 'Meteor
+  // Beam') rather than the ALL_CAPS_UNDERSCORE key this table is written in — without that
+  // normalization this lookup silently never matched for any live-fetched Pokémon.
+  const overrideKey = normalizeMoveKey(move.moveId);
+  if(CHARGE_DURATION_OVERRIDES[overrideKey] !== undefined) return CHARGE_DURATION_OVERRIDES[overrideKey];
   if(typeof move.durationSec === 'number') return move.durationSec; // real value straight from PogoAPI
-  if(CHARGE_DURATION_OVERRIDES[move.moveId] !== undefined) return CHARGE_DURATION_OVERRIDES[move.moveId];
   const est = 1.2 + (move.energy||35)*0.03 + (move.power||60)*0.007;
   return roundToHalfSecond(Math.max(1.5, Math.min(4.0, est)));
 }
@@ -752,7 +772,9 @@ async function loadGameMaster(){
     // gap-fills above). Only adds if genuinely absent; never removes or reorders existing moves.
     const movepoolGapFill = [
       { speciesName:'Blacephalon', kind:'chargedMoves', moveId:'MIND_BLOWN' }, // very recently added move (per this session's research, added to the game in late Dec 2025) — real, own signature-adjacent charge move
-      { speciesName:'Cinderace', kind:'chargedMoves', moveId:'PYROBALL' } // real Community Day-exclusive signature move
+      { speciesName:'Cinderace', kind:'chargedMoves', moveId:'PYROBALL' }, // real Community Day-exclusive signature move
+      { speciesName:'Glimmora', kind:'chargedMoves', moveId:'Meteor Beam' }, // confirmed real 4th charge move (via db.pokemongohub.net) that PogoAPI's current_pokemon_moves.json omits for this species specifically — 'Meteor Beam' (not 'METEOR_BEAM') to match this array's live-data display-name convention, since GM.moves['Meteor Beam'] already exists from the general charged_moves.json fetch (used by other Pokémon like Gigalith)
+      { speciesName:'Gigalith', kind:'fastMoves', moveId:'Lock-On' } // confirmed real fast move — multiple independent sources (including db.pokemongohub.net directly) list "Lock-On / Meteor Beam" as Gigalith's actual best, current, non-legacy moveset, but PogoAPI's current_pokemon_moves.json appears to omit it, same gap pattern as Glimmora/Meteor Beam above
     ];
     movepoolGapFill.forEach(fix => {
       const p = pokemon.find(pp => pp.speciesName === fix.speciesName);
@@ -777,6 +799,12 @@ async function loadGameMaster(){
     if(pokemon.length === 0){
       throw new Error(`Parsed 0 usable Pokémon from live data (moves matched: ${Object.keys(moves).length}, stat entries: ${Object.keys(statsByKey).length}) — check the browser console for raw samples.`);
     }
+
+    // Apply the individually-verified fallback dataset as an override layer — see
+    // applyFallbackOverrides()'s own comment for why this exists (PogoAPI has repeatedly proven to
+    // have real per-species/per-move gaps this session). Runs before GM is populated so every
+    // downstream consumer (boss dropdown, attacker ranking, etc.) sees the corrected data.
+    applyFallbackOverrides(pokemon, moves);
 
     GM.moves = moves;
     GM.pokemon = pokemon;
@@ -826,7 +854,15 @@ async function loadGameMaster(){
   }
 }
 
-function loadFallback(){
+/** Builds the hand-curated, individually-verified fallback dataset without touching GM — used both
+ * as the last-resort data source (loadFallback(), below) and, more importantly, as an override
+ * layer applied on top of successfully-loaded live data (applyFallbackOverrides(), below). PogoAPI
+ * is a community-maintained mirror that has repeatedly proven to have real gaps for specific
+ * Pokémon/move combinations (confirmed this session for both Glimmora/Meteor Beam and
+ * Gigalith/Lock-On) — every entry here has been individually researched and cross-checked against
+ * db.pokemongohub.net, so it's treated as more reliable than live data for the ~150 Pokémon it
+ * covers, while everything outside that set still comes straight from PogoAPI as before. */
+function buildFallbackData(){
   const moves = {};
   const fastDefs = {
     COUNTER:{type:'fighting',power:13,energyGain:9,cooldown:1000},
@@ -874,6 +910,7 @@ function loadFallback(){
     GUST:{type:'flying',power:25,energyGain:20,cooldown:1500},
     DOUBLE_KICK:{type:'fighting',power:10,energyGain:13,cooldown:1000},
     TACKLE:{type:'normal',power:5,energyGain:5,cooldown:500},
+    PSYWAVE:{type:'psychic',power:4,energyGain:7,cooldown:500},
     LICK:{type:'ghost',power:5,energyGain:6,cooldown:500}, // corrected — was 6/6 (back-calculated from an indirect table), confirmed directly as 5/6
     FAIRY_WIND:{type:'fairy',power:9,energyGain:13,cooldown:1000},
     FEINT_ATTACK:{type:'dark',power:11,energyGain:10,cooldown:1000},
@@ -904,7 +941,9 @@ function loadFallback(){
     BUG_BITE:{type:'bug',power:5,energyGain:6,cooldown:500}, // matches this file's existing BUG_BITE damage-window entry (0.25)
     SPARK:{type:'electric',power:6,energyGain:9,cooldown:900}, // NOTE: less rigorously confirmed than most of this session's values — no clean current citation found; from well-established general knowledge
     MAGICAL_LEAF:{type:'grass',power:17,energyGain:17,cooldown:1500},
-    FURY_CUTTER:{type:'bug',power:4,energyGain:8,cooldown:500}
+    FURY_CUTTER:{type:'bug',power:4,energyGain:8,cooldown:500},
+    FORCE_PALM:{type:'fighting',power:10,energyGain:16,cooldown:1000},
+    ROLLOUT:{type:'rock',power:15,energyGain:19,cooldown:1500}
   };
   const chargeDefs = {
     DYNAMIC_PUNCH:{type:'fighting',power:85,energy:50},
@@ -979,10 +1018,13 @@ function loadFallback(){
     BEHEMOTH_BLADE:{type:'steel',power:200,energy:100},
     BEHEMOTH_BASH:{type:'steel',power:125,energy:50},
     SLUDGE_BOMB:{type:'poison',power:85,energy:50},
+    SLUDGE:{type:'poison',power:50,energy:33},
     MOONGEIST_BEAM:{type:'ghost',power:230,energy:100},
     SUNSTEEL_STRIKE:{type:'steel',power:230,energy:100},
     GLACIATE:{type:'ice',power:160,energy:100},
     HURRICANE:{type:'flying',power:105,energy:100},
+    AIR_CUTTER:{type:'flying',power:55,energy:50},
+    FEATHER_DANCE:{type:'flying',power:35,energy:50},
     BRAVE_BIRD:{type:'flying',power:130,energy:100},
     X_SCISSOR:{type:'bug',power:45,energy:33},
     MEGAHORN:{type:'bug',power:105,energy:100},
@@ -994,6 +1036,7 @@ function loadFallback(){
     DRAGON_ENERGY:{type:'dragon',power:155,energy:50},
     SECRET_SWORD:{type:'fighting',power:120,energy:50},
     FLASH_CANNON:{type:'steel',power:100,energy:100},
+    SKULL_BASH:{type:'normal',power:130,energy:100},
     SKY_ATTACK:{type:'flying',power:80,energy:50},
     BRUTAL_SWING:{type:'dark',power:65,energy:33},
     STONE_EDGE:{type:'rock',power:105,energy:100},
@@ -1001,7 +1044,7 @@ function loadFallback(){
     WILD_CHARGE:{type:'electric',power:90,energy:50},
     HEAVY_SLAM:{type:'steel',power:70,energy:50},
     SUPERPOWER:{type:'fighting',power:85,energy:50},
-    METEOR_BEAM:{type:'rock',power:140,energy:100}, // Elite TM move — real, only excluded from raid boss selection, still a legal attacker option
+    METEOR_BEAM:{type:'rock',power:140,energy:100}, // confirmed via db.pokemongohub.net: duration 2.0s, damage window 1.1s-2.0s. Generally an Elite TM/Community Day move for many Pokémon, though neither Gigalith nor Glimmora (its only current users in this file) are flagged elite for it — neither is a raid boss anyway, so the boss-exclusion distinction doesn't apply to them
     SLUDGE_WAVE:{type:'poison',power:105,energy:100},
     POWER_GEM:{type:'rock',power:80,energy:50},
     FIRE_PUNCH:{type:'fire',power:50,energy:33},
@@ -1074,11 +1117,26 @@ function loadFallback(){
     SHADOW_BONE:{type:'ghost',power:85,energy:50},
     SHADOW_FORCE:{type:'ghost',power:140,energy:100},
     NATURES_MADNESS:{type:'fairy',power:90,energy:50},
+    DRAINING_KISS:{type:'fairy',power:60,energy:50},
     THUNDER_CAGE:{type:'electric',power:220,energy:100},
     UPPER_HAND:{type:'fighting',power:50,energy:33},
     WILDBOLT_STORM:{type:'electric',power:150,energy:100},
+    BLEAKWIND_STORM:{type:'flying',power:150,energy:100},
+    SANDSEAR_STORM:{type:'ground',power:150,energy:100},
     PARABOLIC_CHARGE:{type:'electric',power:70,energy:50},
+    TECHNO_BLAST_NORMAL:{type:'normal',power:120,energy:100},
+    DISARMING_VOICE:{type:'fairy',power:70,energy:33},
+    SHADOW_SNEAK:{type:'ghost',power:50,energy:33},
+    SYNCHRONOISE:{type:'psychic',power:80,energy:50},
+    POISON_FANG:{type:'poison',power:35,energy:33},
+    PSYBEAM:{type:'psychic',power:65,energy:50},
+    OBLIVION_WING:{type:'flying',power:85,energy:50},
     FUTURE_SIGHT:{type:'psychic',power:115,energy:100},
+    MIST_BALL:{type:'psychic',power:105,energy:100},
+    LUSTER_PURGE:{type:'psychic',power:100,energy:100},
+    AEROBLAST:{type:'flying',power:180,energy:100},
+    FLY:{type:'flying',power:90,energy:50},
+    AURORA_BEAM:{type:'ice',power:80,energy:50},
     WATER_PULSE:{type:'water',power:65,energy:50},
     HYDRO_CANNON:{type:'water',power:90,energy:50},
     SNIPE_SHOT:{type:'water',power:100,energy:33},
@@ -1102,7 +1160,6 @@ function loadFallback(){
   };
   Object.entries(fastDefs).forEach(([id,d]) => moves[id] = {moveId:id,name:moveNameSync(id),...d});
   Object.entries(chargeDefs).forEach(([id,d]) => moves[id] = {moveId:id,name:moveNameSync(id),...d});
-  GM.moves = moves;
   // Fallback-dataset Mega Dex numbers, needed only for the small set of species that are also the
   // Legendary Mega/Primal exceptions (MEGA_LEGENDARY_DEX_IDS) — safe to name-match here specifically
   // because this dataset's naming is our own and consistent, unlike PogoAPI's live data. Same
@@ -1115,42 +1172,165 @@ function loadFallback(){
     const pokemonId = isMegaForm && baseKey ? FALLBACK_MEGA_DEX_IDS[baseKey] : FALLBACK_UB_DEX_IDS[id];
     return {speciesId:id,speciesName:name,pokemonId,types,baseStats:base,fastMoves:fast,chargedMoves:charge,released:true,isFinalStage:true,isMegaForm,eliteFastMoves:[],eliteChargedMoves:[]};
   };
-  GM.pokemon = [
-    mk('mewtwo','Mewtwo',['psychic'],{atk:300,def:182,hp:214},['PSYCHO_CUT','CONFUSION','COUNTER'],['PSYSTRIKE','SHADOW_BALL','FOCUS_BLAST','ICE_BEAM']),
-    mk('rayquaza','Rayquaza',['dragon','flying'],{atk:284,def:170,hp:213},['DRAGON_TAIL','AIR_SLASH'],['OUTRAGE','ANCIENT_POWER','DRAGON_ASCENT']),
-    mk('metagross','Metagross',['steel','psychic'],{atk:257,def:228,hp:190},['BULLET_PUNCH'],['METEOR_MASH','EARTHQUAKE']),
+  const pokemon = [
+    (() => {
+      const p = mk('mewtwo','Mewtwo',['psychic'],{atk:300,def:182,hp:214},['PSYCHO_CUT','CONFUSION','COUNTER'],['PSYSTRIKE','SHADOW_BALL','FOCUS_BLAST','ICE_BEAM','HYPER_BEAM','FLAMETHROWER','THUNDERBOLT','PSYCHIC']); // Counter confirmed real — GO Fest 2026 addition; added 4 missing charge moves
+      p.eliteChargedMoves = ['PSYSTRIKE','SHADOW_BALL']; // legacy — both confirmed requiring Elite Charged TM
+      return p;
+    })(),
+    (() => {
+      const p = mk('rayquaza','Rayquaza',['dragon','flying'],{atk:284,def:170,hp:213},['DRAGON_TAIL','AIR_SLASH'],['OUTRAGE','ANCIENT_POWER','DRAGON_ASCENT','AERIAL_ACE','HURRICANE','BREAKING_SWIPE']);
+      p.eliteChargedMoves = ['DRAGON_ASCENT']; // Meteorite-only acquisition — not on any live raid boss
+      return p;
+    })(),
+    mk('metagross','Metagross',['steel','psychic'],{atk:257,def:228,hp:190},['BULLET_PUNCH','FURY_CUTTER','SHADOW_CLAW','ZEN_HEADBUTT'],['METEOR_MASH','EARTHQUAKE','FLASH_CANNON','PSYCHIC']),
     mk('machamp','Machamp',['fighting'],{atk:234,def:159,hp:207},['COUNTER'],['DYNAMIC_PUNCH','CROSS_CHOP','CLOSE_COMBAT','ROCK_SLIDE']),
-    mk('garchomp','Garchomp',['dragon','ground'],{atk:261,def:193,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE']),
+    (() => {
+      const p = mk('garchomp','Garchomp',['dragon','ground'],{atk:261,def:193,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER']);
+      p.eliteChargedMoves = ['EARTH_POWER']; // legacy — confirmed needs Elite Charged TM
+      return p;
+    })(),
     mk('excadrill','Excadrill',['ground','steel'],{atk:255,def:129,hp:200},['MUD_SHOT'],['DRILL_RUN','ROCK_SLIDE','EARTHQUAKE']),
-    mk('zacian_hero','Zacian (Hero)',['fairy'],{atk:275,def:194,hp:200},['SNARL','FIRE_FANG','METAL_CLAW'],['CLOSE_COMBAT','PLAY_ROUGH','WILD_CHARGE']),
-    mk('zacian_crowned','Zacian (Crowned Sword)',['fairy','steel'],{atk:332,def:244,hp:200},['METAL_CLAW'],['BEHEMOTH_BLADE','CLOSE_COMBAT']),
-    mk('kyogre','Kyogre',['water'],{atk:270,def:184,hp:205},['WATERFALL'],['ORIGIN_PULSE','SURF','HYDRO_PUMP','BLIZZARD']),
-    mk('groudon','Groudon',['ground'],{atk:270,def:187,hp:213},['MUD_SHOT'],['PRECIPICE_BLADES','SOLAR_BEAM','FIRE_FANG']),
+    mk('zacian_hero','Zacian (Hero)',['fairy'],{atk:254,def:236,hp:192},['SNARL','FIRE_FANG','METAL_CLAW','QUICK_ATTACK'],['CLOSE_COMBAT','PLAY_ROUGH','WILD_CHARGE','IRON_HEAD']),
+    mk('zacian_crowned','Zacian (Crowned Sword)',['fairy','steel'],{atk:332,def:244,hp:200},['METAL_CLAW','AIR_SLASH'],['BEHEMOTH_BLADE','CLOSE_COMBAT','PLAY_ROUGH']),
+    (() => {
+      const p = mk('kyogre','Kyogre',['water'],{atk:270,def:228,hp:205},['WATERFALL'],['ORIGIN_PULSE','SURF','HYDRO_PUMP','BLIZZARD','THUNDER','AVALANCHE']);
+      p.eliteChargedMoves = ['ORIGIN_PULSE']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('groudon','Groudon',['ground'],{atk:270,def:228,hp:205},['MUD_SHOT','DRAGON_TAIL'],['EARTHQUAKE','FIRE_BLAST','FIRE_PUNCH','SOLAR_BEAM','PRECIPICE_BLADES']); // corrected — Fire Fang was fabricated/not real; stats also corrected (was def:187/hp:213, real is 228/205)
+      p.eliteChargedMoves = ['PRECIPICE_BLADES']; // legacy — confirmed requires Elite Charged TM
+      return p;
+    })(),
     mk('dialga','Dialga',['steel','dragon'],{atk:275,def:211,hp:205},['DRAGON_BREATH','METAL_CLAW'],['IRON_HEAD','THUNDER','DRACO_METEOR']),
-    mk('dialga_origin','Dialga (Origin)',['steel','dragon'],{atk:275,def:236,hp:205},['METAL_CLAW','DRAGON_BREATH'],['ROAR_OF_TIME','IRON_HEAD']),
+    (() => {
+      const p = mk('dialga_origin','Dialga (Origin)',['steel','dragon'],{atk:270,def:225,hp:205},['METAL_CLAW','DRAGON_BREATH'],['IRON_HEAD','THUNDER','DRACO_METEOR','ROAR_OF_TIME']);
+      p.eliteChargedMoves = ['ROAR_OF_TIME']; // legacy — official Pokemon.com raid guide confirms this with an asterisk
+      return p;
+    })(),
     mk('togekiss','Togekiss',['fairy','flying'],{atk:225,def:217,hp:209},['CHARM','AIR_SLASH'],['DAZZLING_GLEAM','ANCIENT_POWER','FLAMETHROWER']),
-    mk('lugia','Lugia',['psychic','flying'],{atk:193,def:323,hp:235},['AIR_SLASH'],['SHADOW_BALL','ANCIENT_POWER','FOCUS_BLAST']),
-    mk('ho_oh','Ho-Oh',['fire','flying'],{atk:273,def:296,hp:218},['FIRE_FANG'],['OVERHEAT','ANCIENT_POWER','SOLAR_BEAM']),
-    mk('giratina_origin','Giratina (Origin)',['ghost','dragon'],{atk:225,def:187,hp:284},['SHADOW_CLAW'],['SHADOW_BALL','OUTRAGE','DRACO_METEOR']),
+    (() => {
+      const p = mk('lugia','Lugia',['psychic','flying'],{atk:193,def:310,hp:235},['EXTRASENSORY','DRAGON_TAIL'],['HYDRO_PUMP','SKY_ATTACK','FUTURE_SIGHT','AEROBLAST','FLY']); // corrected — Air Slash, Shadow Ball, Ancient Power, Focus Blast were all fabricated/not real moves for this Pokémon
+      p.eliteChargedMoves = ['AEROBLAST']; // legacy — signature move, Elite TM
+      return p;
+    })(),
+    (() => {
+      const p = mk('ho_oh','Ho-Oh',['fire','flying'],{atk:239,def:244,hp:214},['INCINERATE','HIDDEN_POWER','EXTRASENSORY','STEEL_WING'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','BRAVE_BIRD','SACRED_FIRE']); // corrected — Fire Fang, Overheat, and Ancient Power were fabricated/not real moves for this Pokémon
+      p.eliteChargedMoves = ['SACRED_FIRE']; // legacy — confirmed requires Elite TM
+      return p;
+    })(),
+    (() => {
+      const p = mk('giratina_origin','Giratina (Origin)',['ghost','dragon'],{atk:225,def:187,hp:284},['SHADOW_CLAW','DRAGON_TAIL'],['SHADOW_BALL','OMINOUS_WIND','DRAGON_PULSE','SHADOW_FORCE']); // corrected — Outrage and Draco Meteor were fabricated/not real moves for this Pokémon
+      p.eliteChargedMoves = ['SHADOW_FORCE']; // legacy — signature move added during Halloween 2022 event
+      return p;
+    })(),
     // Additional legendaries / mythicals
-    mk('zapdos','Zapdos',['electric','flying'],{atk:253,def:188,hp:207},['THUNDER_SHOCK'],['THUNDERBOLT','ANCIENT_POWER']),
-    mk('moltres','Moltres',['fire','flying'],{atk:251,def:181,hp:207},['FIRE_FANG'],['OVERHEAT','ANCIENT_POWER']),
-    mk('raikou','Raikou',['electric'],{atk:241,def:195,hp:207},['THUNDER_SHOCK'],['THUNDER','THUNDERBOLT','SHADOW_BALL']),
-    mk('entei','Entei',['fire'],{atk:235,def:171,hp:239},['FIRE_FANG'],['OVERHEAT','FLAMETHROWER']),
-    mk('suicune','Suicune',['water'],{atk:180,def:235,hp:225},['WATERFALL'],['HYDRO_PUMP','ICE_BEAM']),
-    mk('latios','Latios',['dragon','psychic'],{atk:268,def:212,hp:190},['DRAGON_BREATH'],['DRACO_METEOR','PSYCHIC']),
-    mk('latias','Latias',['dragon','psychic'],{atk:233,def:242,hp:190},['DRAGON_BREATH'],['DRACO_METEOR','PSYCHIC']),
+    (() => {
+      const p = mk('zapdos','Zapdos',['electric','flying'],{atk:253,def:185,hp:207},['THUNDER_SHOCK','CHARGE_BEAM'],['THUNDERBOLT','ANCIENT_POWER','DRILL_PECK','HEAT_WAVE','THUNDER','ZAP_CANNON']);
+      p.eliteFastMoves = ['THUNDER_SHOCK']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('moltres','Moltres',['fire','flying'],{atk:251,def:181,hp:207},['FIRE_SPIN','WING_ATTACK'],['OVERHEAT','ANCIENT_POWER','HEAT_WAVE','FIRE_BLAST','SKY_ATTACK','FLY']); // corrected — Fire Fang was fabricated/not real
+      p.eliteChargedMoves = ['SKY_ATTACK']; // legacy
+      return p;
+    })(),
+    mk('raikou','Raikou',['electric'],{atk:241,def:195,hp:207},['THUNDER_SHOCK','VOLT_SWITCH'],['THUNDER','THUNDERBOLT','SHADOW_BALL','AURA_SPHERE','WILD_CHARGE']),
+    mk('entei','Entei',['fire'],{atk:235,def:171,hp:251},['FIRE_FANG','FIRE_SPIN'],['OVERHEAT','FLAMETHROWER','IRON_HEAD','FLAME_CHARGE','FIRE_BLAST','SCORCHING_SANDS']),
+    (() => {
+      const p = mk('suicune','Suicune',['water'],{atk:180,def:235,hp:225},['SNARL','EXTRASENSORY','HIDDEN_POWER','ICE_FANG','WATER_GUN'],['ICE_BEAM','BUBBLE_BEAM','WATER_PULSE','SCALD','HYDRO_PUMP']); // corrected — Waterfall was fabricated; Suicune famously had no Water-type fast move until Water Gun was added Dec 2025
+      p.eliteFastMoves = ['HIDDEN_POWER']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('latios','Latios',['dragon','psychic'],{atk:268,def:212,hp:190},['DRAGON_BREATH','ZEN_HEADBUTT'],['DRAGON_CLAW','PSYCHIC','SOLAR_BEAM','AURA_SPHERE','LUSTER_PURGE']); // corrected — Draco Meteor was fabricated/not real
+      p.eliteChargedMoves = ['LUSTER_PURGE']; // legacy — signature move, event-exclusive
+      return p;
+    })(),
+    (() => {
+      const p = mk('latias','Latias',['dragon','psychic'],{atk:228,def:246,hp:190},['DRAGON_BREATH','ZEN_HEADBUTT','CHARM'],['THUNDER','PSYCHIC','OUTRAGE','AURA_SPHERE','MIST_BALL']); // corrected — Draco Meteor was fabricated/not real
+      p.eliteChargedMoves = ['MIST_BALL']; // legacy — signature move, event-exclusive
+      return p;
+    })(),
     mk('zekrom','Zekrom',['dragon','electric'],{atk:275,def:211,hp:205},['DRAGON_BREATH','CHARGE_BEAM'],['OUTRAGE','FUSION_BOLT','WILD_CHARGE','CRUNCH','FLASH_CANNON']),
     mk('palkia','Palkia',['water','dragon'],{atk:280,def:215,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL']),
     mk('palkia_origin','Palkia (Origin)',['water','dragon'],{atk:286,def:223,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL','SPACIAL_REND']),
-    mk('xerneas','Xerneas',['fairy'],{atk:279,def:214,hp:207},['CHARM','GEOMANCY'],['DAZZLING_GLEAM','PLAY_ROUGH','MOONBLAST']),
-    mk('yveltal','Yveltal',['dark','flying'],{atk:275,def:184,hp:213},['SNARL'],['FOUL_PLAY','FOCUS_BLAST']),
-    mk('solgaleo','Solgaleo',['psychic','steel'],{atk:260,def:229,hp:207},['PSYCHO_CUT'],['IRON_HEAD','FOCUS_BLAST']),
-    mk('lunala','Lunala',['psychic','ghost'],{atk:262,def:196,hp:225},['SHADOW_CLAW'],['SHADOW_BALL','PSYCHIC']),
-    mk('necrozma','Necrozma',['psychic'],{atk:233,def:205,hp:205},['PSYCHO_CUT'],['PSYCHIC','FOCUS_BLAST']),
-    mk('necrozma_dusk_mane','Necrozma (Dusk Mane)',['psychic','steel'],{atk:233,def:212,hp:214},['SHADOW_CLAW','PSYCHO_CUT'],['SUNSTEEL_STRIKE','IRON_HEAD']),
-    mk('necrozma_dawn_wings','Necrozma (Dawn Wings)',['psychic','ghost'],{atk:233,def:207,hp:214},['SHADOW_CLAW','PSYCHO_CUT'],['MOONGEIST_BEAM','SHADOW_BALL']),
-    mk('regigigas','Regigigas',['normal'],{atk:238,def:200,hp:190},['HIDDEN_POWER','SHADOW_CLAW'],['CRUSH_GRIP','FOCUS_BLAST']),
+    mk('xerneas','Xerneas',['fairy'],{atk:250,def:185,hp:246},['CHARM','GEOMANCY','TACKLE','ZEN_HEADBUTT'],['DAZZLING_GLEAM','PLAY_ROUGH','MOONBLAST','CLOSE_COMBAT','GIGA_IMPACT','MEGAHORN','THUNDER']),
+    (() => {
+      const p = mk('yveltal','Yveltal',['dark','flying'],{atk:250,def:185,hp:246},['SNARL','SUCKER_PUNCH','GUST'],['FOCUS_BLAST','HYPER_BEAM','DARK_PULSE','PSYCHIC','HURRICANE','OBLIVION_WING']); // corrected — Foul Play was fabricated/not real; added missing fast moves and charge moves
+      p.eliteChargedMoves = ['OBLIVION_WING']; // legacy — signature move, Elite Charged TM only
+      return p;
+    })(),
+    mk('solgaleo','Solgaleo',['psychic','steel'],{atk:255,def:191,hp:264},['ZEN_HEADBUTT','FIRE_SPIN'],['IRON_HEAD','FLAMETHROWER','SOLAR_BEAM','PSYCHIC_FANGS']), // corrected — Psycho Cut and Focus Blast were fabricated/not real; Sunsteel Strike confirmed exclusive to Dusk Mane Necrozma only, not Solgaleo itself
+    mk('lunala','Lunala',['psychic','ghost'],{atk:255,def:191,hp:264},['SHADOW_CLAW','CONFUSION','AIR_SLASH'],['SHADOW_BALL','PSYCHIC','MOONBLAST','FUTURE_SIGHT']),
+    mk('necrozma','Necrozma',['psychic'],{atk:251,def:195,hp:219},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['FUTURE_SIGHT','DARK_PULSE','IRON_HEAD','OUTRAGE']), // corrected — Psychic and Focus Blast were fabricated/not real; also missing 2 fast moves
+    mk('necrozma_dusk_mane','Necrozma (Dusk Mane)',['psychic','steel'],{atk:277,def:220,hp:200},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['SUNSTEEL_STRIKE','IRON_HEAD','DARK_PULSE','OUTRAGE','FUTURE_SIGHT']),
+    mk('necrozma_dawn_wings','Necrozma (Dawn Wings)',['psychic','ghost'],{atk:277,def:220,hp:200},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['MOONGEIST_BEAM','DARK_PULSE','FUTURE_SIGHT','IRON_HEAD','OUTRAGE']), // corrected — Shadow Ball replaced with confirmed Dark Pulse/Future Sight
+    (() => {
+      const p = mk('regigigas','Regigigas',['normal'],{atk:287,def:210,hp:221},['HIDDEN_POWER','ZEN_HEADBUTT'],['CRUSH_GRIP','FOCUS_BLAST','THUNDER','GIGA_IMPACT']); // corrected — Shadow Claw was fabricated/not real; real second fast move is Zen Headbutt
+      p.eliteChargedMoves = ['CRUSH_GRIP']; // legacy — confirmed "Elite move"
+      return p;
+    })(),
+    mk('cobalion','Cobalion',['steel','fighting'],{atk:192,def:229,hp:209},['METAL_CLAW','ZEN_HEADBUTT','DOUBLE_KICK'],['SACRED_SWORD','STONE_EDGE','CLOSE_COMBAT','IRON_HEAD']),
+    mk('terrakion','Terrakion',['rock','fighting'],{atk:260,def:192,hp:209},['SMACK_DOWN','DOUBLE_KICK','ZEN_HEADBUTT'],['ROCK_SLIDE','CLOSE_COMBAT','EARTHQUAKE','SACRED_SWORD']),
+    mk('virizion','Virizion',['grass','fighting'],{atk:192,def:229,hp:209},['DOUBLE_KICK','QUICK_ATTACK','ZEN_HEADBUTT'],['LEAF_BLADE','SACRED_SWORD','STONE_EDGE','CLOSE_COMBAT']),
+    mk('tornadus_incarnate','Tornadus (Incarnate)',['flying'],{atk:266,def:164,hp:188},['AIR_SLASH','ASTONISH','BITE'],['HURRICANE','GRASS_KNOT','HEAT_WAVE','FOCUS_BLAST','DARK_PULSE','HYPER_BEAM']),
+    (() => {
+      const p = mk('tornadus_therian','Tornadus (Therian)',['flying'],{atk:238,def:189,hp:188},['GUST','ASTONISH'],['BLEAKWIND_STORM','HURRICANE','PSYCHIC','HEAT_WAVE','FOCUS_BLAST']);
+      p.eliteChargedMoves = ['BLEAKWIND_STORM']; // legacy — signature move, Elite Charged TM
+      return p;
+    })(),
+    mk('thundurus_incarnate','Thundurus (Incarnate)',['electric','flying'],{atk:266,def:164,hp:188},['THUNDER_SHOCK','ASTONISH'],['THUNDER','THUNDER_PUNCH','BRICK_BREAK','CRUNCH']),
+    (() => {
+      const p = mk('thundurus_therian','Thundurus (Therian)',['electric','flying'],{atk:295,def:161,hp:188},['VOLT_SWITCH','BITE'],['WILDBOLT_STORM','THUNDER','THUNDERBOLT','CRUNCH','FOCUS_BLAST','SLUDGE_WAVE']);
+      p.eliteChargedMoves = ['WILDBOLT_STORM']; // legacy — signature move, Elite Charged TM
+      return p;
+    })(),
+    mk('landorus_incarnate','Landorus (Incarnate)',['ground','flying'],{atk:261,def:182,hp:205},['MUD_SHOT','ROCK_THROW'],['EARTH_POWER','ROCK_SLIDE','OUTRAGE','FOCUS_BLAST']),
+    (() => {
+      const p = mk('landorus_therian','Landorus (Therian)',['ground','flying'],{atk:289,def:179,hp:205},['MUD_SHOT','EXTRASENSORY'],['SANDSEAR_STORM','ROCK_SLIDE','EARTH_POWER','OUTRAGE','FOCUS_BLAST','BULLDOZE','EARTHQUAKE','STONE_EDGE','SUPERPOWER']);
+      p.eliteChargedMoves = ['SANDSEAR_STORM']; // legacy — signature move, Elite Charged TM
+      return p;
+    })(),
+    mk('enamorus_incarnate','Enamorus (Incarnate)',['fairy','flying'],{atk:281,def:162,hp:179},['FAIRY_WIND','ASTONISH','ZEN_HEADBUTT'],['DAZZLING_GLEAM','FLY','GRASS_KNOT']),
+    mk('enamorus_therian','Enamorus (Therian)',['fairy','flying'],{atk:250,def:201,hp:179},['FAIRY_WIND','ASTONISH','EXTRASENSORY'],['FLY','MOONBLAST','EARTH_POWER','MYSTICAL_FIRE']), // real Therian moveset — Zen Headbutt/Dazzling Gleam/Grass Knot were originally planned but removed before release, confirmed by Bulbapedia/Fandom
+    (() => {
+      const p = mk('tapu_koko','Tapu Koko',['electric','fairy'],{atk:250,def:181,hp:172},['VOLT_SWITCH','QUICK_ATTACK'],['THUNDERBOLT','THUNDER','DAZZLING_GLEAM','BRAVE_BIRD','NATURES_MADNESS']);
+      p.eliteChargedMoves = ['NATURES_MADNESS']; // legacy — confirmed Elite move for all four Tapus
+      return p;
+    })(),
+    (() => {
+      const p = mk('tapu_lele','Tapu Lele',['psychic','fairy'],{atk:259,def:208,hp:172},['ASTONISH','CONFUSION'],['PSYSHOCK','FOCUS_BLAST','FUTURE_SIGHT','MOONBLAST','DRAINING_KISS','NATURES_MADNESS']); // stats less directly confirmed via this session's sources than other entries — well-established general knowledge figures, flagged accordingly
+      p.eliteChargedMoves = ['NATURES_MADNESS'];
+      return p;
+    })(),
+    (() => {
+      const p = mk('tapu_bulu','Tapu Bulu',['grass','fairy'],{atk:249,def:215,hp:172},['BULLET_SEED','ROCK_SMASH'],['GRASS_KNOT','NATURES_MADNESS','DAZZLING_GLEAM','MEGAHORN','SOLAR_BEAM']);
+      p.eliteChargedMoves = ['NATURES_MADNESS'];
+      return p;
+    })(),
+    (() => {
+      const p = mk('tapu_fini','Tapu Fini',['water','fairy'],{atk:189,def:254,hp:172},['HIDDEN_POWER','WATER_GUN'],['ICE_BEAM','HYDRO_PUMP','NATURES_MADNESS','MOONBLAST','SURF']);
+      p.eliteChargedMoves = ['NATURES_MADNESS'];
+      return p;
+    })(),
+    (() => {
+      const p = mk('reshiram','Reshiram',['dragon','fire'],{atk:275,def:211,hp:205},['FIRE_FANG','DRAGON_BREATH'],['FUSION_FLARE','OVERHEAT','DRACO_METEOR','STONE_EDGE','CRUNCH']);
+      p.eliteChargedMoves = ['FUSION_FLARE']; // legacy — signature move, Elite Charged TM
+      return p;
+    })(),
+    mk('genesect','Genesect',['bug','steel'],{atk:252,def:199,hp:174},['METAL_CLAW','FURY_CUTTER'],['MAGNET_BOMB','X_SCISSOR','HYPER_BEAM','TECHNO_BLAST_NORMAL']),
+    (() => {
+      const p = mk('cresselia','Cresselia',['psychic'],{atk:152,def:258,hp:260},['PSYCHO_CUT','CONFUSION'],['GRASS_KNOT','AURORA_BEAM','FUTURE_SIGHT','MOONBLAST']);
+      p.eliteChargedMoves = ['GRASS_KNOT']; // legacy — confirmed Elite Charged TM move
+      return p;
+    })(),
+    (() => {
+      const p = mk('regieleki','Regieleki',['electric'],{atk:250,def:125,hp:190},['LOCK_ON','THUNDER_SHOCK','VOLT_SWITCH'],['THUNDER','HYPER_BEAM','ZAP_CANNON','THUNDER_CAGE']);
+      p.eliteChargedMoves = ['THUNDER_CAGE']; // legacy — signature move, Elite Charged TM
+      return p;
+    })(),
     (() => {
       const p = mk('blacephalon','Blacephalon',['fire','ghost'],{atk:315,def:148,hp:142},['ASTONISH','INCINERATE'],['SHADOW_BALL','OVERHEAT','MYSTICAL_FIRE','MIND_BLOWN']);
       p.eliteChargedMoves = ['MIND_BLOWN']; // legacy — confirmed by user, reverting my earlier misread of a news article
@@ -1166,40 +1346,75 @@ function loadFallback(){
       p.eliteChargedMoves = ['GLAIVE_RUSH']; // legacy — Community Day exclusive move
       return p;
     })(),
-    mk('regidrago','Regidrago',['dragon'],{atk:224,def:130,hp:257},['DRAGON_BREATH'],['DRAGON_ENERGY','OUTRAGE']),
-    mk('keldeo_resolute','Keldeo (Resolute)',['water','fighting'],{atk:229,def:190,hp:216},['LOW_KICK','WATERFALL'],['SECRET_SWORD','HYDRO_PUMP']),
+    (() => {
+      const p = mk('regidrago','Regidrago',['dragon'],{atk:202,def:101,hp:400},['BITE','DRAGON_BREATH'],['DRAGON_ENERGY','OUTRAGE','HYPER_BEAM','VISE_GRIP','DRAGON_PULSE','BREAKING_SWIPE']);
+      p.eliteFastMoves = ['DRAGON_BREATH']; // legacy
+      p.eliteChargedMoves = ['DRAGON_ENERGY']; // legacy — confirmed not on the boss's current "Available Charged Attacks" list
+      return p;
+    })(),
+    mk('keldeo_resolute','Keldeo (Resolute)',['water','fighting'],{atk:260,def:192,hp:209},['LOW_KICK','POISON_JAB'],['SECRET_SWORD','HYDRO_PUMP','AQUA_JET','X_SCISSOR','CLOSE_COMBAT','SACRED_SWORD']), // corrected — Waterfall was fabricated/not a real move; should be Poison Jab
     // Newly-released Mega Evolutions (2026), verified against PokeBase cross-references
     mk('raichu_mega_x','Raichu (Mega X)',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK'],['WILD_CHARGE','THUNDERBOLT']),
     mk('raichu_mega_y','Raichu (Mega Y)',['electric'],{atk:339,def:157,hp:155},['THUNDER_SHOCK'],['WILD_CHARGE','THUNDERBOLT']),
-    mk('mewtwo_mega_x','Mewtwo (Mega X)',['psychic','fighting'],{atk:399,def:215,hp:228},['PSYCHO_CUT','COUNTER'],['PSYSTRIKE','CLOSE_COMBAT']),
+    mk('mewtwo_mega_x','Mewtwo (Mega X)',['psychic','fighting'],{atk:399,def:215,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','CLOSE_COMBAT','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC']),
     mk('victreebel_mega','Victreebel (Mega)',['grass','poison'],{atk:265,def:181,hp:190},['RAZOR_LEAF','MAGICAL_LEAF','ACID'],['SLUDGE_BOMB','SOLAR_BEAM','LEAF_BLADE','ACID_SPRAY','LEAF_TORNADO']),
-    mk('dragonite_mega','Dragonite (Mega)',['dragon','flying'],{atk:299,def:255,hp:209},['DRAGON_BREATH'],['OUTRAGE','DRACO_METEOR']),
+    (() => {
+      const p = mk('dragonite_mega','Dragonite (Mega)',['dragon','flying'],{atk:299,def:255,hp:209},['DRAGON_BREATH','STEEL_WING','DRAGON_TAIL'],['OUTRAGE','DRACO_METEOR','HYPER_BEAM','THUNDER_PUNCH','DRAGON_PULSE','DRAGON_CLAW','HURRICANE','SUPERPOWER']);
+      p.eliteChargedMoves = ['DRACO_METEOR']; // legacy
+      return p;
+    })(),
     mk('malamar_mega','Malamar (Mega)',['dark','psychic'],{atk:208,def:222,hp:200},['PSYCHO_CUT'],['FOUL_PLAY','PSYCHIC']),
-    mk('falinks_mega','Falinks (Mega)',['fighting'],{atk:267,def:229,hp:163},['COUNTER'],['CLOSE_COMBAT','CROSS_CHOP']),
+    mk('falinks_mega','Falinks (Mega)',['fighting'],{atk:267,def:229,hp:163},['COUNTER','ROCK_SMASH'],['SUPERPOWER','BRICK_BREAK','MEGAHORN']), // corrected — Close Combat and Cross Chop were fabricated/not real moves for this Pokémon
     mk('skarmory_mega','Skarmory (Mega)',['steel','flying'],{atk:273,def:228,hp:163},['AIR_SLASH','STEEL_WING'],['FLASH_CANNON','BRAVE_BIRD','SKY_ATTACK']),
-    mk('starmie_mega','Starmie (Mega)',['water','psychic'],{atk:229,def:155,hp:155},['WATERFALL'],['HYDRO_PUMP','PSYCHIC']),
-    mk('zamazenta_hero','Zamazenta (Hero)',['fighting'],{atk:263,def:263,hp:210},['SNARL','ICE_FANG','QUICK_ATTACK','METAL_CLAW'],['CLOSE_COMBAT','CRUNCH']),
-    mk('zamazenta_crowned','Zamazenta (Crowned Shield)',['fighting','steel'],{atk:250,def:292,hp:192},['METAL_CLAW'],['BEHEMOTH_BASH','CLOSE_COMBAT']),
-    mk('eternatus','Eternatus',['poison','dragon'],{atk:278,def:192,hp:268},['DRAGON_TAIL'],['DYNAMAX_CANNON','DRACO_METEOR','FOCUS_BLAST']),
-    mk('kyurem_black','Kyurem (Black)',['dragon','ice'],{atk:279,def:207,hp:245},['DRAGON_BREATH'],['FREEZE_SHOCK','OUTRAGE','BLIZZARD']),
-    mk('kyurem_white','Kyurem (White)',['dragon','ice'],{atk:310,def:183,hp:245},['DRAGON_BREATH','ICE_FANG'],['ICE_BURN','DRACO_METEOR','BLIZZARD']),
+    mk('starmie_mega','Starmie (Mega)',['water','psychic'],{atk:229,def:155,hp:155},['TACKLE','WATER_GUN','HIDDEN_POWER','PSYWAVE'],['PSYBEAM','ICE_BEAM','AQUA_JET','POWER_GEM','THUNDER','HYDRO_PUMP','PSYCHIC','SURF']), // corrected — Waterfall was fabricated/not real; missing most of the real 12-move kit
+    mk('zamazenta_hero','Zamazenta (Hero)',['fighting'],{atk:254,def:236,hp:192},['SNARL','ICE_FANG','QUICK_ATTACK','METAL_CLAW'],['CLOSE_COMBAT','CRUNCH','IRON_HEAD','MOONBLAST']),
+    mk('zamazenta_crowned','Zamazenta (Crowned Shield)',['fighting','steel'],{atk:250,def:292,hp:192},['METAL_CLAW','ICE_FANG'],['BEHEMOTH_BASH','CLOSE_COMBAT','MOONBLAST','GIGA_IMPACT']),
+    mk('eternatus','Eternatus',['poison','dragon'],{atk:278,def:192,hp:268},['DRAGON_TAIL','POISON_JAB'],['DYNAMAX_CANNON','DRACO_METEOR','FOCUS_BLAST','DRAGON_PULSE','FLAMETHROWER','SLUDGE_BOMB']),
+    mk('kyurem_black','Kyurem (Black)',['dragon','ice'],{atk:310,def:183,hp:245},['DRAGON_TAIL','SHADOW_CLAW'],['FREEZE_SHOCK','OUTRAGE','BLIZZARD','FUSION_BOLT','STONE_EDGE','IRON_HEAD']), // corrected — Dragon Breath was fabricated; real fast moves are Dragon Tail/Shadow Claw; added missing charge moves
+    mk('kyurem_white','Kyurem (White)',['dragon','ice'],{atk:310,def:183,hp:245},['DRAGON_BREATH','ICE_FANG','STEEL_WING'],['ICE_BURN','BLIZZARD','FUSION_FLARE','ANCIENT_POWER','DRAGON_PULSE','FOCUS_BLAST']), // corrected — Draco Meteor was fabricated/not real; added confirmed Fusion Flare
     // Mega-evolved Pokémon
-    mk('rayquaza_mega','Rayquaza (Mega)',['dragon','flying'],{atk:377,def:210,hp:227},['DRAGON_TAIL'],['OUTRAGE','ANCIENT_POWER','BREAKING_SWIPE','DRAGON_ASCENT']),
-    mk('mewtwo_mega_y','Mewtwo (Mega Y)',['psychic'],{atk:413,def:223,hp:228},['PSYCHO_CUT','COUNTER'],['PSYSTRIKE','FOCUS_BLAST']),
-    mk('charizard_mega_x','Charizard (Mega X)',['fire','dragon'],{atk:273,def:213,hp:186},['DRAGON_BREATH'],['DRACO_METEOR','CRUNCH']),
-    mk('charizard_mega_y','Charizard (Mega Y)',['fire','flying'],{atk:319,def:212,hp:186},['FIRE_FANG'],['OVERHEAT','SOLAR_BEAM']),
-    mk('garchomp_mega','Garchomp (Mega)',['dragon','ground'],{atk:337,def:241,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE']),
-    mk('metagross_mega','Metagross (Mega)',['steel','psychic'],{atk:338,def:264,hp:190},['BULLET_PUNCH'],['METEOR_MASH','EARTHQUAKE']),
-    mk('gyarados_mega','Gyarados (Mega)',['water','dark'],{atk:237,def:206,hp:216},['WATERFALL'],['CRUNCH','HYDRO_PUMP']),
-    mk('tyranitar_mega','Tyranitar (Mega)',['rock','dark'],{atk:297,def:222,hp:225},['BITE','DRAGON_BREATH','IRON_TAIL','SMACK_DOWN'],['STONE_EDGE','FIRE_BLAST','CRUNCH','BRUTAL_SWING']),
-    mk('latios_mega','Latios (Mega)',['dragon','psychic'],{atk:319,def:240,hp:190},['DRAGON_BREATH'],['DRACO_METEOR','PSYCHIC']),
+    (() => {
+      const p = mk('rayquaza_mega','Rayquaza (Mega)',['dragon','flying'],{atk:377,def:210,hp:227},['DRAGON_TAIL','AIR_SLASH'],['OUTRAGE','ANCIENT_POWER','BREAKING_SWIPE','DRAGON_ASCENT','AERIAL_ACE','HURRICANE']);
+      p.eliteChargedMoves = ['DRAGON_ASCENT']; // legacy — confirmed by user; my earlier reasoning conflated a player's own prerequisite for Mega Evolving with what the raid boss itself uses
+      return p;
+    })(),
+    mk('mewtwo_mega_y','Mewtwo (Mega Y)',['psychic'],{atk:413,def:223,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC']),
+    (() => {
+      const p = mk('charizard_mega_x','Charizard (Mega X)',['fire','dragon'],{atk:273,def:213,hp:186},['AIR_SLASH','FIRE_SPIN','DRAGON_BREATH','EMBER','WING_ATTACK'],['DRAGON_CLAW','FIRE_BLAST','OVERHEAT','BLAST_BURN','FLAMETHROWER','AIR_CUTTER']); // corrected — Draco Meteor and Crunch were fabricated/not real moves; Air Cutter confirmed real and added via PvPoke's raw gamemaster.json
+      p.eliteFastMoves = ['DRAGON_BREATH','EMBER','WING_ATTACK']; // legacy
+      p.eliteChargedMoves = ['BLAST_BURN','FLAMETHROWER']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('charizard_mega_y','Charizard (Mega Y)',['fire','flying'],{atk:319,def:212,hp:186},['AIR_SLASH','FIRE_SPIN','DRAGON_BREATH','EMBER','WING_ATTACK'],['DRAGON_CLAW','FIRE_BLAST','OVERHEAT','BLAST_BURN','FLAMETHROWER','AIR_CUTTER']); // corrected — Fire Fang and Solar Beam were fabricated/not real moves; Air Cutter confirmed real and added via PvPoke's raw gamemaster.json
+      p.eliteFastMoves = ['DRAGON_BREATH','EMBER','WING_ATTACK']; // legacy
+      p.eliteChargedMoves = ['BLAST_BURN','FLAMETHROWER']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('garchomp_mega','Garchomp (Mega)',['dragon','ground'],{atk:337,def:241,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER']);
+      p.eliteChargedMoves = ['EARTH_POWER']; // legacy — confirmed needs Elite Charged TM
+      return p;
+    })(),
+    mk('metagross_mega','Metagross (Mega)',['steel','psychic'],{atk:338,def:264,hp:190},['BULLET_PUNCH','FURY_CUTTER','SHADOW_CLAW','ZEN_HEADBUTT'],['METEOR_MASH','EARTHQUAKE','FLASH_CANNON','PSYCHIC']),
+    mk('gyarados_mega','Gyarados (Mega)',['water','dark'],{atk:237,def:206,hp:216},['BITE','DRAGON_BREATH','DRAGON_TAIL','WATERFALL'],['AQUA_TAIL','TWISTER','DRAGON_PULSE','HYDRO_PUMP','OUTRAGE','CRUNCH']),
+    (() => {
+      const p = mk('tyranitar_mega','Tyranitar (Mega)',['rock','dark'],{atk:297,def:222,hp:225},['BITE','DRAGON_BREATH','IRON_TAIL','SMACK_DOWN'],['STONE_EDGE','FIRE_BLAST','CRUNCH','BRUTAL_SWING']);
+      p.eliteFastMoves = ['SMACK_DOWN']; // legacy — confirmed Elite Move
+      return p;
+    })(),
+    (() => {
+      const p = mk('latios_mega','Latios (Mega)',['dragon','psychic'],{atk:335,def:241,hp:190},['DRAGON_BREATH','ZEN_HEADBUTT'],['DRAGON_CLAW','PSYCHIC','SOLAR_BEAM','AURA_SPHERE','LUSTER_PURGE']); // corrected — Draco Meteor was fabricated/not real
+      p.eliteChargedMoves = ['LUSTER_PURGE']; // legacy
+      return p;
+    })(),
     // Fully evolved Ice-type Pokémon
     mk('weavile','Weavile',['dark','ice'],{atk:246,def:103,hp:172},['FROST_BREATH'],['AVALANCHE','FOUL_PLAY','ICE_PUNCH']),
     mk('glaceon','Glaceon',['ice'],{atk:238,def:205,hp:136},['FROST_BREATH'],['AVALANCHE','ICE_BEAM']),
     mk('mamoswine','Mamoswine',['ice','ground'],{atk:247,def:146,hp:242},['POWDER_SNOW'],['AVALANCHE','BULLDOZE','ICE_PUNCH']),
-    mk('kyurem','Kyurem',['dragon','ice'],{atk:246,def:170,hp:245},['DRAGON_BREATH'],['GLACIATE','DRACO_METEOR','BLIZZARD']),
+    mk('kyurem','Kyurem',['dragon','ice'],{atk:246,def:170,hp:245},['DRAGON_BREATH','STEEL_WING'],['GLACIATE','DRACO_METEOR','BLIZZARD','DRAGON_CLAW']),
     (() => {
-      const p = mk('articuno','Articuno',['ice','flying'],{atk:192,def:249,hp:207},['FROST_BREATH','ICE_SHARD','POWDER_SNOW'],['ICE_BEAM','ANCIENT_POWER','BLIZZARD','ICY_WIND','HURRICANE']);
+      const p = mk('articuno','Articuno',['ice','flying'],{atk:192,def:236,hp:207},['FROST_BREATH','ICE_SHARD','POWDER_SNOW'],['ICE_BEAM','ANCIENT_POWER','BLIZZARD','ICY_WIND','HURRICANE','TRIPLE_AXEL']);
       p.eliteFastMoves = ['POWDER_SNOW']; // legacy — original launch fast move, no longer normally obtainable
       p.eliteChargedMoves = ['HURRICANE']; // legacy — Elite Charge TM / special event only
       return p;
@@ -1208,16 +1423,24 @@ function loadFallback(){
     mk('avalugg','Avalugg',['ice'],{atk:134,def:190,hp:225},['POWDER_SNOW'],['AVALANCHE','CRUNCH']), // not a raid boss (ex-Tier 3) — attacker roster only
     mk('beartic','Beartic',['ice'],{atk:233,def:152,hp:216},['POWDER_SNOW','CHARM'],['ICE_PUNCH','PLAY_ROUGH']), // not a raid boss (ex-Tier 3) — attacker roster only; stats corrected (was atk:181, real is 233) and CHARM added (confirmed part of its best moveset) while restoring
     mk('azelf','Azelf',['psychic'],{atk:270,def:151,hp:181},['CONFUSION','EXTRASENSORY'],['FUTURE_SIGHT','FIRE_BLAST','SWIFT']),
+    mk('uxie','Uxie',['psychic'],{atk:156,def:270,hp:181},['CONFUSION','EXTRASENSORY'],['FUTURE_SIGHT','THUNDER','SWIFT']),
+    mk('mesprit','Mesprit',['psychic'],{atk:212,def:212,hp:190},['CONFUSION','EXTRASENSORY'],['FUTURE_SIGHT','BLIZZARD','SWIFT']),
     mk('walrein','Walrein',['ice','water'],{atk:182,def:176,hp:242},['POWDER_SNOW'],['BLIZZARD','EARTHQUAKE']),
     mk('abomasnow','Abomasnow',['grass','ice'],{atk:173,def:186,hp:207},['POWDER_SNOW'],['WEATHER_BALL_ICE','ENERGY_BALL']),
     mk('abomasnow_mega','Abomasnow (Mega)',['grass','ice'],{atk:240,def:191,hp:207},['POWDER_SNOW'],['WEATHER_BALL_ICE','ENERGY_BALL']),
     mk('froslass','Froslass',['ice','ghost'],{atk:161,def:166,hp:137},['POWDER_SNOW'],['AVALANCHE','SHADOW_BALL']),
-    mk('cloyster','Cloyster',['water','ice'],{atk:186,def:256,hp:137},['FROST_BREATH'],['AVALANCHE','HYDRO_PUMP']),
+    mk('cloyster','Cloyster',['water','ice'],{atk:186,def:256,hp:137},['ICE_SHARD','FROST_BREATH'],['BLIZZARD','HYDRO_PUMP','ICY_WIND','AURORA_BEAM','AVALANCHE','RAZOR_SHELL','LIQUIDATION']),
     mk('lapras','Lapras',['water','ice'],{atk:165,def:180,hp:277},['FROST_BREATH'],['BLIZZARD','ICE_BEAM']),
     mk('ninetales_alolan','Ninetales (Alolan)',['ice','fairy'],{atk:170,def:193,hp:177},['POWDER_SNOW'],['BLIZZARD','DAZZLING_GLEAM']),
     mk('sandslash_alolan','Sandslash (Alolan)',['ice','steel'],{atk:177,def:195,hp:181},['POWDER_SNOW'],['BLIZZARD','IRON_HEAD']),
     mk('vanilluxe','Vanilluxe',['ice'],{atk:201,def:150,hp:181},['FROST_BREATH'],['BLIZZARD','SIGNAL_BEAM']),
-    mk('regice','Regice',['ice'],{atk:159,def:209,hp:190},['FROST_BREATH'],['BLIZZARD','FOCUS_BLAST']),
+    mk('regice','Regice',['ice'],{atk:179,def:309,hp:190},['FROST_BREATH','ROCK_SMASH','LOCK_ON'],['BLIZZARD','FOCUS_BLAST','EARTHQUAKE','THUNDER']),
+    (() => {
+      const p = mk('regirock','Regirock',['rock'],{atk:179,def:309,hp:190},['ROCK_SMASH','LOCK_ON','ROCK_THROW'],['FOCUS_BLAST','EARTHQUAKE','STONE_EDGE','ZAP_CANNON']);
+      p.eliteChargedMoves = ['EARTHQUAKE']; // legacy — confirmed Elite TM move
+      return p;
+    })(),
+    mk('registeel','Registeel',['steel'],{atk:143,def:285,hp:190},['ROCK_SMASH','LOCK_ON','METAL_CLAW'],['FOCUS_BLAST','HYPER_BEAM','FLASH_CANNON','ZAP_CANNON']),
     mk('jynx','Jynx',['ice','psychic'],{atk:177,def:115,hp:146},['FROST_BREATH'],['ICE_PUNCH','FOCUS_BLAST']),
     mk('gigalith','Gigalith',['rock'],{atk:226,def:201,hp:198},['MUD_SLAP','SMACK_DOWN','LOCK_ON'],['ROCK_SLIDE','SOLAR_BEAM','HEAVY_SLAM','SUPERPOWER','METEOR_BEAM']),
     mk('glimmora','Glimmora',['rock','poison'],{atk:246,def:177,hp:195},['ROCK_THROW','SMACK_DOWN'],['POWER_GEM','DAZZLING_GLEAM','SLUDGE_WAVE','METEOR_BEAM']),
@@ -1227,27 +1450,209 @@ function loadFallback(){
     // Ultra Beasts, added by request. Poipole and Naganadel deliberately excluded (Poipole is
     // Special-Research-only, matching the NEVER_RAID_BOSS_NAMES exclusion elsewhere in this file;
     // Naganadel only evolves from it, so isn't independently raid-obtainable either).
-    mk('nihilego','Nihilego',['rock','poison'],{atk:249,def:210,hp:240},['ACID','POISON_JAB'],['SLUDGE_BOMB','ROCK_SLIDE','POWER_GEM','GUNK_SHOT']),
-    mk('buzzwole','Buzzwole',['bug','fighting'],{atk:236,def:196,hp:216},['COUNTER'],['SUPERPOWER','POISON_JAB','FELL_STINGER','DYNAMIC_PUNCH']),
-    mk('pheromosa','Pheromosa',['bug','fighting'],{atk:316,def:85,hp:174},['BUG_BITE','LOW_KICK'],['BUG_BUZZ','FOCUS_BLAST']),
+    mk('nihilego','Nihilego',['rock','poison'],{atk:249,def:210,hp:240},['ACID','POISON_JAB','POUND'],['SLUDGE_BOMB','ROCK_SLIDE','POWER_GEM','GUNK_SHOT']),
+    mk('buzzwole','Buzzwole',['bug','fighting'],{atk:236,def:196,hp:216},['COUNTER','POISON_JAB'],['LUNGE','SUPERPOWER','FELL_STINGER','POWER_UP_PUNCH']), // corrected — Poison Jab was miscategorized as a charge move, and Dynamic Punch (not real for this Pokémon) was replaced with its actual charge kit
+    mk('pheromosa','Pheromosa',['bug','fighting'],{atk:316,def:85,hp:174},['BUG_BITE','LOW_KICK'],['BUG_BUZZ','FOCUS_BLAST','CLOSE_COMBAT','LUNGE']),
     mk('xurkitree','Xurkitree',['electric'],{atk:330,def:144,hp:195},['THUNDER_SHOCK','SPARK'],['DISCHARGE','THUNDER','POWER_WHIP','DAZZLING_GLEAM']),
-    mk('celesteela','Celesteela',['steel','flying'],{atk:207,def:199,hp:219},['AIR_SLASH','SMACK_DOWN'],['HEAVY_SLAM','BODY_SLAM','IRON_HEAD']),
+    mk('celesteela','Celesteela',['steel','flying'],{atk:207,def:199,hp:219},['AIR_SLASH','SMACK_DOWN'],['HEAVY_SLAM','BODY_SLAM','IRON_HEAD','BULLDOZE']), // added missing Bulldoze
     mk('kartana','Kartana',['grass','steel'],{atk:323,def:182,hp:139},['FURY_CUTTER','AIR_SLASH','RAZOR_LEAF'],['AERIAL_ACE','NIGHT_SLASH','X_SCISSOR','LEAF_BLADE','SACRED_SWORD']),
     mk('guzzlord','Guzzlord',['dark','dragon'],{atk:188,def:99,hp:440},['SNARL','DRAGON_TAIL'],['DRAGON_CLAW','SLUDGE_BOMB','CRUNCH','BRUTAL_SWING']),
-    mk('stakataka','Stakataka',['rock','steel'],{atk:213,def:298,hp:156},['TAKE_DOWN','ROCK_THROW'],['STONE_EDGE','FLASH_CANNON']),
+    mk('stakataka','Stakataka',['rock','steel'],{atk:213,def:298,hp:156},['TAKE_DOWN','ROCK_THROW'],['STONE_EDGE','FLASH_CANNON','BULLDOZE']),
     mk('vigoroth','Vigoroth',['normal'],{atk:159,def:145,hp:190},['SCRATCH','COUNTER'],['BODY_SLAM','BRICK_BREAK','BULLDOZE','ROCK_SLIDE']),
-    mk('gengar','Gengar',['ghost','poison'],{atk:261,def:149,hp:155},['SUCKER_PUNCH','LICK','SHADOW_CLAW','HEX'],['DARK_PULSE','SHADOW_BALL','SLUDGE_BOMB','SLUDGE_WAVE','PSYCHIC','FOCUS_BLAST']),
+    (() => {
+      const p = mk('gengar','Gengar',['ghost','poison'],{atk:261,def:149,hp:155},['SUCKER_PUNCH','LICK','SHADOW_CLAW','HEX'],['DARK_PULSE','FOCUS_BLAST','DRAIN_PUNCH','SHADOW_PUNCH','SHADOW_BALL','SLUDGE_BOMB','SLUDGE_WAVE','PSYCHIC']); // added missing Drain Punch and Shadow Punch from its real 8-move charge kit
+      p.eliteFastMoves = ['LICK']; // legacy
+      p.eliteChargedMoves = ['DARK_PULSE','SHADOW_PUNCH','SLUDGE_WAVE','PSYCHIC']; // legacy
+      return p;
+    })(),
     mk('greninja','Greninja',['water','dark'],{atk:223,def:152,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN','AERIAL_ACE'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON']),
     mk('magnezone','Magnezone',['electric','steel'],{atk:238,def:205,hp:172},['SPARK','CHARGE_BEAM','VOLT_SWITCH'],['WILD_CHARGE','MIRROR_SHOT','FLASH_CANNON']),
     mk('hitmonchan','Hitmonchan',['fighting'],{atk:193,def:197,hp:137},['COUNTER','BULLET_PUNCH'],['FIRE_PUNCH','THUNDER_PUNCH','ICE_PUNCH','CLOSE_COMBAT','POWER_UP_PUNCH','BRICK_BREAK']),
-    mk('lucario','Lucario',['fighting','steel'],{atk:236,def:144,hp:172},['COUNTER','BULLET_PUNCH'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK']),
+    (() => {
+      const p = mk('lucario','Lucario',['fighting','steel'],{atk:236,def:144,hp:172},['COUNTER','BULLET_PUNCH','FORCE_PALM'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK']); // added confirmed real fast move Force Palm (added to Lucario's movepool July 2024)
+      p.eliteFastMoves = ['FORCE_PALM']; // legacy — Elite Fast TM / event-exclusive
+      return p;
+    })(),
+    (() => {
+      const p = mk('lucario_mega','Lucario (Mega)',['fighting','steel'],{atk:310,def:175,hp:172},['COUNTER','BULLET_PUNCH','FORCE_PALM'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK','THUNDER_PUNCH']); // stats corrected via direct db.pokemongohub.net fetch — was 314/197, real is 310/175
+      p.eliteFastMoves = ['FORCE_PALM']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('gengar_mega','Gengar (Mega)',['ghost','poison'],{atk:349,def:199,hp:155},['SUCKER_PUNCH','LICK','SHADOW_CLAW','HEX'],['DARK_PULSE','FOCUS_BLAST','DRAIN_PUNCH','SHADOW_PUNCH','SHADOW_BALL','SLUDGE_BOMB','SLUDGE_WAVE','PSYCHIC']); // stats corrected via direct db.pokemongohub.net fetch — was 328/194, real is 349/199; added missing Drain Punch and Shadow Punch from its real 8-move charge kit
+      p.eliteFastMoves = ['LICK']; // legacy
+      p.eliteChargedMoves = ['DARK_PULSE','SHADOW_PUNCH','SLUDGE_WAVE','PSYCHIC']; // legacy — all four confirmed with an asterisk on gohub
+      return p;
+    })(),
+    (() => {
+      const p = mk('salamence_mega','Salamence (Mega)',['dragon','flying'],{atk:310,def:251,hp:216},['BITE','DRAGON_TAIL','FIRE_FANG'],['CRUNCH','BRUTAL_SWING','OUTRAGE','DRACO_METEOR','FIRE_BLAST','FLY','HYDRO_PUMP']); // confirmed via direct db.pokemongohub.net fetch
+      p.eliteChargedMoves = ['OUTRAGE']; // legacy — confirmed with an asterisk on gohub
+      return p;
+    })(),
+    (() => {
+      const p = mk('gardevoir_mega','Gardevoir (Mega)',['psychic','fairy'],{atk:326,def:229,hp:216},['CHARM','CONFUSION','CHARGE_BEAM','MAGICAL_LEAF'],['DAZZLING_GLEAM','PSYCHIC','SHADOW_BALL','TRIPLE_AXEL']); // confirmed via official raid-guide moveset listing
+      p.eliteChargedMoves = ['TRIPLE_AXEL']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('alakazam_mega','Alakazam (Mega)',['psychic'],{atk:367,def:207,hp:137},['PSYCHO_CUT','CONFUSION','COUNTER'],['SHADOW_BALL','DAZZLING_GLEAM','PSYCHIC','FIRE_PUNCH','FOCUS_BLAST','FUTURE_SIGHT']);
+      p.eliteChargedMoves = ['PSYCHIC']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('venusaur_mega','Venusaur (Mega)',['grass','poison'],{atk:241,def:246,hp:190},['VINE_WHIP','RAZOR_LEAF'],['SLUDGE','PETAL_BLIZZARD','SLUDGE_BOMB','SOLAR_BEAM','FRENZY_PLANT']);
+      p.eliteChargedMoves = ['FRENZY_PLANT']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('blastoise_mega','Blastoise (Mega)',['water'],{atk:264,def:237,hp:188},['BITE','ROLLOUT','WATER_GUN'],['ICE_BEAM','SKULL_BASH','FLASH_CANNON','HYDRO_PUMP','HYDRO_CANNON']); // confirmed via direct db.pokemongohub.net fetch
+      p.eliteChargedMoves = ['HYDRO_CANNON']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('beedrill_mega','Beedrill (Mega)',['bug','poison'],{atk:303,def:148,hp:163},['BUG_BITE','INFESTATION','POISON_JAB','POISON_STING'],['AERIAL_ACE','SLUDGE_BOMB','X_SCISSOR','FELL_STINGER','DRILL_RUN']); // confirmed directly via PvPoke's raw gamemaster.json
+      p.eliteFastMoves = ['BUG_BITE'];
+      p.eliteChargedMoves = ['DRILL_RUN'];
+      return p;
+    })(),
+    (() => {
+      const p = mk('pidgeot_mega','Pidgeot (Mega)',['normal','flying'],{atk:280,def:175,hp:195},['AIR_SLASH','STEEL_WING','WING_ATTACK','GUST'],['AERIAL_ACE','AIR_CUTTER','BRAVE_BIRD','HURRICANE','FEATHER_DANCE','HEAT_WAVE','TWISTER']); // confirmed directly via PvPoke's raw gamemaster.json
+      p.eliteFastMoves = ['WING_ATTACK','GUST']; // legacy — confirmed via gamemaster.json eliteMoves field
+      p.eliteChargedMoves = ['AIR_CUTTER']; // legacy — Air Cutter is a charge move here, distinct from Beedrill/Zubat's identically-named fast move
+      return p;
+    })(),
+    (() => {
+      const p = mk('ampharos_mega','Ampharos (Mega)',['electric','dragon'],{atk:296,def:227,hp:207},['CHARGE_BEAM','VOLT_SWITCH'],['POWER_GEM','THUNDER_PUNCH','THUNDER','DRAGON_PULSE','FOCUS_BLAST','ZAP_CANNON','BRUTAL_SWING','TRAILBLAZE']); // moveset confirmed via db.pokemongohub.net; exact Mega ATK/DEF less directly re-confirmed this round than most entries (base Ampharos 211/169/207 is directly confirmed)
+      p.eliteChargedMoves = ['DRAGON_PULSE']; // legacy — confirmed Elite TM move
+      return p;
+    })(),
+    (() => {
+      const p = mk('blaziken_mega','Blaziken (Mega)',['fire','fighting'],{atk:329,def:168,hp:190},['COUNTER','EMBER','FIRE_SPIN'],['FOCUS_BLAST','AURA_SPHERE','OVERHEAT','BLAST_BURN','BLAZE_KICK','BRAVE_BIRD','STONE_EDGE']); // stats corrected via direct db.pokemongohub.net fetch — was 292/158, real is 329/168; also added missing Ember (fast) and Focus Blast (charge) from its real full kit. Confirmed current active Mega raid boss
+      p.eliteChargedMoves = ['BLAST_BURN','STONE_EDGE']; // legacy — both confirmed with an asterisk on gohub
+      return p;
+    })(),
     mk('emboar','Emboar',['fire','fighting'],{atk:235,def:127,hp:242},['LOW_KICK','EMBER'],['HEAT_WAVE','ROCK_SLIDE','FOCUS_BLAST','FLAME_CHARGE','BLAST_BURN']),
     mk('rhyperior','Rhyperior',['ground','rock'],{atk:241,def:190,hp:251},['MUD_SHOT','SMACK_DOWN'],['ROCK_WRECKER','EARTHQUAKE','STONE_EDGE','SURF','SUPERPOWER']),
     mk('heatran','Heatran',['fire','steel'],{atk:251,def:213,hp:209},['FIRE_SPIN','BUG_BITE'],['FIRE_BLAST','IRON_HEAD','STONE_EDGE','FLAMETHROWER','EARTH_POWER','MAGMA_STORM']),
-    mk('incineroar','Incineroar',['fire','dark'],{atk:214,def:175,hp:216},['SNARL','DOUBLE_KICK','FIRE_FANG'],['DARK_PULSE','BRUTAL_SWING','DARKEST_LARIAT','FIRE_BLAST','BLAST_BURN','BLAZE_KICK'])
+    mk('incineroar','Incineroar',['fire','dark'],{atk:214,def:175,hp:216},['SNARL','DOUBLE_KICK','FIRE_FANG'],['DARK_PULSE','BRUTAL_SWING','DARKEST_LARIAT','FIRE_BLAST','BLAST_BURN','BLAZE_KICK']),
+    (() => {
+      const p = mk('slowbro_mega','Slowbro (Mega)',['water','psychic'],{atk:224,def:259,hp:216},['CONFUSION','WATER_GUN'],['ICE_BEAM','PSYCHIC','WATER_PULSE','SURF','SCALD','DRAIN_PUNCH']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['SURF']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('kangaskhan_mega','Kangaskhan (Mega)',['normal'],{atk:246,def:210,hp:233},['LOW_KICK','MUD_SLAP'],['BRICK_BREAK','CRUNCH','EARTHQUAKE','OUTRAGE','STOMP','POWER_UP_PUNCH']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['BRICK_BREAK','STOMP']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('pinsir_mega','Pinsir (Mega)',['bug','flying'],{atk:305,def:231,hp:163},['BUG_BITE','FURY_CUTTER','ROCK_SMASH'],['CLOSE_COMBAT','SUBMISSION','VISE_GRIP','X_SCISSOR','SUPERPOWER']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['SUBMISSION']; // legacy
+      return p;
+    })(),
+    mk('aerodactyl_mega','Aerodactyl (Mega)',['rock','flying'],{atk:292,def:210,hp:190},['BITE','STEEL_WING','ROCK_THROW','DRAGON_BREATH'],['ANCIENT_POWER','HYPER_BEAM','IRON_HEAD','ROCK_SLIDE','EARTH_POWER']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('steelix_mega','Steelix (Mega)',['steel','ground'],{atk:212,def:327,hp:181},['DRAGON_TAIL','IRON_TAIL','THUNDER_FANG'],['CRUNCH','EARTHQUAKE','HEAVY_SLAM','PSYCHIC_FANGS','BREAKING_SWIPE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('scizor_mega','Scizor (Mega)',['bug','steel'],{atk:279,def:250,hp:172},['BULLET_PUNCH','FURY_CUTTER'],['IRON_HEAD','NIGHT_SLASH','X_SCISSOR','TRAILBLAZE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('heracross_mega','Heracross (Mega)',['bug','fighting'],{atk:334,def:223,hp:190},['COUNTER','STRUGGLE_BUG','FURY_CUTTER'],['CLOSE_COMBAT','EARTHQUAKE','MEGAHORN','ROCK_BLAST','UPPER_HAND','ROCK_TOMB']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('houndoom_mega','Houndoom (Mega)',['dark','fire'],{atk:289,def:194,hp:181},['FIRE_FANG','SNARL'],['CRUNCH','FIRE_BLAST','FLAMETHROWER','FOUL_PLAY']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    (() => {
+      const p = mk('sceptile_mega','Sceptile (Mega)',['grass','dragon'],{atk:320,def:186,hp:172},['BULLET_SEED','FURY_CUTTER'],['AERIAL_ACE','EARTHQUAKE','LEAF_BLADE','FRENZY_PLANT','DRAGON_CLAW','BREAKING_SWIPE']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['FRENZY_PLANT']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('swampert_mega','Swampert (Mega)',['water','ground'],{atk:283,def:218,hp:225},['MUD_SHOT','WATER_GUN'],['EARTHQUAKE','SLUDGE_WAVE','SURF','HYDRO_CANNON','MUDDY_WATER','SLUDGE']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['HYDRO_CANNON']; // legacy
+      return p;
+    })(),
+    mk('sableye_mega','Sableye (Mega)',['dark','ghost'],{atk:151,def:216,hp:137},['FEINT_ATTACK','SHADOW_CLAW'],['FOUL_PLAY','POWER_GEM','SHADOW_SNEAK','DAZZLING_GLEAM','DRAIN_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('mawile_mega','Mawile (Mega)',['steel','fairy'],{atk:188,def:217,hp:137},['ASTONISH','BITE','FIRE_FANG','ICE_FANG','FAIRY_WIND'],['IRON_HEAD','PLAY_ROUGH','VISE_GRIP','POWER_UP_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('aggron_mega','Aggron (Mega)',['steel'],{atk:247,def:331,hp:172},['DRAGON_TAIL','IRON_TAIL','SMACK_DOWN','METAL_SOUND'],['HEAVY_SLAM','STONE_EDGE','THUNDER','ROCK_TOMB','METEOR_BEAM']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('medicham_mega','Medicham (Mega)',['fighting','psychic'],{atk:205,def:179,hp:155},['COUNTER','PSYCHO_CUT'],['DYNAMIC_PUNCH','ICE_PUNCH','PSYCHIC','POWER_UP_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('manectric_mega','Manectric (Mega)',['electric'],{atk:286,def:179,hp:172},['CHARGE_BEAM','SNARL','THUNDER_FANG'],['FLAME_BURST','THUNDER','WILD_CHARGE','OVERHEAT','PSYCHIC_FANGS']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('sharpedo_mega','Sharpedo (Mega)',['water','dark'],{atk:289,def:144,hp:172},['BITE','WATERFALL'],['CRUNCH','HYDRO_PUMP','POISON_FANG']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('camerupt_mega','Camerupt (Mega)',['fire','ground'],{atk:253,def:183,hp:172},['EMBER','ROCK_SMASH','INCINERATE'],['EARTHQUAKE','OVERHEAT','SOLAR_BEAM','EARTH_POWER','SCORCHING_SANDS','ROCK_TOMB']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    (() => {
+      const p = mk('altaria_mega','Altaria (Mega)',['dragon','fairy'],{atk:222,def:218,hp:181},['DRAGON_BREATH','PECK'],['DAZZLING_GLEAM','DRAGON_PULSE','SKY_ATTACK','MOONBLAST','FLAMETHROWER']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['MOONBLAST']; // legacy
+      return p;
+    })(),
+    mk('banette_mega','Banette (Mega)',['ghost'],{atk:312,def:160,hp:162},['HEX','SHADOW_CLAW'],['DAZZLING_GLEAM','SHADOW_BALL','THUNDER']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    (() => {
+      const p = mk('absol_mega','Absol (Mega)',['dark'],{atk:314,def:130,hp:163},['PSYCHO_CUT','SNARL'],['DARK_PULSE','MEGAHORN','THUNDER','PAYBACK','BRUTAL_SWING']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['BRUTAL_SWING']; // legacy
+      return p;
+    })(),
+    mk('glalie_mega','Glalie (Mega)',['ice'],{atk:252,def:168,hp:190},['FROST_BREATH','ICE_SHARD','ROLLOUT','POWDER_SNOW'],['AVALANCHE','GYRO_BALL','SHADOW_BALL']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    (() => {
+      const p = mk('latias_mega','Latias (Mega)',['dragon','psychic'],{atk:289,def:297,hp:190},['DRAGON_BREATH','ZEN_HEADBUTT','CHARM'],['OUTRAGE','PSYCHIC','THUNDER','MIST_BALL','AURA_SPHERE']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['MIST_BALL']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('kyogre_primal','Kyogre (Primal)',['water'],{atk:353,def:268,hp:218},['WATERFALL'],['BLIZZARD','HYDRO_PUMP','THUNDER','SURF','ORIGIN_PULSE','AVALANCHE']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['ORIGIN_PULSE']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('groudon_primal','Groudon (Primal)',['fire','ground'],{atk:353,def:268,hp:218},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','FIRE_PUNCH','PRECIPICE_BLADES']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['PRECIPICE_BLADES','FIRE_PUNCH']; // legacy
+      return p;
+    })(),
+    mk('lopunny_mega','Lopunny (Mega)',['normal','fighting'],{atk:282,def:214,hp:163},['LOW_KICK','POUND','DOUBLE_KICK'],['FIRE_PUNCH','FOCUS_BLAST','HYPER_BEAM','TRIPLE_AXEL','THUNDER_PUNCH','SHADOW_BALL']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    (() => {
+      const p = mk('gallade_mega','Gallade (Mega)',['psychic','fighting'],{atk:326,def:230,hp:169},['CONFUSION','LOW_KICK','CHARM','PSYCHO_CUT'],['CLOSE_COMBAT','LEAF_BLADE','PSYCHIC','SYNCHRONOISE']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['SYNCHRONOISE']; // legacy
+      return p;
+    })(),
+    (() => {
+      const p = mk('audino_mega','Audino (Mega)',['normal','fairy'],{atk:147,def:239,hp:230},['POUND','ZEN_HEADBUTT'],['DISARMING_VOICE','DAZZLING_GLEAM','HYPER_BEAM','BODY_SLAM']); // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+      p.eliteChargedMoves = ['BODY_SLAM']; // legacy
+      return p;
+    })(),
   ];
+  return { moves, pokemon };
+}
+
+/** Thin wrapper around buildFallbackData() for the last-resort case where live data fails
+ * entirely — assigns straight to GM, same as this function always did before the refactor. */
+function loadFallback(){
+  const data = buildFallbackData();
+  GM.moves = data.moves;
+  GM.pokemon = data.pokemon;
   GM.byId = {};
   GM.pokemon.forEach(p => GM.byId[p.speciesId] = p);
+}
+
+/** Applies the verified fallback dataset as an override layer on top of successfully-loaded live
+ * data, species by species. For each fallback Pokémon: if a live entry with the same speciesName
+ * exists, its baseStats/movesets/elite flags are replaced wholesale with the verified fallback
+ * values (live data keeps its speciesId/pokemonId/types, which aren't the problem); if no live
+ * entry exists at all (a very recently-released Mega PogoAPI hasn't caught up on yet), the fallback
+ * entry is added outright. Fallback move definitions are merged into the live moves object under
+ * their own ALL_CAPS keys — this never collides with live data's human-readable move names, so nothing
+ * is overwritten, it just makes the fallback-referenced move IDs resolvable. Mutates both arguments
+ * in place; returns nothing. */
+function applyFallbackOverrides(livePokemon, liveMoves){
+  const fb = buildFallbackData();
+  Object.entries(fb.moves).forEach(([id, def]) => { if(!liveMoves[id]) liveMoves[id] = def; });
+  const byName = new Map(livePokemon.map(p => [p.speciesName, p]));
+  let overridden = 0, added = 0;
+  fb.pokemon.forEach(fp => {
+    const existing = byName.get(fp.speciesName);
+    if(existing){
+      existing.baseStats = fp.baseStats;
+      existing.fastMoves = fp.fastMoves;
+      existing.chargedMoves = fp.chargedMoves;
+      existing.eliteFastMoves = fp.eliteFastMoves || [];
+      existing.eliteChargedMoves = fp.eliteChargedMoves || [];
+      overridden++;
+    } else {
+      livePokemon.push(fp);
+      added++;
+    }
+  });
+  console.log(`[RaidCalc] Applied verified fallback data over live data: ${overridden} species overridden, ${added} species added that live data was missing entirely.`);
 }
 
 /* ---------------- HELPERS ---------------- */
@@ -1495,6 +1900,8 @@ function updateFriendshipVisibility(){
   const solo = parseInt($('players').value,10) === 1;
   $('friendshipRow').style.display = solo ? 'none' : '';
   $('friendshipHiddenHint').style.display = solo ? '' : 'none';
+  $('partyPowerRow').style.display = solo ? 'none' : '';
+  if(solo) $('partyPowerActive').checked = false; // party power is meaningless below 2 players — uncheck it too, not just hide it
 }
 $('players').addEventListener('input', ()=> { $('playersval').textContent = $('players').value; updateFriendshipVisibility(); });
 updateFriendshipVisibility();
@@ -1502,7 +1909,6 @@ $('megaBoostActive').addEventListener('change', () => {
   $('megaBoostTypeRow').style.display = $('megaBoostActive').checked ? '' : 'none';
 });
 $('playersval').textContent = $('players').value;
-$('rankBtn').disabled = true;
 $('rankBtn').disabled = true;
 
 /* ---------------- SIMULATION CORE ---------------- */
@@ -1528,47 +1934,73 @@ const TURN_SEC = 0.5;
 const BOSS_CHARGE_CHANCE = 0.3;
 function toTurns(sec){ return Math.max(1, Math.round(sec/TURN_SEC)); }
 
-function runSim(cfg, rng){
+/**
+ * Precomputes everything about a matchup that depends ONLY on the boss side (species, its chosen
+ * moves, tier, and weather) — never on which attacker is being tested. Within a single "Rank Every
+ * Pokémon" pass, the boss config is fixed across (roster size × combos-per-Pokémon × screen
+ * samples) calls, easily 50,000-100,000+ calls to runSim() — recomputing GM.byId lookups, move
+ * duration/window resolution, STAB, and name lookups on every single one of those was pure waste.
+ * Call this once per boss config (rankAllAttackers() does; the manual single-matchup UI doesn't
+ * need to, since it only ever runs one boss config at a time) and pass the result as runSim's third
+ * argument. Does NOT include anything that depends on the attacker's own types (boss-side type
+ * effectiveness against the attacker, and the attacker's own STAB/effectiveness/window/name/party
+ * boost), since those genuinely vary per attacker and stay computed inside runSim itself.
+ */
+function computeBossContext(cfg){
+  const b = GM.byId[cfg.bossId];
+  const fastB = GM.moves[cfg.bossFastId];
+  const chargeB1 = GM.moves[cfg.bossCharge1Id];
+  const tier = TIERS[cfg.tier];
+  const bTypes = realTypes(b.types);
+  const bStats = statsFor(b.baseStats, tier.cpm);
+  const bossHPmax = tier.hp;
+  const fastBDurSec = fastDuration(fastB), chargeBDurSec = chargeDuration(chargeB1);
+  const fastBTurns = toTurns(fastBDurSec);
+  const weatherTypes = WEATHER[cfg.weather].types;
+  const wMult = t => weatherTypes.includes(t) ? 1.2 : 1;
+  return {
+    b, fastB, chargeB1, tier, bTypes, bStats, bossHPmax,
+    fastBDurSec, chargeBDurSec, fastBTurns,
+    weatherTypes, wMult,
+    chargeB_stab: bTypes.includes(chargeB1.type)?1.2:1, chargeB_wm: wMult(chargeB1.type),
+    fastB_wm: wMult(fastB.type),
+    chargeB_window: damageWindowSec(chargeB1.moveId, chargeBDurSec), fastB_window: damageWindowSec(fastB.moveId, fastBDurSec),
+    chargeB_name: moveNameSync(chargeB1.moveId), fastB_name: moveNameSync(fastB.moveId),
+    boss_name: speciesNameSync(b.speciesId)
+  };
+}
+
+function runSim(cfg, rng, bossCtx){
   rng = rng || Math.random;
   const needLog = !!cfg.needLog; // most callers (moveset screening, solo-DPS pass, capped win-rate
   // pass) only ever read timeSec/dps/win/deaths — never the log — so building log text for those is
   // pure waste at scale (thousands of calls). Only evaluateCombo's example-run pass sets this true.
   const a = GM.byId[cfg.attackerId];
-  const b = GM.byId[cfg.bossId];
   const fastA = GM.moves[cfg.fastId], chargeA = GM.moves[cfg.chargeId];
-  const fastB = GM.moves[cfg.bossFastId];
-  const chargeB1 = GM.moves[cfg.bossCharge1Id];
   const cpm = CPM[cfg.level];
-  const tier = TIERS[cfg.tier];
+  bossCtx = bossCtx || computeBossContext(cfg); // manual/other callers that don't precompute it — same result, just not shared across calls
+  const { b, fastB, chargeB1, tier, bTypes, bStats: bStatsShared, bossHPmax, fastBDurSec, chargeBDurSec, fastBTurns,
+          chargeB_stab, chargeB_wm, fastB_wm, chargeB_window, fastB_window, chargeB_name, fastB_name, boss_name } = bossCtx;
 
-  const aTypes = realTypes(a.types), bTypes = realTypes(b.types);
+  const aTypes = realTypes(a.types);
   const aStats = statsFor(a.baseStats, cpm);
   if(cfg.shieldBoost) aStats.def *= 1.1;
-  const bStats = statsFor(b.baseStats, tier.cpm);
-  const bossHPmax = tier.hp;
+  const bStats = bStatsShared; // boss stats are never mutated below (only aStats.def, for shieldBoost) — safe to share the same object across every call in a ranking pass instead of copying
 
   const fastADurSec = fastDuration(fastA), chargeADurSec = chargeDuration(chargeA);
-  const fastBDurSec = fastDuration(fastB), chargeBDurSec = chargeDuration(chargeB1);
   const fastATurns = toTurns(fastADurSec), chargeATurns = toTurns(chargeADurSec);
-  const fastBTurns = toTurns(fastBDurSec);
 
-  const weatherTypes = WEATHER[cfg.weather].types;
-  const wMult = t => weatherTypes.includes(t) ? 1.2 : 1;
+  const weatherTypes = bossCtx.weatherTypes, wMult = bossCtx.wMult;
 
-  // Per-move STAB, type-effectiveness, weather multiplier, and damage-window seconds are all
-  // constant for the whole simulation (types/weather never change mid-fight) — hoisted out of the
-  // hot loop instead of recomputed on every single cast, which otherwise means a full multiplier()
-  // scan (iterates the defender's type list) and an Array.includes() call every time any move
-  // lands, potentially thousands of times per run.
+  // Per-move STAB, type-effectiveness, and damage-window seconds that DO depend on the attacker's
+  // own types are still computed fresh each call (they genuinely vary per attacker); everything
+  // boss-only comes from bossCtx above instead of being recomputed here.
   const chargeA_stab = aTypes.includes(chargeA.type)?1.2:1, chargeA_eff = multiplier(chargeA.type, bTypes), chargeA_wm = wMult(chargeA.type);
   const fastA_stab = aTypes.includes(fastA.type)?1.2:1, fastA_eff = multiplier(fastA.type, bTypes), fastA_wm = wMult(fastA.type);
-  const chargeB_stab = bTypes.includes(chargeB1.type)?1.2:1, chargeB_eff = multiplier(chargeB1.type, aTypes), chargeB_wm = wMult(chargeB1.type);
-  const fastB_stab = bTypes.includes(fastB.type)?1.2:1, fastB_eff = multiplier(fastB.type, aTypes), fastB_wm = wMult(fastB.type);
+  const chargeB_eff = multiplier(chargeB1.type, aTypes);
+  const fastB_stab = bTypes.includes(fastB.type)?1.2:1, fastB_eff = multiplier(fastB.type, aTypes);
   const chargeA_window = damageWindowSec(chargeA.moveId, chargeADurSec), fastA_window = damageWindowSec(fastA.moveId, fastADurSec);
-  const chargeB_window = damageWindowSec(chargeB1.moveId, chargeBDurSec), fastB_window = damageWindowSec(fastB.moveId, fastBDurSec);
   const chargeA_name = moveNameSync(chargeA.moveId), fastA_name = moveNameSync(fastA.moveId);
-  const chargeB_name = moveNameSync(chargeB1.moveId), fastB_name = moveNameSync(fastB.moveId);
-  const boss_name = speciesNameSync(b.speciesId);
   const chargeA_partyBoost = partyBoostMultiplier(chargeA.type, cfg), fastA_partyBoost = partyBoostMultiplier(fastA.type, cfg);
   const friendshipMult = parseFloat(cfg.friendship);
 
@@ -1827,6 +2259,12 @@ function rankAllAttackers(){
   const results = [];
   let totalSims = 0;
 
+  // The boss side of the matchup (species, its chosen moves, tier, weather) never changes across
+  // this whole function — only the attacker being tested does. Computed once here and passed into
+  // every runSim() call below instead of letting each one redo the same GM lookups, move-duration/
+  // window resolution, and name lookups tens of thousands of times over.
+  const bossCtx = computeBossContext(baseCfg);
+
   const boss = GM.byId[baseCfg.bossId];
   const bossTypes = realTypes(boss.types);
 
@@ -1846,7 +2284,7 @@ function rankAllAttackers(){
     const cfgWithLog = {...cfg, needLog:true}; // the only caller that reads the log — screening,
     // solo-DPS, and capped win-rate passes never do, so they default to skipping log construction.
     const allRuns = [];
-    for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog)); totalSims++; }
+    for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, bossCtx)); totalSims++; }
 
     const faintGroups = {};
     allRuns.forEach(r => { (faintGroups[r.deaths] = faintGroups[r.deaths] || []).push(r); });
@@ -1919,14 +2357,17 @@ function rankAllAttackers(){
     // Screen every super-effective combo with a quick 30-run sample each, then run the full
     // 200-run Monte Carlo only on the winning combo — faster than running all 200 on every
     // combo, at some risk of occasionally misranking two very close options by chance.
-    const SCREEN_N = 30;
+    const SCREEN_N = 80; // raised from 30 for general robustness against sampling noise on close
+    // combos. (Not the cause of the Glimmora/Meteor Beam case investigated alongside this change —
+    // that turned out to be a live-data movepool gap, fixed separately via movepoolGapFill above —
+    // but a larger screen sample is still a reasonable improvement on its own merits.)
     let bestCombo = null, bestScreenTime = Infinity;
     fastOptions.forEach(fastId => {
       chargeOptions.forEach(chargeId => {
         if(!comboIsSuperEffective(fastId, chargeId)) return; // only super-effective combos are considered at all
         const cfg = {...baseCfg, attackerId: p.speciesId, fastId, chargeId};
         let t = 0;
-        for(let i=0;i<SCREEN_N;i++){ t += runSim(cfg).timeSec; totalSims++; }
+        for(let i=0;i<SCREEN_N;i++){ t += runSim(cfg, null, bossCtx).timeSec; totalSims++; }
         const avg = t/SCREEN_N;
         if(avg < bestScreenTime){ bestScreenTime = avg; bestCombo = {fastId, chargeId}; }
       });
@@ -1977,7 +2418,7 @@ function rankAllAttackers(){
   top30.forEach(r => {
     const soloCfg = {...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
     let partyDps = 0;
-    for(let i=0;i<SOLO_N;i++){ partyDps += runSim(soloCfg).dps; totalSims++; }
+    for(let i=0;i<SOLO_N;i++){ partyDps += runSim(soloCfg, null, bossCtx).dps; totalSims++; }
     partyDps /= SOLO_N;
     const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
     r.soloDps = perPlayerDps;
@@ -1991,7 +2432,7 @@ function rankAllAttackers(){
     const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
     let wins=0;
     for(let i=0;i<CAPPED_N;i++){
-      const cr = runSim(cappedCfg);
+      const cr = runSim(cappedCfg, null, bossCtx);
       totalSims++;
       if(cr.win) wins++;
     }
