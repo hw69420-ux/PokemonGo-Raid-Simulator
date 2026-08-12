@@ -63,7 +63,6 @@
   }
   input[type=range]{width:100%;padding:0;margin:10px 0;background:transparent;}
   select:focus,input:focus{outline:2px solid var(--red);outline-offset:1px;}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 
   /* Custom moveset combo dropdown (native <select> can't hold icons) */
   .combo-select{position:relative;}
@@ -78,8 +77,6 @@
   .combo-select.open .combo-select-caret{transform:rotate(180deg);}
   .combo-select-label-inner{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1;}
   .combo-select-label-inner .typebadge,.combo-select-option .typebadge{min-width:0;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;}
-  .combo-select-move-pair{display:flex;align-items:center;gap:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex-shrink:1;}
-  .combo-select-icon{flex-shrink:0;font-size:14px;line-height:1;}
   .combo-select-sep{color:var(--muted);flex-shrink:0;}
   .combo-select-panel{
     position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;
@@ -95,9 +92,6 @@
   }
   .combo-select-option:last-child{border-bottom:none;}
   .combo-select-option:hover,.combo-select-option.active{background:rgba(255,195,61,0.08);}
-  .combo-select-option .combo-select-legacy{font-family:var(--mono);font-size:10.5px;color:var(--gold);margin-left:2px;}
-  .rangeval{display:flex;justify-content:space-between;font-family:var(--mono);font-size:13px;color:var(--muted);margin-top:6px;}
-  .rangeval b{color:var(--text);}
 
   .typebadge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:2px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:#0a0c11;font-weight:700;margin-right:6px;margin-top:4px;}
   #bossTypeInline .typebadge{padding:3px 8px;font-size:10.5px;margin-top:0;margin-right:4px;}
@@ -117,29 +111,6 @@
   button:disabled{opacity:0.4;cursor:not-allowed;}
 
   .hint{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:5px;}
-  .chip-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-height:150px;overflow-y:auto;padding-right:2px;}
-  .chip-list::-webkit-scrollbar{width:6px;}
-  .chip-list::-webkit-scrollbar-thumb{background:var(--border);}
-  .chip{font-family:var(--mono);font-size:11.5px;background:var(--panel-2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:2px;cursor:pointer;transition:border-color .12s ease,color .12s ease;}
-  .chip:hover{border-color:#96D9D6;color:#96D9D6;}
-  .chip.active{border-color:var(--gold);color:var(--gold);background:rgba(255,195,61,0.08);}
-
-  /* Arena */
-  .arena{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;}
-  @media (max-width:700px){.arena{grid-template-columns:1fr;}}
-  .fighter{background:var(--panel);border:1px solid var(--border);padding:22px;position:relative;overflow:hidden;}
-  .fighter.boss{border-color:#3a2230;}
-  .fighter .fname{font-family:var(--display);font-weight:600;font-size:23px;text-transform:uppercase;letter-spacing:0.5px;}
-  .fighter .flabel{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:6px;}
-  .hpbar-outer{margin-top:14px;height:24px;background:#0d0f14;border:1px solid var(--border);position:relative;}
-  .hpbar-inner{height:100%;background:linear-gradient(90deg,#3ddc84,#2bb673);transition:width .25s ease;}
-  .hpbar-inner.low{background:linear-gradient(90deg,#ffb23d,#ff8a3d);}
-  .hpbar-inner.crit{background:linear-gradient(90deg,#ff4655,#c92a3c);}
-  .hptext{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin-top:7px;display:flex;justify-content:space-between;}
-  .energybar-outer{margin-top:9px;height:9px;background:#0d0f14;border:1px solid var(--border);}
-  .energybar-inner{height:100%;background:var(--gold);transition:width .2s ease;}
-  .deaths{font-family:var(--mono);font-size:13.5px;color:var(--muted);margin-top:12px;}
-  .deaths .skull{color:var(--red);}
 
   .verdict{font-family:var(--display);font-weight:700;letter-spacing:1.2px;text-transform:uppercase;font-size:16px;padding:6px 13px;display:inline-block;margin-top:12px;}
   .verdict.win{background:rgba(74,222,128,0.12);color:var(--green);border:1px solid var(--green);}
@@ -198,13 +169,11 @@
   .toggle-switch input:focus-visible ~ .toggle-switch-track{outline:2px solid var(--red);outline-offset:1px;}
   .stat-mid{color:var(--gold);}
   .stat-bad{color:var(--red);}
-  .winbar-outer{background:#0d0f14;border:1px solid var(--border);height:14px;width:100%;}
   .sprite-img{width:40px;height:40px;object-fit:contain;image-rendering:pixelated;display:block;}
   .tier-icon-img{width:22px;height:22px;object-fit:contain;flex-shrink:0;border-radius:50%;}
   .tier-icon-img.tier-icon-ultra{transform:scale(1.35);} /* source PNG has extra internal padding vs. the other tier eggs — scaled up so it visually fills its circle the same amount */
   .tier-icon-fallback{width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
   .type-icon-img{display:inline-block;flex-shrink:0;}
-  .winbar-inner{background:var(--green);height:100%;}
 
   .footnote{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:26px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px;}
 </style>
@@ -1411,8 +1380,7 @@ function buildFallbackData(){
   const pokemon = [
     (() => {
       const p = mk('mewtwo','Mewtwo',['psychic'],{atk:300,def:182,hp:214},['PSYCHO_CUT','CONFUSION','COUNTER'],['PSYSTRIKE','SHADOW_BALL','FOCUS_BLAST','ICE_BEAM','HYPER_BEAM','FLAMETHROWER','THUNDERBOLT','PSYCHIC']); // Counter confirmed real — GO Fest 2026 addition; added 4 missing charge moves
-      p.eliteChargedMoves = ['HYPER_BEAM']; // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-      p.eliteChargedMoves = ['PSYSTRIKE','SHADOW_BALL']; // legacy — both confirmed requiring Elite Charged TM
+      p.eliteChargedMoves = ['HYPER_BEAM','PSYSTRIKE','SHADOW_BALL']; // legacy — Hyper Beam confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Psystrike/Shadow Ball confirmed requiring Elite Charged TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Hyper Beam's flag was never actually taking effect.)
       return p;
     })(),
     (() => {
@@ -1442,8 +1410,7 @@ function buildFallbackData(){
     })(),
     (() => {
       const p = mk('groudon','Groudon',['ground'],{atk:270,def:228,hp:205},['MUD_SHOT','DRAGON_TAIL'],['EARTHQUAKE','FIRE_BLAST','FIRE_PUNCH','SOLAR_BEAM','PRECIPICE_BLADES']); // corrected — Fire Fang was fabricated/not real; stats also corrected (was def:187/hp:213, real is 228/205)
-      p.eliteChargedMoves = ['FIRE_PUNCH']; // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-      p.eliteChargedMoves = ['PRECIPICE_BLADES']; // legacy — confirmed requires Elite Charged TM
+      p.eliteChargedMoves = ['FIRE_PUNCH','PRECIPICE_BLADES']; // legacy — Fire Punch confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Precipice Blades confirmed requires Elite Charged TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Fire Punch's flag was never actually taking effect.)
       return p;
     })(),
     mk('dialga','Dialga',['steel','dragon'],{atk:275,def:211,hp:205},['DRAGON_BREATH','METAL_CLAW'],['IRON_HEAD','THUNDER','DRACO_METEOR']),
@@ -1460,8 +1427,7 @@ function buildFallbackData(){
     })(),
     (() => {
       const p = mk('ho_oh','Ho-Oh',['fire','flying'],{atk:239,def:244,hp:214},['INCINERATE','HIDDEN_POWER','EXTRASENSORY','STEEL_WING'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','BRAVE_BIRD','SACRED_FIRE']); // corrected — Fire Fang, Overheat, and Ancient Power were fabricated/not real moves for this Pokémon
-      p.eliteChargedMoves = ['EARTHQUAKE']; // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-      p.eliteChargedMoves = ['SACRED_FIRE']; // legacy — confirmed requires Elite TM
+      p.eliteChargedMoves = ['EARTHQUAKE','SACRED_FIRE']; // legacy — Earthquake confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Sacred Fire confirmed requiring Elite TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Earthquake's flag was never actually taking effect.)
       return p;
     })(),
     (() => {
@@ -1631,7 +1597,7 @@ function buildFallbackData(){
     mk('excadrill_mega','Mega Excadrill',['ground','steel'],{atk:322,def:184,hp:242},['MUD_SHOT'],['DRILL_RUN','ROCK_SLIDE','EARTHQUAKE']),
     mk('feraligatr_mega','Mega Feraligatr',['water','dragon'],{atk:304,def:227,hp:198},['BITE','SHADOW_CLAW','WATER_GUN','WATERFALL','ICE_FANG'],['ICE_BEAM','HYDRO_PUMP','CRUNCH','HYDRO_CANNON']), // type corrected — gains Dragon on Mega Evolution (confirmed via its "Dragonize" ability description), not pure Water like its base form
     mk('hawlucha_mega','Mega Hawlucha',['fighting','flying'],{atk:280,def:212,hp:186},['ROCK_SMASH','LOW_KICK'],['CLOSE_COMBAT','FLYING_PRESS','AERIAL_ACE']),
-    mk('greninja_mega','Mega Greninja',['water','dark'],{atk:299,def:180,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN','AERIAL_ACE'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON']), // was missing an mk() entry entirely despite being referenced in the Upcoming Megas tier set — added now with the stats given directly by the user; type confirmed unchanged from base (Water/Dark)
+    mk('greninja_mega','Mega Greninja',['water','dark'],{atk:299,def:180,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON','AERIAL_ACE']), // was missing an mk() entry entirely despite being referenced in the Upcoming Megas tier set — added now with the stats given directly by the user; type confirmed unchanged from base (Water/Dark); Aerial Ace corrected to charge move, matching the fix applied to base Greninja
     mk('garchomp_mega_z','Mega Garchomp Z',['dragon'],{atk:321,def:196,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER']), // type corrected — loses Ground on Mega Evolution, becoming pure Dragon (confirmed via multiple sources), not Dragon/Ground like its base form
     mk('meganium_mega','Mega Meganium',['grass','fairy'],{atk:276,def:232,hp:190},['VINE_WHIP','RAZOR_LEAF'],['EARTHQUAKE','SOLAR_BEAM','FRENZY_PLANT']), // type corrected — gains Fairy on Mega Evolution (confirmed via official PokeBeach reveal), not pure Grass like its base form
     mk('staraptor_mega','Mega Staraptor',['fighting','flying'],{atk:278,def:207,hp:198},['WING_ATTACK','QUICK_ATTACK','GUST','SAND_ATTACK'],['HEAT_WAVE','CLOSE_COMBAT','BRAVE_BIRD','FLY']), // type corrected — gains Fighting in place of Normal on Mega Evolution (confirmed via multiple sources), not Normal/Flying like its base form
@@ -1825,7 +1791,7 @@ function buildFallbackData(){
       return p;
     })(),
     (() => {
-      const p = mk('greninja','Greninja',['water','dark'],{atk:223,def:152,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN','AERIAL_ACE'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON']);
+      const p = mk('greninja','Greninja',['water','dark'],{atk:223,def:152,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON','AERIAL_ACE']); // Aerial Ace corrected — it's a charge move, not a fast move (it isn't defined as a fast move anywhere in this roster's move data)
       p.eliteChargedMoves = ['HYDRO_CANNON']; // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
       return p;
     })(),
@@ -2385,6 +2351,76 @@ function bossAutoTier(p){
   return null; // no auto-assignment — leave whatever tier is currently selected
 }
 
+/** Serializes every setting that affects a ranking pass into URL query params, similar to how
+ * Pokebattler encodes a raid setup in its own URLs — makes the current configuration bookmarkable
+ * and shareable as a link that reproduces the exact same setup when opened. Called via pushState
+ * (a genuinely new history entry, so the back button steps through past searches, matching
+ * Pokebattler's own behavior) each time "Rank Every Pokémon" runs — not on every minor UI tweak,
+ * to avoid spamming history with an entry per dropdown click. */
+function pushStateToUrl(){
+  const params = new URLSearchParams();
+  params.set('boss', selectedBossId);
+  params.set('tier', $('tier').value);
+  params.set('fast', $('bossfast').value);
+  params.set('charge', $('bosscharge1').value);
+  params.set('level', $('level').value);
+  params.set('weather', $('weather').value);
+  params.set('players', $('players').value);
+  if($('players').value !== '1') params.set('friendship', $('friendship').value);
+  if($('bladeBoost').checked) params.set('blade', '1');
+  if($('shieldBoost').checked) params.set('shield', '1');
+  if($('dodgeChargeOnly').checked) params.set('dodgeCharge', '1');
+  if($('partyPowerActive').checked) params.set('partyPower', '1');
+  if($('megaBoostActive').checked){
+    params.set('megaBoost', '1');
+    params.set('megaBoostType', $('megaBoostType').value);
+  }
+  if(!$('excludeUpcomingMegas').checked) params.set('includeUpcoming', '1');
+  const newUrl = `${location.pathname}?${params.toString()}`;
+  history.pushState({raidcalc: true}, '', newUrl);
+}
+/** Reverses pushStateToUrl() — reads query params on page load (or on popstate, i.e. the user
+ * pressing back/forward through past searches) and applies them to the UI. Runs after the boss
+ * dropdown is already populated with its own default selection, so it only needs to override
+ * pieces that differ from that default rather than build the UI from scratch. Silently ignores any
+ * param naming a boss/move id that doesn't exist in the currently-loaded roster (e.g. an old link
+ * for a species this session's live-vs-fallback data doesn't have), leaving the normal default in
+ * place for that piece rather than erroring. */
+function applyStateFromUrl(){
+  const params = new URLSearchParams(location.search);
+  if(!params.has('boss')) return; // no shared-state link present — leave the normal defaults alone
+  const bossId = params.get('boss');
+  if(GM.byId[bossId]){
+    selectBoss(bossId);
+    $('bossSelect').value = bossId;
+  }
+  const tier = params.get('tier');
+  if(tier && TIERS[tier]){ $('tier').value = tier; syncTierComboDisplay(); updateBossInfo(); }
+  const fast = params.get('fast'), charge = params.get('charge');
+  if(fast && charge && GM.moves[fast] && GM.moves[charge]){
+    // renderBossMoves() (already run via selectBoss above) rebuilds the combo panel fresh each
+    // time, so the specific combo requested here needs to be picked from it after the fact rather
+    // than set before — same pattern the panel's own click handler uses internally.
+    $('bossfast').value = fast;
+    $('bosscharge1').value = charge;
+    const label = $('bossMoveComboLabel');
+    if(label) label.innerHTML = `${moveBadge(fast)}<span class="combo-select-sep">/</span>${moveBadge(charge)}`;
+  }
+  const level = params.get('level'); if(level && CPM[level]) $('level').value = level;
+  const weather = params.get('weather'); if(weather && WEATHER[weather]) $('weather').value = weather;
+  const players = params.get('players'); if(players) $('players').value = players;
+  const friendship = params.get('friendship'); if(friendship) $('friendship').value = friendship;
+  $('bladeBoost').checked = params.get('blade') === '1';
+  $('shieldBoost').checked = params.get('shield') === '1';
+  $('dodgeChargeOnly').checked = params.get('dodgeCharge') === '1';
+  $('partyPowerActive').checked = params.get('partyPower') === '1';
+  $('megaBoostActive').checked = params.get('megaBoost') === '1';
+  $('megaBoostTypeRow').style.display = $('megaBoostActive').checked ? '' : 'none';
+  const megaBoostType = params.get('megaBoostType'); if(megaBoostType) $('megaBoostType').value = megaBoostType;
+  $('excludeUpcomingMegas').checked = params.get('includeUpcoming') !== '1';
+}
+window.addEventListener('popstate', () => { if(GM.pokemon) applyStateFromUrl(); });
+
 function onDataReady(){
   buildBossDropdown();
   $('weather').innerHTML = Object.entries(WEATHER).map(([k,w])=>`<option value="${k}">${w.label}</option>`).join('');
@@ -2395,6 +2431,8 @@ function onDataReady(){
   const defaultBoss = GM.byId['rayquaza'] ? 'rayquaza' : bossDropdownRoster()[0].speciesId;
   selectBoss(defaultBoss);
   $('bossSelect').value = defaultBoss;
+
+  applyStateFromUrl(); // if the page was opened via a shared/bookmarked link, override the defaults above with whatever it specifies
 
   $('rankBtn').disabled = false;
 }
@@ -2922,6 +2960,7 @@ function readGlobalConfig(){
 /* ---------------- RANK EVERY POKÉMON (200-run Monte Carlo each) ---------------- */
 $('rankBtn').addEventListener('click', async ()=>{
   if(!selectedBossId){ return; }
+  pushStateToUrl(); // encodes this run's exact setup into the URL, Pokebattler-style — shareable/bookmarkable
   const btn = $('rankBtn');
   const originalLabel = btn.textContent;
   btn.disabled = true;
