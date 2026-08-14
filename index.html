@@ -78,6 +78,7 @@
   .combo-select-label-inner{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1;}
   .combo-select-label-inner .typebadge,.combo-select-option .typebadge{min-width:0;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;}
   .combo-select-sep{color:var(--muted);flex-shrink:0;}
+  .combo-select-auto-label{font-size:13.5px;}
   .combo-select-panel{
     position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;
     background:var(--panel-2);border:1px solid var(--border);border-radius:2px;
@@ -176,6 +177,48 @@
   .type-icon-img{display:inline-block;flex-shrink:0;}
 
   .footnote{font-family:var(--mono);font-size:12px;color:var(--muted);margin-top:26px;line-height:1.7;border-top:1px solid var(--border);padding-top:16px;}
+
+  /* ===== Mobile optimization (phones — narrower than the general 980px single-column breakpoint
+     above, which only stacks the two-column layout but doesn't address padding/sizing/overflow
+     risks on genuinely narrow screens). ===== */
+  @media (max-width:600px){
+    .wrap{padding:18px 14px 60px;}
+    .panel{padding:16px;}
+    .panel + .panel{margin-top:14px;}
+    header.hud{padding-bottom:16px;margin-bottom:18px;}
+    .brand h1{font-size:26px;}
+    .disclaimer{max-width:none;text-align:left;font-size:12px;}
+    .eyebrow{font-size:11.5px;letter-spacing:1.8px;margin-bottom:12px;}
+
+    /* Boss selector row (sprite + species dropdown + type badges) — was a fixed nowrap flex row
+       that could overflow a narrow phone screen once a boss with two long type names was picked;
+       lets it wrap onto a second line instead of forcing everything into one cramped row. */
+    .boss-type-inline{white-space:normal !important;}
+
+    /* Results table — the horizontal-scroll fallback (already in place via .mc-table-scroll) stays
+       the primary strategy, since a 12-column table can't reasonably reflow to fit a phone screen
+       any other way, but shrinking font/padding a bit reduces how much scrolling is needed and
+       makes each screenful show more rows. */
+    .mc-table{font-size:12.5px;}
+    .mc-table th,.mc-table td{padding:8px 9px;}
+    .mc-table-scroll{max-height:55vh;}
+    .sprite-img{width:32px;height:32px;}
+
+    /* Combat log modal */
+    .modal-overlay{padding:16px 8px;}
+    .modal-box{padding:16px;}
+    .modal-title{font-size:17px;margin-right:32px;}
+    .stats-strip{grid-template-columns:repeat(2,1fr);}
+    .stat-cell{padding:11px 12px;}
+    .stat-cell .v{font-size:22px;}
+
+    /* Toggle/label rows and the results-panel header (title + JSON link + toggle) already wrap via
+       flex-wrap, but tightening their gap keeps them from feeling sparse once stacked on a narrow
+       screen. */
+    .toggle-switch-label{font-size:11.5px;}
+
+    button.primary{padding:14px;font-size:16px;}
+  }
 </style>
 </head>
 <body>
@@ -264,9 +307,9 @@
         <p class="eyebrow">Raid Boss</p>
 
         <label for="bossSelect">Pokémon</label>
-        <div style="display:flex;align-items:center;gap:10px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
           <span id="bossSpriteImg" style="flex-shrink:0;"></span>          <select id="bossSelect" style="flex:1;"></select>
-          <span id="bossTypeInline" style="white-space:nowrap;"></span>
+          <span id="bossTypeInline" style="white-space:nowrap;" class="boss-type-inline"></span>
         </div>
 
         <label for="tierCombo">Raid Tier</label>
@@ -278,7 +321,8 @@
           <div class="combo-select-panel" id="tierComboPanel" role="listbox"></div>
         </div>
         <select id="tier" style="display:none;">
-          <option value="t5" selected>Tier 5 · Legendary</option>
+          <option value="" selected>Select a Raid Tier…</option>
+          <option value="t5">Tier 5 · Legendary</option>
           <option value="ultrabeast">Tier 5 · Ultra Beast</option>
           <option value="mega">Mega Raid</option>
           <option value="mega_legendary">Mega Raid · Legendary</option>
@@ -316,13 +360,16 @@
       <div class="panel" id="top30Panel" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
           <p class="eyebrow" id="top30Title" style="margin:0;">Top 30 Attackers</p>
-          <label class="toggle-switch-label" for="excludeUpcomingMegas">
-            <span>Include Upcoming Megas</span>
-            <span class="toggle-switch">
-              <input type="checkbox" id="excludeUpcomingMegas">
-              <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-            </span>
-          </label>
+          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+            <a href="#" id="downloadJsonLink" download="raid-results.json" class="hint" style="text-decoration:underline;color:var(--teal);">⬇ Download results (JSON)</a>
+            <label class="toggle-switch-label" for="excludeUpcomingMegas">
+              <span>Include Upcoming Megas</span>
+              <span class="toggle-switch">
+                <input type="checkbox" id="excludeUpcomingMegas">
+                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+              </span>
+            </label>
+          </div>
         </div>
         <div class="hint" id="top30Hint" style="margin-bottom:10px;">&nbsp;</div>
         <div class="mc-table-scroll">
@@ -446,8 +493,9 @@ const TIER_ICON_URL = {
   mega_upcoming: 'https://static.pokebattler.com/images/mega_raid_egg.png'
 };
 function tierIconHtml(tierKey){
+  if(!tierKey) return ''; // blank/placeholder "Select a Raid Tier…" state — no icon
   const url = TIER_ICON_URL[tierKey];
-  if(!url) return '<span class="tier-icon-fallback">🔮</span>'; // fallback only, shouldn't hit given all tiers now have an icon
+  if(!url) return '<span class="tier-icon-fallback">🔮</span>'; // fallback only, shouldn't hit given all real tiers now have an icon
   const extraClass = tierKey === 'ultrabeast' ? ' tier-icon-ultra' : ''; // scaled up by request — the
   // source PNG has more internal padding than the other tier eggs, so it reads smaller/off unless
   // scaled to visually match the others' fill within their circular background.
@@ -786,7 +834,7 @@ async function loadGameMaster(){
       if(/(19|20)\d{2}/.test(form)) return; // costume/event form tagged with a year — skip, cosmetic only
       const nameLower = p.pokemon_name.toLowerCase();
       if(nameLower === 'chien-pao' || nameLower === 'chien_pao') return; // not actually released yet
-      if(nameLower === 'darmanitan' && /zen/i.test(form) && /galar/i.test(form)) return; // not actually released yet
+      if(nameLower === 'darmanitan' && /zen/i.test(form)) return; // both Standard and Galarian Zen forms — not actually released yet
       if(nameLower === 'calyrex' && /(shadow|ice)[\s_-]?rider/i.test(form)) return; // not actually released yet
       if(/eternamax/i.test(form) || /eternamax/i.test(nameLower)) return; // event-only raid boss form, never obtainable/usable as a player attacker
       const key = `${p.pokemon_id}|${form}`;
@@ -1369,7 +1417,7 @@ function buildFallbackData(){
     emboar_mega:500, chesnaught_mega:652, golurk_mega:623, barbaracle_mega:689, drampa_mega:780,
     eelektross_mega:604, clefable_mega:36, scrafty_mega:560, golisopod_mega:768,
     crabominable_mega:740, meowstic_mega:678, pyroar_mega:668, tatsugiri_mega:978, scolipede_mega:545,
-    chimecho_mega:358, dragalge_mega:691, malamar_mega_z:687,
+    chimecho_mega:358, dragalge_mega:691,
     zapdos:145, zapdos_galarian:145, zekrom:644, zygarde:718, zygarde_10:718, zygarde_complete:718
   };
   const mk = (id,name,types,base,fast,charge) => {
@@ -1582,9 +1630,11 @@ function buildFallbackData(){
     })(),
     // Upcoming Megas — Legends: Z-A additions whose base species is already released in GO. Each
     // uses its base form's real moveset per request; stats given directly by user. "Z" variants
-    // (Lucario Z, Absol Z, Garchomp Z, Malamar Z) are second, distinct Mega forms alongside the
+    // (Lucario Z, Absol Z, Garchomp Z) are second, distinct Mega forms alongside the
     // already-established single Mega of the same species — handled exactly like Charizard/
-    // Mewtwo/Raichu's X/Y pairs per request.
+    // Mewtwo/Raichu's X/Y pairs per request. (Malamar turned out not to have a real distinct "Z"
+    // form — its "Mega Malamar Z" entry was an accidental duplicate of the real single Mega
+    // Malamar and has been removed.)
     mk('zygarde_mega','Mega Zygarde',['dragon','ground'],{atk:403,def:181,hp:415},['DRAGON_TAIL','BITE','ZEN_HEADBUTT'],['OUTRAGE','EARTHQUAKE','CRUNCH','HYPER_BEAM','BULLDOZE']),
     mk('heatran_mega','Mega Heatran',['fire','steel'],{atk:331,def:252,hp:209},['FIRE_SPIN','BUG_BITE'],['FIRE_BLAST','IRON_HEAD','STONE_EDGE','FLAMETHROWER','EARTH_POWER','MAGMA_STORM']),
     mk('zeraora_mega','Mega Zeraora',['electric'],{atk:361,def:180,hp:204},['SPARK','VOLT_SWITCH'],['DISCHARGE','WILD_CHARGE','THUNDER_PUNCH','PLASMA_FISTS']),
@@ -1599,25 +1649,24 @@ function buildFallbackData(){
     mk('hawlucha_mega','Mega Hawlucha',['fighting','flying'],{atk:280,def:212,hp:186},['ROCK_SMASH','LOW_KICK'],['CLOSE_COMBAT','FLYING_PRESS','AERIAL_ACE']),
     mk('greninja_mega','Mega Greninja',['water','dark'],{atk:299,def:180,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON','AERIAL_ACE']), // was missing an mk() entry entirely despite being referenced in the Upcoming Megas tier set — added now with the stats given directly by the user; type confirmed unchanged from base (Water/Dark); Aerial Ace corrected to charge move, matching the fix applied to base Greninja
     mk('garchomp_mega_z','Mega Garchomp Z',['dragon'],{atk:321,def:196,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER']), // type corrected — loses Ground on Mega Evolution, becoming pure Dragon (confirmed via multiple sources), not Dragon/Ground like its base form
-    mk('meganium_mega','Mega Meganium',['grass','fairy'],{atk:276,def:232,hp:190},['VINE_WHIP','RAZOR_LEAF'],['EARTHQUAKE','SOLAR_BEAM','FRENZY_PLANT']), // type corrected — gains Fairy on Mega Evolution (confirmed via official PokeBeach reveal), not pure Grass like its base form
+    mk('meganium_mega','Mega Meganium',['grass','fairy'],{atk:276,def:232,hp:190},['VINE_WHIP','RAZOR_LEAF','MAGICAL_LEAF'],['EARTHQUAKE','PETAL_BLIZZARD','SOLAR_BEAM','FRENZY_PLANT']), // type corrected — gains Fairy on Mega Evolution (confirmed via official PokeBeach reveal), not pure Grass like its base form; moveset corrected to match base Meganium's confirmed real kit
     mk('staraptor_mega','Mega Staraptor',['fighting','flying'],{atk:278,def:207,hp:198},['WING_ATTACK','QUICK_ATTACK','GUST','SAND_ATTACK'],['HEAT_WAVE','CLOSE_COMBAT','BRAVE_BIRD','FLY']), // type corrected — gains Fighting in place of Normal on Mega Evolution (confirmed via multiple sources), not Normal/Flying like its base form
     mk('emboar_mega','Mega Emboar',['fire','fighting'],{atk:287,def:194,hp:242},['LOW_KICK','EMBER'],['HEAT_WAVE','ROCK_SLIDE','FOCUS_BLAST','FLAME_CHARGE','BLAST_BURN']),
-    mk('chesnaught_mega','Mega Chesnaught',['grass','fighting'],{atk:242,def:282,hp:204},['VINE_WHIP'],['FRENZY_PLANT','SUPERPOWER','GYRO_BALL']),
+    mk('chesnaught_mega','Mega Chesnaught',['grass','fighting'],{atk:242,def:282,hp:204},['LOW_KICK','VINE_WHIP','SMACK_DOWN'],['THUNDER_PUNCH','SOLAR_BEAM','SUPERPOWER','FRENZY_PLANT']), // moveset corrected to match base Chesnaught's confirmed real kit
     mk('golurk_mega','Mega Golurk',['ground','ghost'],{atk:284,def:202,hp:205},['MUD_SLAP','ASTONISH'],['SHADOW_PUNCH','DYNAMIC_PUNCH','EARTH_POWER','POLTERGEIST']),
-    mk('barbaracle_mega','Mega Barbaracle',['rock','fighting'],{atk:268,def:248,hp:176},['ROCK_THROW','FURY_CUTTER'],['CROSS_CHOP','ICE_BEAM','NIGHT_SLASH']), // type corrected — gains Fighting in place of Water on Mega Evolution (confirmed via multiple sources), not Rock/Water like its base form
-    mk('drampa_mega','Mega Drampa',['normal','dragon'],{atk:278,def:210,hp:186},['DRAGON_BREATH','ICE_FANG'],['DRAGON_PULSE','FLY','OUTRAGE']),
-    mk('eelektross_mega','Mega Eelektross',['electric'],{atk:291,def:175,hp:198},['SPARK','ACID'],['CRUNCH','THUNDERBOLT','FLAME_CHARGE']),
-    mk('clefable_mega','Mega Clefable',['fairy','flying'],{atk:253,def:205,hp:216},['CHARM','ZEN_HEADBUTT'],['MOONBLAST','PSYCHIC','METEOR_MASH']), // type corrected — gains Flying on Mega Evolution (grows wings, confirmed via official coverage), not pure Fairy like its base form
-    mk('scrafty_mega','Mega Scrafty',['dark','fighting'],{atk:238,def:266,hp:163},['COUNTER','SNARL'],['FOUL_PLAY','POWER_UP_PUNCH','ICE_PUNCH']),
+    mk('barbaracle_mega','Mega Barbaracle',['rock','fighting'],{atk:268,def:248,hp:176},['FURY_CUTTER','WATER_GUN','MUD_SLAP'],['CROSS_CHOP','STONE_EDGE','GRASS_KNOT','SKULL_BASH','RAZOR_SHELL']), // type corrected — gains Fighting in place of Water on Mega Evolution (confirmed via multiple sources), not Rock/Water like its base form; moveset corrected to match base Barbaracle's confirmed real kit
+    mk('drampa_mega','Mega Drampa',['normal','dragon'],{atk:278,def:210,hp:186},['DRAGON_BREATH','EXTRASENSORY'],['DRAGON_PULSE','SWIFT','OUTRAGE','FLY']), // moveset corrected to match base Drampa's confirmed real kit
+    mk('eelektross_mega','Mega Eelektross',['electric'],{atk:291,def:175,hp:198},['SPARK','ACID','VOLT_SWITCH'],['THUNDERBOLT','DRAGON_CLAW','CRUNCH','ACID_SPRAY','LIQUIDATION']), // moveset corrected to match base Eelektross's confirmed real kit
+    mk('clefable_mega','Mega Clefable',['fairy','flying'],{atk:253,def:205,hp:216},['POUND','ZEN_HEADBUTT','CHARGE_BEAM','CHARM','FAIRY_WIND'],['DRAINING_KISS','DAZZLING_GLEAM','MOONBLAST','PSYCHIC','SWIFT','METEOR_MASH']), // type corrected — gains Flying on Mega Evolution (grows wings, confirmed via official coverage), not pure Fairy like its base form; moveset corrected to match base Clefable's confirmed real kit
+    mk('scrafty_mega','Mega Scrafty',['dark','fighting'],{atk:238,def:266,hp:163},['COUNTER','SNARL'],['THUNDER_PUNCH','FOUL_PLAY','ACID_SPRAY','POWER_UP_PUNCH','UPPER_HAND']), // moveset corrected to match base Scrafty's confirmed real kit
     mk('golisopod_mega','Mega Golisopod',['bug','steel'],{atk:260,def:287,hp:181},['FURY_CUTTER','SHADOW_CLAW','METAL_CLAW','WATERFALL'],['AERIAL_ACE','AQUA_JET','X_SCISSOR','RAZOR_SHELL','LIQUIDATION']), // type corrected — gains Steel in place of Water on Mega Evolution (confirmed via multiple sources), not Bug/Water like its base form
-    mk('crabominable_mega','Mega Crabominable',['ice','fighting'],{atk:266,def:213,hp:219},['ICE_SHARD','ROCK_SMASH'],['ICE_PUNCH','CLOSE_COMBAT','DYNAMIC_PUNCH']),
-    mk('meowstic_mega','Mega Meowstic',['psychic'],{atk:288,def:201,hp:179},['CONFUSION','SUCKER_PUNCH'],['THUNDERBOLT','PSYSHOCK','SHADOW_BALL']),
-    mk('pyroar_mega','Mega Pyroar',['fire','normal'],{atk:273,def:198,hp:200},['INCINERATE','FIRE_FANG'],['FLAME_CHARGE','OVERHEAT','SOLAR_BEAM']),
+    mk('crabominable_mega','Mega Crabominable',['ice','fighting'],{atk:266,def:213,hp:219},['BUBBLE','ROCK_SMASH'],['ICE_PUNCH','BRICK_BREAK','CRABHAMMER','POWER_UP_PUNCH','PAYBACK']), // moveset corrected to match base Crabominable's confirmed real kit
+    mk('meowstic_mega','Mega Meowstic',['psychic'],{atk:288,def:201,hp:179},['CONFUSION','SUCKER_PUNCH'],['THUNDERBOLT','PSYCHIC','ENERGY_BALL']), // moveset corrected to match base Meowstic's confirmed real kit
+    mk('pyroar_mega','Mega Pyroar',['fire','normal'],{atk:273,def:198,hp:200},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM']), // moveset corrected to match base Pyroar's confirmed real kit
     mk('tatsugiri_mega','Mega Tatsugiri',['dragon','water'],{atk:262,def:232,hp:169},['TAKE_DOWN','WATER_GUN'],['SURF','MUDDY_WATER','OUTRAGE','HYDRO_PUMP']),
-    mk('scolipede_mega','Mega Scolipede',['bug','poison'],{atk:257,def:254,hp:155},['POISON_STING','BUG_BITE'],['SLUDGE_BOMB','MEGAHORN','GYRO_BALL']),
-    mk('chimecho_mega','Mega Chimecho',['psychic','steel'],{atk:244,def:228,hp:181},['ASTONISH','EXTRASENSORY'],['PSYCHIC','SHADOW_BALL','ENERGY_BALL']), // type corrected — gains Steel on Mega Evolution (confirmed via official PokeBeach reveal), not pure Psychic like its base form
-    mk('dragalge_mega','Mega Dragalge',['poison','dragon'],{atk:236,def:265,hp:163},['DRAGON_TAIL','WATER_GUN'],['AQUA_TAIL','DRAGON_PULSE','SLUDGE_WAVE']),
-    mk('malamar_mega_z','Mega Malamar Z',['dark','psychic'],{atk:208,def:222,hp:200},['PSYCHO_CUT'],['FOUL_PLAY','PSYCHIC']),
+    mk('scolipede_mega','Mega Scolipede',['bug','poison'],{atk:257,def:254,hp:155},['BUG_BITE','POISON_JAB','POISON_STING'],['X_SCISSOR','MEGAHORN','SLUDGE_BOMB']), // moveset corrected to match base Scolipede's confirmed real kit
+    mk('chimecho_mega','Mega Chimecho',['psychic','steel'],{atk:244,def:228,hp:181},['ASTONISH','EXTRASENSORY'],['PSYSHOCK','SHADOW_BALL','ENERGY_BALL']), // type corrected — gains Steel on Mega Evolution (confirmed via official PokeBeach reveal), not pure Psychic like its base form; moveset corrected to match base Chimecho's confirmed real kit
+    mk('dragalge_mega','Mega Dragalge',['poison','dragon'],{atk:236,def:265,hp:163},['ACID','WATER_GUN','DRAGON_TAIL'],['AQUA_TAIL','SLUDGE_BOMB','GUNK_SHOT','HYDRO_PUMP','FOCUS_BLAST','OUTRAGE']), // moveset corrected to match base Dragalge's confirmed real kit
     (() => {
       const p = mk('regidrago','Regidrago',['dragon'],{atk:202,def:101,hp:400},['BITE','DRAGON_BREATH'],['DRAGON_ENERGY','OUTRAGE','HYPER_BEAM','VISE_GRIP','DRAGON_PULSE','BREAKING_SWIPE']);
       p.eliteFastMoves = ['DRAGON_BREATH']; // legacy
@@ -1630,8 +1679,8 @@ function buildFallbackData(){
       return p;
     })(),
     // Newly-released Mega Evolutions (2026), verified against PokeBase cross-references
-    mk('raichu_mega_x','Mega Raichu X',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK'],['WILD_CHARGE','THUNDERBOLT']),
-    mk('raichu_mega_y','Mega Raichu Y',['electric'],{atk:339,def:157,hp:155},['THUNDER_SHOCK'],['WILD_CHARGE','THUNDERBOLT']),
+    mk('raichu_mega_x','Mega Raichu X',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE']), // moveset corrected to match base Raichu's confirmed real kit — previous entry was a much sparser earlier-session guess
+    mk('raichu_mega_y','Mega Raichu Y',['electric'],{atk:339,def:157,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE']), // moveset corrected — same reasoning as Mega Raichu X above
     mk('mewtwo_mega_x','Mega Mewtwo X',['psychic','fighting'],{atk:399,def:215,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','CLOSE_COMBAT','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC']),
     mk('victreebel_mega','Mega Victreebel',['grass','poison'],{atk:265,def:181,hp:190},['RAZOR_LEAF','MAGICAL_LEAF','ACID'],['SLUDGE_BOMB','SOLAR_BEAM','LEAF_BLADE','ACID_SPRAY','LEAF_TORNADO']),
     (() => {
@@ -1639,7 +1688,7 @@ function buildFallbackData(){
       p.eliteChargedMoves = ['DRACO_METEOR']; // legacy
       return p;
     })(),
-    mk('malamar_mega','Mega Malamar',['dark','psychic'],{atk:208,def:222,hp:200},['PSYCHO_CUT'],['FOUL_PLAY','PSYCHIC']),
+    mk('malamar_mega','Mega Malamar',['dark','psychic'],{atk:208,def:222,hp:200},['PECK','PSYCHO_CUT','PSYWAVE'],['PSYBEAM','FOUL_PLAY','SUPERPOWER','HYPER_BEAM']), // moveset corrected — was missing Peck and Psywave (fast) and Superpower/Hyper Beam (charge); Psychic was incorrectly included and isn't real
     mk('falinks_mega','Mega Falinks',['fighting'],{atk:267,def:229,hp:163},['COUNTER','ROCK_SMASH'],['SUPERPOWER','BRICK_BREAK','MEGAHORN']), // corrected — Close Combat and Cross Chop were fabricated/not real moves for this Pokémon
     mk('skarmory_mega','Mega Skarmory',['steel','flying'],{atk:273,def:228,hp:163},['AIR_SLASH','STEEL_WING'],['FLASH_CANNON','BRAVE_BIRD','SKY_ATTACK']),
     mk('starmie_mega','Mega Starmie',['water','psychic'],{atk:276,def:229,hp:155},['TACKLE','WATER_GUN','HIDDEN_POWER','PSYWAVE'],['PSYBEAM','ICE_BEAM','AQUA_JET','POWER_GEM','THUNDER','HYDRO_PUMP','PSYCHIC','SURF']), // stats corrected via user-provided data — was 229/155, real is 276/229
@@ -1900,7 +1949,7 @@ function buildFallbackData(){
       return p;
     })(),
     (() => {
-      const p = mk('meganium','Meganium',['grass'],{atk:168,def:202,hp:190},['VINE_WHIP','RAZOR_LEAF'],['EARTHQUAKE','SOLAR_BEAM','FRENZY_PLANT']); // general-knowledge moveset — not individually re-verified this session
+      const p = mk('meganium','Meganium',['grass'],{atk:168,def:202,hp:190},['VINE_WHIP','RAZOR_LEAF','MAGICAL_LEAF'],['EARTHQUAKE','PETAL_BLIZZARD','SOLAR_BEAM','FRENZY_PLANT']); // moveset corrected — confirmed via db.pokemongohub.net; was missing Magical Leaf (fast) and Petal Blizzard (charge)
       p.eliteChargedMoves = ['FRENZY_PLANT']; // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
       return p;
     })(),
@@ -1910,24 +1959,24 @@ function buildFallbackData(){
       return p;
     })(),
     (() => {
-      const p = mk('chesnaught','Chesnaught',['grass','fighting'],{atk:160,def:225,hp:204},['VINE_WHIP'],['FRENZY_PLANT','SUPERPOWER','GYRO_BALL']); // general-knowledge moveset — not individually re-verified this session
+      const p = mk('chesnaught','Chesnaught',['grass','fighting'],{atk:160,def:225,hp:204},['LOW_KICK','VINE_WHIP','SMACK_DOWN'],['THUNDER_PUNCH','SOLAR_BEAM','SUPERPOWER','FRENZY_PLANT']); // moveset corrected — confirmed via db.pokemongohub.net; was missing Low Kick/Smack Down (fast) and Thunder Punch/Solar Beam (charge); Gyro Ball was not real
       p.eliteChargedMoves = ['FRENZY_PLANT']; // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
       return p;
     })(),
     mk('golurk','Golurk',['ground','ghost'],{atk:184,def:132,hp:205},['MUD_SLAP','ASTONISH'],['SHADOW_PUNCH','DYNAMIC_PUNCH','EARTH_POWER','POLTERGEIST']),
     mk('golisopod','Golisopod',['bug','water'],{atk:156,def:213,hp:181},['FURY_CUTTER','SHADOW_CLAW','METAL_CLAW','WATERFALL'],['AERIAL_ACE','AQUA_JET','X_SCISSOR','RAZOR_SHELL','LIQUIDATION']),
-    mk('barbaracle','Barbaracle',['rock','water'],{atk:220,def:172,hp:176},['ROCK_THROW','FURY_CUTTER'],['CROSS_CHOP','ICE_BEAM','NIGHT_SLASH']), // general-knowledge moveset — not individually re-verified this session
-    mk('drampa','Drampa',['normal','dragon'],{atk:185,def:140,hp:225},['DRAGON_BREATH','ICE_FANG'],['DRAGON_PULSE','FLY','OUTRAGE']), // general-knowledge moveset — not individually re-verified this session
-    mk('eelektross','Eelektross',['electric'],{atk:184,def:155,hp:216},['SPARK','ACID'],['CRUNCH','THUNDERBOLT','FLAME_CHARGE']), // general-knowledge moveset — not individually re-verified this session
-    mk('clefable','Clefable',['fairy'],{atk:178,def:176,hp:216},['CHARM','ZEN_HEADBUTT'],['MOONBLAST','PSYCHIC','METEOR_MASH']), // general-knowledge moveset — not individually re-verified this session
-    mk('scrafty','Scrafty',['dark','fighting'],{atk:177,def:172,hp:198},['COUNTER','SNARL'],['FOUL_PLAY','POWER_UP_PUNCH','ICE_PUNCH']), // general-knowledge moveset — not individually re-verified this session
-    mk('crabominable','Crabominable',['ice','fighting'],{atk:207,def:135,hp:225},['ICE_SHARD','ROCK_SMASH'],['ICE_PUNCH','CLOSE_COMBAT','DYNAMIC_PUNCH']), // general-knowledge moveset — not individually re-verified this session
-    mk('meowstic','Meowstic',['psychic'],{atk:150,def:154,hp:155},['CONFUSION','SUCKER_PUNCH'],['THUNDERBOLT','PSYSHOCK','SHADOW_BALL']), // general-knowledge moveset — not individually re-verified this session
-    mk('pyroar','Pyroar',['fire','normal'],{atk:198,def:149,hp:181},['INCINERATE','FIRE_FANG'],['FLAME_CHARGE','OVERHEAT','SOLAR_BEAM']), // general-knowledge moveset — not individually re-verified this session; male model per request
-    mk('scolipede','Scolipede',['bug','poison'],{atk:203,def:161,hp:194},['POISON_STING','BUG_BITE'],['SLUDGE_BOMB','MEGAHORN','GYRO_BALL']), // general-knowledge moveset — not individually re-verified this session
-    mk('chimecho','Chimecho',['psychic'],{atk:139,def:200,hp:172},['ASTONISH','EXTRASENSORY'],['PSYCHIC','SHADOW_BALL','ENERGY_BALL']), // general-knowledge moveset — not individually re-verified this session
-    mk('dragalge','Dragalge',['poison','dragon'],{atk:151,def:227,hp:163},['DRAGON_TAIL','WATER_GUN'],['AQUA_TAIL','DRAGON_PULSE','SLUDGE_WAVE']), // general-knowledge moveset — not individually re-verified this session
-    mk('raichu','Raichu',['electric'],{atk:193,def:151,hp:155},['VOLT_SWITCH','SPARK'],['WILD_CHARGE','THUNDER_PUNCH','BRICK_BREAK']), // general-knowledge moveset — not individually re-verified this session
+    mk('barbaracle','Barbaracle',['rock','water'],{atk:220,def:172,hp:176},['FURY_CUTTER','WATER_GUN','MUD_SLAP'],['CROSS_CHOP','STONE_EDGE','GRASS_KNOT','SKULL_BASH','RAZOR_SHELL']), // moveset corrected — confirmed via db.pokemongohub.net; original guess (Rock Throw fast; Ice Beam/Night Slash charge) was entirely wrong
+    mk('drampa','Drampa',['normal','dragon'],{atk:185,def:140,hp:225},['DRAGON_BREATH','EXTRASENSORY'],['DRAGON_PULSE','SWIFT','OUTRAGE','FLY']), // moveset corrected — confirmed via db.pokemongohub.net; Ice Fang was not real, should be Extrasensory; was missing Swift (charge)
+    mk('eelektross','Eelektross',['electric'],{atk:184,def:155,hp:216},['SPARK','ACID','VOLT_SWITCH'],['THUNDERBOLT','DRAGON_CLAW','CRUNCH','ACID_SPRAY','LIQUIDATION']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Volt Switch (fast) and Dragon Claw/Acid Spray/Liquidation (charge); Flame Charge was not real
+    mk('clefable','Clefable',['fairy'],{atk:178,def:176,hp:216},['POUND','ZEN_HEADBUTT','CHARGE_BEAM','CHARM','FAIRY_WIND'],['DRAINING_KISS','DAZZLING_GLEAM','MOONBLAST','PSYCHIC','SWIFT','METEOR_MASH']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Pound/Charge Beam/Fairy Wind (fast) and Draining Kiss/Dazzling Gleam/Swift (charge)
+    mk('scrafty','Scrafty',['dark','fighting'],{atk:177,def:172,hp:198},['COUNTER','SNARL'],['THUNDER_PUNCH','FOUL_PLAY','ACID_SPRAY','POWER_UP_PUNCH','UPPER_HAND']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Thunder Punch/Acid Spray/Upper Hand; Ice Punch was not real
+    mk('crabominable','Crabominable',['ice','fighting'],{atk:207,def:135,hp:225},['BUBBLE','ROCK_SMASH'],['ICE_PUNCH','BRICK_BREAK','CRABHAMMER','POWER_UP_PUNCH','PAYBACK']), // moveset corrected — confirmed via db.pokemongohub.net; Ice Shard/Close Combat/Dynamic Punch were not real, should be Bubble (fast) and Brick Break/Crabhammer/Power-Up Punch/Payback (charge)
+    mk('meowstic','Meowstic',['psychic'],{atk:150,def:154,hp:155},['CONFUSION','SUCKER_PUNCH'],['THUNDERBOLT','PSYCHIC','ENERGY_BALL']), // moveset corrected — confirmed via db.pokemongohub.net; Psyshock/Shadow Ball were not real, should be Psychic/Energy Ball
+    mk('pyroar','Pyroar',['fire','normal'],{atk:198,def:149,hp:181},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Ember/Take Down (fast); Flame Charge was not real, should be Dark Pulse; male model per request
+    mk('scolipede','Scolipede',['bug','poison'],{atk:203,def:161,hp:194},['BUG_BITE','POISON_JAB','POISON_STING'],['X_SCISSOR','MEGAHORN','SLUDGE_BOMB']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Poison Jab (fast); Gyro Ball was not real, should be X-Scissor
+    mk('chimecho','Chimecho',['psychic'],{atk:139,def:200,hp:172},['ASTONISH','EXTRASENSORY'],['PSYSHOCK','SHADOW_BALL','ENERGY_BALL']), // moveset corrected — confirmed via db.pokemongohub.net; Psychic was not real, should be Psyshock
+    mk('dragalge','Dragalge',['poison','dragon'],{atk:151,def:227,hp:163},['ACID','WATER_GUN','DRAGON_TAIL'],['AQUA_TAIL','SLUDGE_BOMB','GUNK_SHOT','HYDRO_PUMP','FOCUS_BLAST','OUTRAGE']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Acid (fast); Dragon Pulse/Sludge Wave were not real, should be Sludge Bomb/Gunk Shot/Hydro Pump/Focus Blast/Outrage
+    mk('raichu','Raichu',['electric'],{atk:193,def:151,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Thunder Shock/Charm (fast) and Thunder/Surf/Skull Bash/Trailblaze (charge)
     (() => {
       const p = mk('darkrai','Darkrai',['dark'],{atk:285,def:198,hp:172},['FEINT_ATTACK','SNARL'],['DARK_PULSE','FOCUS_BLAST','SHADOW_BALL','SLUDGE_BOMB']); // confirmed real raid boss — added via PvPoke's raw gamemaster.json
       p.eliteChargedMoves = ['SLUDGE_BOMB']; // legacy
@@ -2194,10 +2243,23 @@ function speciesNameToShowdownSlug(name){
         'attack':'-attack', 'defense':'-defense', 'speed':'-speed', // confirmed (Deoxys forms)
         'rapid strike':'-rapidstrike', 'single strike':'-singlestrike', // confirmed: no hyphen before strike
         'hero':'', 'sword':'-crowned', 'shield':'-crowned', 'midday':'', // Midday is Lycanroc's implicit default form — confirmed Showdown has no suffix for it (just "lycanroc.gif"), only "-midnight"/"-dusk" for the other two
+        'standard':'', 'ordinary':'', // Darmanitan's "Standard" and Keldeo's "Ordinary" are each that species' implicit default form — live data names them explicitly (unlike most base forms), but Showdown's file for the default form has no suffix at all ("darmanitan.gif", "keldeo.gif")
         '50% forme':'', '10% forme':'-10', 'complete forme':'-complete',
         's':'' // Shadow — no distinct Showdown sprite, falls back to base
       };
-      suffix = formSuffixMap[form] !== undefined ? formSuffixMap[form] : ('-' + form.replace(/[^a-z0-9]+/g, ''));
+      if(formSuffixMap[form] !== undefined){
+        suffix = formSuffixMap[form];
+      } else {
+        // No exact match on the whole parenthetical (e.g. live data might say "Galarian Standard"
+        // as one combined string rather than just "Galarian") — fall back to checking known
+        // keywords within it individually, so a compound form text still resolves correctly
+        // instead of falling all the way through to the generic (and usually wrong) catch-all.
+        // Word-boundary matching specifically (not a plain substring check) — otherwise the
+        // single-character 's' key (Shadow marker) would falsely match inside words like
+        // "standard", since "standard".includes('s') is true.
+        const keywordMatch = Object.keys(formSuffixMap).find(k => new RegExp(`\\b${k}\\b`).test(form));
+        suffix = keywordMatch !== undefined ? formSuffixMap[keywordMatch] : ('-' + form.replace(/[^a-z0-9]+/g, ''));
+      }
     }
   }
   // Confirmed from the listing: species with a hyphen in their own name lose it entirely
@@ -2326,13 +2388,15 @@ const ULTRA_BEAST_DEX_IDS = new Set([793,794,795,796,797,798,799,803,804,805,806
 // the intentionally-reserved "Upcoming Megas" tier per request, since none of these are actual
 // raid bosses yet. Excludes Magearna by design: its base form isn't released in GO yet. Scovillain
 // (base and Mega both) was removed entirely, since its base isn't released either.
-// Dragonite/Skarmory/Malamar Z/Starmie/Raichu X&Y were moved OUT of this set back to the regular
-// Mega tier per request — treated as already-released Mega bosses, not upcoming ones.
+// Dragonite/Skarmory/Starmie/Raichu X&Y/Greninja/Delphox/Chesnaught were moved OUT of this set
+// back to the regular Mega tier per request — treated as already-released Mega bosses, not
+// upcoming ones (and automatically excluded from the "Upcoming Megas" toggle's filtering as a
+// direct consequence, since that toggle keys off this same set).
 const UPCOMING_MEGA_SPECIES_IDS = new Set([
-  'baxcalibur_mega','zygarde_mega','heatran_mega','zeraora_mega','delphox_mega','lucario_mega_z',
+  'baxcalibur_mega','zygarde_mega','heatran_mega','zeraora_mega','lucario_mega_z',
   'darkrai_mega','chandelure_mega','absol_mega_z','glimmora_mega','excadrill_mega','feraligatr_mega',
-  'hawlucha_mega','greninja_mega','garchomp_mega_z','froslass_mega','meganium_mega',
-  'staraptor_mega','emboar_mega','chesnaught_mega','golurk_mega','barbaracle_mega',
+  'hawlucha_mega','garchomp_mega_z','froslass_mega','meganium_mega',
+  'staraptor_mega','emboar_mega','golurk_mega','barbaracle_mega',
   'drampa_mega','eelektross_mega','clefable_mega','scrafty_mega','golisopod_mega',
   'crabominable_mega','meowstic_mega','pyroar_mega','tatsugiri_mega','scolipede_mega',
   'chimecho_mega','dragalge_mega'
@@ -2391,7 +2455,7 @@ function applyStateFromUrl(){
   if(!params.has('boss')) return; // no shared-state link present — leave the normal defaults alone
   const bossId = params.get('boss');
   if(GM.byId[bossId]){
-    selectBoss(bossId);
+    selectBoss(bossId, false); // suppress the normal auto-run here — the rest of this function still has more specific settings to apply first; runs once for real at the end instead
     $('bossSelect').value = bossId;
   }
   const tier = params.get('tier');
@@ -2418,23 +2482,19 @@ function applyStateFromUrl(){
   $('megaBoostTypeRow').style.display = $('megaBoostActive').checked ? '' : 'none';
   const megaBoostType = params.get('megaBoostType'); if(megaBoostType) $('megaBoostType').value = megaBoostType;
   $('excludeUpcomingMegas').checked = params.get('includeUpcoming') !== '1';
+  if(GM.byId[bossId] && !$('rankBtn').disabled) $('rankBtn').click(); // the one real auto-run, now that every setting from the link is actually in place
 }
 window.addEventListener('popstate', () => { if(GM.pokemon) applyStateFromUrl(); });
 
 function onDataReady(){
-  buildBossDropdown();
+  buildBossDropdown(); // shows the "select a tier first" placeholder — nothing pre-selected, by request
+  initTierCombo(); // re-run now that GM.pokemon actually exists, so the per-tier "(N)" counts populate — the first call at script load ran before data had loaded and showed no counts
   $('weather').innerHTML = Object.entries(WEATHER).map(([k,w])=>`<option value="${k}">${w.label}</option>`).join('');
   $('megaBoostType').innerHTML = '<option value="rayquaza">Mega Rayquaza (Dragon + Flying + Psychic)</option>' +
     '<option value="primal_kyogre">Primal Kyogre (Water + Electric + Bug)</option>' +
     '<option value="primal_groudon">Primal Groudon (Fire + Grass + Ground)</option>'; // by request — these 3 are the only Pokémon with a genuine teamwide party boost in-game; the rest of the roster's Megas only boost their own type for themselves, not the whole party
 
-  const defaultBoss = GM.byId['rayquaza'] ? 'rayquaza' : bossDropdownRoster()[0].speciesId;
-  selectBoss(defaultBoss);
-  $('bossSelect').value = defaultBoss;
-
-  applyStateFromUrl(); // if the page was opened via a shared/bookmarked link, override the defaults above with whatever it specifies
-
-  $('rankBtn').disabled = false;
+  applyStateFromUrl(); // if the page was opened via a shared/bookmarked link, this is the only thing that pre-selects a boss/tier — a plain page load leaves both blank
 }
 
 /** Raid bosses eligible to appear at all: fully evolved only (raid bosses are never pre-evolutions
@@ -2457,30 +2517,45 @@ function bossDropdownRoster(){
  * by request from a single dropdown grouped by all tiers via <optgroup> to one that shows just the
  * relevant species for whichever tier is picked. Re-run whenever the Raid Tier changes, and after
  * the background PokeAPI legendary-status fetch resolves, since bossAutoTier's answer for a given
- * Pokémon can change once its real status is confirmed. If the previously-selected boss doesn't
- * belong to the newly-selected tier, falls back to the first (alphabetically) species in it. */
+ * Pokémon can change once its real status is confirmed. Leaves nothing pre-selected by request —
+ * shows a placeholder until a tier is picked, and (once a tier is picked) another placeholder
+ * until the person actively chooses a specific boss, rather than defaulting to the first one
+ * alphabetically. */
 function buildBossDropdown(){
   const prevSelection = $('bossSelect').value || selectedBossId;
   const selectedTier = $('tier').value;
+  if(!selectedTier){
+    $('bossSelect').innerHTML = '<option value="">Select a Raid Tier first…</option>';
+    $('bossSelect').value = '';
+    return;
+  }
   const roster = bossDropdownRoster()
     .filter(p => bossAutoTier(p) === selectedTier)
     .sort((a,b) => a.speciesName.localeCompare(b.speciesName));
-  $('bossSelect').innerHTML = roster.map(p => `<option value="${p.speciesId}">${p.speciesName}</option>`).join('');
+  const placeholder = '<option value="">Select a Pokémon…</option>';
+  $('bossSelect').innerHTML = placeholder + roster.map(p => `<option value="${p.speciesId}">${p.speciesName}</option>`).join('');
   if(prevSelection && roster.some(p => p.speciesId === prevSelection)){
-    $('bossSelect').value = prevSelection;
-  } else if(roster.length){
-    $('bossSelect').value = roster[0].speciesId;
+    $('bossSelect').value = prevSelection; // only re-applies a still-valid PRIOR selection (e.g. after a background data refresh) — never auto-picks a new default
+  } else {
+    $('bossSelect').value = '';
   }
 }
 
-function selectBoss(id){
+function selectBoss(id, autoRun){
   const p = GM.byId[id];
   if(!p) return;
   selectedBossId = id;
+  $('rankBtn').disabled = false; // stays disabled (see onDataReady) until an actual boss is picked, by request — nothing pre-selected on load
   const autoTier = bossAutoTier(p);
   if(autoTier){ $('tier').value = autoTier; syncTierComboDisplay(); }
   renderBossMoves(p);
   updateBossInfo();
+  // Auto-runs the ranking pass right after a boss is picked, by request — defaults to on, but
+  // applyStateFromUrl() passes false here since it's about to apply more specific settings (an
+  // exact moveset, weather, etc.) right after this call returns; running immediately would fire
+  // one wasted simulation against the placeholder "Average" moveset before those settings ever
+  // took effect, instead of the one real run the restored link's own state deserves.
+  if(autoRun !== false && !$('rankBtn').disabled) $('rankBtn').click();
 }
 /** Refreshes the custom Raid Tier dropdown's button label and active-row highlight to match
  * whatever $('tier').value currently is — called after ANY direct assignment to that hidden
@@ -2490,7 +2565,9 @@ function syncTierComboDisplay(){
   const select = $('tier');
   const opt = Array.from(select.options).find(o => o.value === select.value) || select.options[0];
   if(!opt) return;
-  $('tierComboLabel').innerHTML = `${tierIconHtml(opt.value)}<span>${opt.textContent}</span>`;
+  const counts = tierCounts();
+  const countStr = (opt.value && counts[opt.value] !== undefined) ? ` (${counts[opt.value]})` : '';
+  $('tierComboLabel').innerHTML = `${tierIconHtml(opt.value)}<span>${opt.textContent}${countStr}</span>`;
   $('tierComboPanel').querySelectorAll('.combo-select-option').forEach(el => {
     el.classList.toggle('active', el.dataset.tier === opt.value);
   });
@@ -2499,9 +2576,27 @@ function syncTierComboDisplay(){
  * <select><option> can't hold images, same reason the moveset picker is a custom widget). Keeps
  * the hidden <select id="tier"> in sync and dispatches a real 'change' event on it so every
  * existing $('tier') reference and 'change' listener elsewhere in the app keeps working unchanged. */
+/** Counts how many bosses would appear under each tier, for the "(N)" shown next to each tier's
+ * name in the dropdown — same idea as the old boss dropdown's per-optgroup counts before tier
+ * became a separate filter step. Returns an empty object before GM.pokemon exists yet (i.e. the
+ * very first call at script load, before data has finished fetching) — initTierCombo() is called
+ * again once onDataReady() runs, which re-populates the panel with real numbers at that point. */
+function tierCounts(){
+  if(!GM.pokemon) return {};
+  const counts = {};
+  bossDropdownRoster().forEach(p => {
+    const t = bossAutoTier(p);
+    if(t) counts[t] = (counts[t]||0) + 1;
+  });
+  return counts;
+}
 function initTierCombo(){
+  const counts = tierCounts();
   const options = Array.from($('tier').options).map(o => ({ value: o.value, text: o.textContent }));
-  const rowHtml = o => `<div class="combo-select-option" data-tier="${o.value}" role="option">${tierIconHtml(o.value)}<span>${o.text}</span></div>`;
+  const rowHtml = o => {
+    const countStr = (o.value && counts[o.value] !== undefined) ? ` (${counts[o.value]})` : '';
+    return `<div class="combo-select-option" data-tier="${o.value}" role="option">${tierIconHtml(o.value)}<span>${o.text}${countStr}</span></div>`;
+  };
   $('tierComboPanel').innerHTML = options.map(rowHtml).join('');
 
   $('tierComboPanel').querySelectorAll('.combo-select-option').forEach(el => {
@@ -2531,8 +2626,18 @@ document.addEventListener('click', e => {
 });
 initTierCombo();
 
+let _lastRenderedBossMovesId = null; // tracks which boss the current bossfast/bosscharge1 selection actually belongs to
 function renderBossMoves(p){
-  const keepFast = $('bossfast').value, keepC1 = $('bosscharge1').value;
+  // Only "keep" a prior specific combo selection if it was made FOR THIS SAME BOSS — otherwise a
+  // fresh boss selection could coincidentally carry over a stale combo from a different species
+  // that happens to share the same move IDs (e.g. two Pokémon both legally knowing Rock Throw),
+  // silently skipping the intended "defaults to Average" behavior for a genuinely new boss. Always
+  // resets to Auto on a real boss change; only persists a specific pick across re-renders of the
+  // *same* boss (e.g. after a live-data refresh).
+  const isSameBossAsBefore = _lastRenderedBossMovesId === p.speciesId;
+  const keepFast = isSameBossAsBefore ? $('bossfast').value : null;
+  const keepC1 = isSameBossAsBefore ? $('bosscharge1').value : null;
+  _lastRenderedBossMovesId = p.speciesId;
   const eliteFast = new Set(p.eliteFastMoves||[]);
   const eliteCharge = new Set(p.eliteChargedMoves||[]);
   const bossFastOptions = p.fastMoves.filter(m => !eliteFast.has(m));
@@ -2552,12 +2657,22 @@ function renderBossMoves(p){
       <span class="combo-select-sep">/</span>
       ${moveBadge(chargeId)}
     </div>`;
-  $('bossMoveComboPanel').innerHTML = combos.map(rowHtml).join('');
+  // "Auto" row — the new default. When selected, the simulation itself randomly samples across
+  // every legal boss moveset combo (weighted evenly) instead of being locked to one, since a real
+  // raid boss's actual moveset varies lobby to lobby and this gives a result representative of
+  // facing it in general rather than one specific (arbitrary) combo the app happened to default to.
+  const autoRowHtml = combos.length > 1 ? `
+    <div class="combo-select-option" data-fast="AUTO" data-charge="AUTO" role="option">
+      <span class="combo-select-auto-label">🎲 Average across all ${combos.length} legal movesets</span>
+    </div>` : '';
+  $('bossMoveComboPanel').innerHTML = autoRowHtml + combos.map(rowHtml).join('');
 
   const pick = (fastId, chargeId) => {
     $('bossfast').value = fastId;
     $('bosscharge1').value = chargeId;
-    $('bossMoveComboLabel').innerHTML = `${moveBadge(fastId)}<span class="combo-select-sep">/</span>${moveBadge(chargeId)}`;
+    $('bossMoveComboLabel').innerHTML = (fastId === 'AUTO')
+      ? `<span class="combo-select-auto-label">🎲 Average across all ${combos.length} legal movesets</span>`
+      : `${moveBadge(fastId)}<span class="combo-select-sep">/</span>${moveBadge(chargeId)}`;
     $('bossMoveComboPanel').querySelectorAll('.combo-select-option').forEach(el => {
       el.classList.toggle('active', el.dataset.fast === fastId && el.dataset.charge === chargeId);
     });
@@ -2568,14 +2683,17 @@ function renderBossMoves(p){
       pick(el.dataset.fast, el.dataset.charge);
       $('bossMoveComboWrap').classList.remove('open');
       $('bossMoveComboBtn').setAttribute('aria-expanded', 'false');
+      if(!$('rankBtn').disabled) $('rankBtn').click(); // auto-run on an explicit user pick, by request — not on the automatic default selection below, which fires on every boss change and would otherwise re-trigger a run before the person's even looked at the rest of their settings
     });
   });
 
-  const keepStillValid = bossFastOptions.includes(keepFast) && bossChargeOptions.includes(keepC1);
+  const keepStillValid = keepFast === 'AUTO' || (bossFastOptions.includes(keepFast) && bossChargeOptions.includes(keepC1));
   if(keepStillValid){
     pick(keepFast, keepC1);
-  } else if(combos.length){
-    pick(combos[0].fastId, combos[0].chargeId);
+  } else if(combos.length > 1){
+    pick('AUTO', 'AUTO'); // default for any boss with more than one legal combo
+  } else if(combos.length === 1){
+    pick(combos[0].fastId, combos[0].chargeId); // only one legal option exists — nothing to average, just use it directly
   } else {
     $('bossfast').value = ''; $('bosscharge1').value = '';
     $('bossMoveComboLabel').textContent = 'No legal moveset available';
@@ -2614,7 +2732,7 @@ $('tier').addEventListener('change', () => {
 $('excludeUpcomingMegas').addEventListener('change', () => {
   // Applied after the sim, not as a pre-filter — see drawTop30Rows()'s own comment. If a ranking
   // hasn't been run yet, currentTop30Results is empty and this just no-ops harmlessly.
-  if(currentTop30Results.length) drawTop30Rows();
+  if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
 });
 $('bossMoveComboBtn').addEventListener('click', () => {
   const wrap = $('bossMoveComboWrap');
@@ -2701,6 +2819,31 @@ function computeBossContext(cfg){
     chargeB_name: moveNameSync(chargeB1.moveId), fastB_name: moveNameSync(fastB.moveId),
     boss_name: speciesNameSync(b.speciesId)
   };
+}
+/** Returns an ARRAY of boss contexts instead of one — either a single-element array for a
+ * specifically-picked moveset (cfg.bossFastId/bossCharge1Id set to a real move), or one context
+ * per legal (non-elite) fast×charge combo when cfg.bossFastId === 'AUTO'. Callers that want the
+ * "average across all legal movesets" behavior pick a random element from this list PER RUN rather
+ * than fixing one bossCtx for the whole batch — since a real raid boss's actual moveset varies
+ * lobby to lobby, this gives results representative of facing the boss in general. */
+function computeBossContextList(cfg){
+  if(cfg.bossFastId !== 'AUTO') return [computeBossContext(cfg)];
+  const b = GM.byId[cfg.bossId];
+  const eliteFast = new Set(b.eliteFastMoves||[]);
+  const eliteCharge = new Set(b.eliteChargedMoves||[]);
+  const fastOptions = b.fastMoves.filter(m => !eliteFast.has(m));
+  const chargeOptions = b.chargedMoves.filter(c => c !== 'STRUGGLE' && !eliteCharge.has(c));
+  const list = [];
+  fastOptions.forEach(fastId => {
+    chargeOptions.forEach(chargeId => {
+      list.push(computeBossContext({...cfg, bossFastId: fastId, bossCharge1Id: chargeId}));
+    });
+  });
+  return list.length ? list : [computeBossContext(cfg)]; // defensive fallback — shouldn't happen since renderBossMoves only offers AUTO when 2+ combos exist
+}
+function pickRandomBossCtx(bossCtxList, rng){
+  rng = rng || Math.random;
+  return bossCtxList[Math.floor(rng() * bossCtxList.length)];
 }
 
 function runSim(cfg, rng, bossCtx){
@@ -3010,8 +3153,13 @@ async function rankAllAttackers(onProgress){
   // The boss side of the matchup (species, its chosen moves, tier, weather) never changes across
   // this whole function — only the attacker being tested does. Computed once here and passed into
   // every runSim() call below instead of letting each one redo the same GM lookups, move-duration/
-  // window resolution, and name lookups tens of thousands of times over.
-  const bossCtx = computeBossContext(baseCfg);
+  // window resolution, and name lookups tens of thousands of times over. bossCtxList holds one
+  // entry for a specifically-picked moveset, or one per legal combo when "Auto" is selected — see
+  // computeBossContextList()'s own comment. bossCtx (singular) stays as an alias to the first
+  // entry for code that only ever needs "a" reasonable boss context (e.g. reading boss stats,
+  // which don't vary by moveset) rather than "the randomly-sampled one for this specific run".
+  const bossCtxList = computeBossContextList(baseCfg);
+  const bossCtx = bossCtxList[0];
 
   const boss = GM.byId[baseCfg.bossId];
   const bossTypes = realTypes(boss.types);
@@ -3064,7 +3212,7 @@ async function rankAllAttackers(onProgress){
     const cfgWithLog = {...cfg, needLog:true}; // the only caller that reads the log — screening,
     // solo-DPS, and capped win-rate passes never do, so they default to skipping log construction.
     const allRuns = [];
-    for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, bossCtx)); totalSims++; }
+    for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, pickRandomBossCtx(bossCtxList))); totalSims++; }
 
     const faintGroups = {};
     allRuns.forEach(r => { (faintGroups[r.deaths] = faintGroups[r.deaths] || []).push(r); });
@@ -3256,7 +3404,7 @@ async function rankAllAttackers(onProgress){
           }
           const cfg = {...baseCfg, attackerId: p.speciesId, fastId, chargeId};
           let t = 0;
-          for(let i=0;i<SCREEN_N;i++){ t += runSim(cfg, null, bossCtx).timeSec; totalSims++; }
+          for(let i=0;i<SCREEN_N;i++){ t += runSim(cfg, null, pickRandomBossCtx(bossCtxList)).timeSec; totalSims++; }
           const avg = t/SCREEN_N;
           if(avg < bestScreenTime){ bestScreenTime = avg; bestCombo = {fastId, chargeId}; }
         });
@@ -3321,7 +3469,7 @@ async function rankAllAttackers(onProgress){
     const r = top30[i];
     const soloCfg = {...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
     let partyDps = 0;
-    for(let j=0;j<SOLO_N;j++){ partyDps += runSim(soloCfg, null, bossCtx).dps; totalSims++; }
+    for(let j=0;j<SOLO_N;j++){ partyDps += runSim(soloCfg, null, pickRandomBossCtx(bossCtxList)).dps; totalSims++; }
     partyDps /= SOLO_N;
     const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
     r.soloDps = perPlayerDps;
@@ -3335,7 +3483,7 @@ async function rankAllAttackers(onProgress){
     const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
     let wins=0;
     for(let j=0;j<CAPPED_N;j++){
-      const cr = runSim(cappedCfg, null, bossCtx);
+      const cr = runSim(cappedCfg, null, pickRandomBossCtx(bossCtxList));
       totalSims++;
       if(cr.win) wins++;
     }
@@ -3360,10 +3508,55 @@ function renderTop30(results){
   $('top30Hint').textContent = `Screened every legal fast+charged moveset combo with a quick sample for fully-evolved Pokémon (pre-evolutions and off-type/resisted combos skipped, neutral combos included only if a cheap analytical estimate says they're competitive), ran a full 200-run Monte Carlo on each one's best combo, then computed Power% (per-player un-capped DPS × raid time limit ÷ boss HP — theoretical, can exceed 100%) and Win% (a separate capped run: 6 lives, no more revives, stopped at the raid's real time limit) — matching Pokebattler's metric definitions. Ranked by Estimator. Total simulations run: ${lastTotalSims.toLocaleString('en-US')}.`;
   currentTop30Results = results;
   currentSort = { key: 'estimator', asc: true };
-  drawTop30Rows();
+  const visible = drawTop30Rows();
+  updateResultsJsonLink(visible);
   $('top30EmptyState').style.display='none';
   $('top30Panel').style.display='block';
   $('top30Panel').scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+/** Builds a downloadable JSON export of the run — Pokebattler-style, per the user's own comparison
+ * ("every raid sim automatically creates a json file... they already create a specific url each").
+ * Generated automatically as soon as a ranking pass finishes (no extra click needed to produce it,
+ * only to actually save it) — a plain data:URI on the results panel's download link, refreshed on
+ * every new run and cleaned up between refreshes since object URLs otherwise leak memory for the
+ * life of the page. Mirrors the same setup pushStateToUrl() encodes into the URL, plus the full
+ * results table, so the export is self-describing rather than needing the URL alongside it. */
+let _lastJsonBlobUrl = null;
+function updateResultsJsonLink(results){
+  const exportObj = {
+    boss: { speciesId: selectedBossId, speciesName: speciesNameSync(selectedBossId) },
+    tier: $('tier').value,
+    tierLabel: TIERS[$('tier').value].label,
+    bossMoveset: $('bossfast').value === 'AUTO'
+      ? 'AUTO (averaged across every legal boss moveset)'
+      : { fast: moveNameSync($('bossfast').value), charge: moveNameSync($('bosscharge1').value) },
+    settings: {
+      level: $('level').value, weather: $('weather').value, players: $('players').value,
+      friendship: $('friendship').value, bladeBoost: $('bladeBoost').checked,
+      shieldBoost: $('shieldBoost').checked, dodgeChargeOnly: $('dodgeChargeOnly').checked,
+      partyPowerActive: $('partyPowerActive').checked, megaBoostActive: $('megaBoostActive').checked,
+      megaBoostType: $('megaBoostActive').checked ? $('megaBoostType').value : null,
+      includeUpcomingMegas: $('excludeUpcomingMegas').checked // checkbox reads "Include Upcoming Megas" (checked = include) despite its id, per an earlier UI change
+    },
+    totalSimulations: lastTotalSims,
+    generatedAt: new Date().toISOString(),
+    shareableUrl: location.href,
+    results: results.map(r => ({
+      speciesId: r.speciesId, name: r.name, types: r.types,
+      fastMove: r.fastName, chargeMove: r.chargeName,
+      powerPct: r.powerPct, timeToWinSec: r.avgTimeSec, estimator: r.estimator,
+      avgFainted: r.avgDeaths, avgDps: r.avgDps, avgRejoins: r.avgRevives,
+      timeoutRate: r.timeoutRate, isUpcomingMega: !!r.isUpcomingMega
+    }))
+  };
+  const json = JSON.stringify(exportObj, null, 2);
+  if(_lastJsonBlobUrl) URL.revokeObjectURL(_lastJsonBlobUrl); // avoid leaking a new object URL on every run
+  _lastJsonBlobUrl = URL.createObjectURL(new Blob([json], {type:'application/json'}));
+  const link = $('downloadJsonLink');
+  link.href = _lastJsonBlobUrl;
+  const safeName = speciesNameSync(selectedBossId).toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  link.download = `raid-results-${safeName}.json`;
 }
 
 /** Tiers a metric into good/mid/bad for the color-coded stat classes. `higherIsBetter` flips the
@@ -3411,6 +3604,7 @@ function drawTop30Rows(){
     </tr>
   `;
   }).join('');
+  return sorted;
 }
 
 let currentTop30Results = [];
@@ -3423,7 +3617,7 @@ document.addEventListener('click', e => {
     const key = th.dataset.sort;
     if(currentSort.key === key) currentSort.asc = !currentSort.asc;
     else currentSort = { key, asc: th.dataset.sortAsc === '1' };
-    drawTop30Rows();
+    updateResultsJsonLink(drawTop30Rows());
   }
 });
 function openCombatLog(r){
@@ -3694,6 +3888,26 @@ function computeBossContext(cfg){
   };
 }
 
+function computeBossContextList(cfg){
+  if(cfg.bossFastId !== 'AUTO') return [computeBossContext(cfg)];
+  const b = GM.byId[cfg.bossId];
+  const eliteFast = new Set(b.eliteFastMoves||[]);
+  const eliteCharge = new Set(b.eliteChargedMoves||[]);
+  const fastOptions = b.fastMoves.filter(m => !eliteFast.has(m));
+  const chargeOptions = b.chargedMoves.filter(c => c !== 'STRUGGLE' && !eliteCharge.has(c));
+  const list = [];
+  fastOptions.forEach(fastId => {
+    chargeOptions.forEach(chargeId => {
+      list.push(computeBossContext({...cfg, bossFastId: fastId, bossCharge1Id: chargeId}));
+    });
+  });
+  return list.length ? list : [computeBossContext(cfg)];
+}
+function pickRandomBossCtx(bossCtxList, rng){
+  rng = rng || Math.random;
+  return bossCtxList[Math.floor(rng() * bossCtxList.length)];
+}
+
 function runSim(cfg, rng, bossCtx){
   rng = rng || Math.random;
   const needLog = !!cfg.needLog; // most callers (moveset screening, solo-DPS pass, capped win-rate
@@ -3943,11 +4157,11 @@ function quickDpsEstimate(a, fastId, chargeId, aStats, bStats, bossTypes){
 }
 /** De-closured version of the main thread's evaluateCombo — takes N/bossCtx/goals as explicit
  * params instead of closing over them, and returns simCount instead of mutating an outer counter. */
-function evaluateCombo(cfg, N, bossCtx, goals){
+function evaluateCombo(cfg, N, bossCtxList, goals){
   const cfgWithLog = {...cfg, needLog:true};
   const allRuns = [];
   let simCount = 0;
-  for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, bossCtx)); simCount++; }
+  for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, pickRandomBossCtx(bossCtxList))); simCount++; }
 
   const faintGroups = {};
   allRuns.forEach(r => { (faintGroups[r.deaths] = faintGroups[r.deaths] || []).push(r); });
@@ -3992,7 +4206,8 @@ function evaluateCombo(cfg, N, bossCtx, goals){
 self.onmessage = function(e){
   const { moves, bossPokemon, pokemonChunk, baseCfg, N, screenN, neutralThreshold, attackerStats } = e.data;
   GM = { moves, byId: { [baseCfg.bossId]: bossPokemon } };
-  const bossCtx = computeBossContext(baseCfg);
+  const bossCtxList = computeBossContextList(baseCfg);
+  const bossCtx = bossCtxList[0];
   const bossTypes = bossCtx.bTypes;
   const goals = e.data.goals;
   const results = [];
@@ -4016,7 +4231,7 @@ self.onmessage = function(e){
         }
         const cfg = {...baseCfg, attackerId: p.speciesId, fastId, chargeId};
         let t = 0;
-        for(let i=0;i<screenN;i++){ t += runSim(cfg, null, bossCtx).timeSec; totalSimCount++; }
+        for(let i=0;i<screenN;i++){ t += runSim(cfg, null, pickRandomBossCtx(bossCtxList)).timeSec; totalSimCount++; }
         const avg = t/screenN;
         if(avg < bestScreenTime){ bestScreenTime = avg; bestCombo = {fastId, chargeId}; }
       });
@@ -4024,7 +4239,7 @@ self.onmessage = function(e){
     if(!bestCombo) continue;
 
     const cfg = {...baseCfg, attackerId: p.speciesId, fastId: bestCombo.fastId, chargeId: bestCombo.chargeId};
-    const bestStats = evaluateCombo(cfg, N, bossCtx, goals);
+    const bestStats = evaluateCombo(cfg, N, bossCtxList, goals);
     totalSimCount += bestStats.simCount;
 
     results.push({
