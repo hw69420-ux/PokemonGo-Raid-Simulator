@@ -305,12 +305,6 @@
       <div class="panel">
         <p class="eyebrow">Raid Boss</p>
 
-        <label for="bossSelect">Pokémon</label>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span id="bossSpriteImg" style="flex-shrink:0;"></span>          <select id="bossSelect" style="flex:1;"></select>
-          <span id="bossTypeInline" style="white-space:nowrap;" class="boss-type-inline"></span>
-        </div>
-
         <label for="tierCombo">Raid Tier</label>
         <div class="combo-select" id="tierComboWrap">
           <button type="button" class="combo-select-btn" id="tierComboBtn" aria-haspopup="listbox" aria-expanded="false">
@@ -327,6 +321,12 @@
           <option value="mega_legendary">Mega Raid · Legendary</option>
           <option value="mega_upcoming">Upcoming Megas</option>
         </select>
+
+        <label for="bossSelect">Pokémon</label>
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span id="bossSpriteImg" style="flex-shrink:0;"></span>          <select id="bossSelect" style="flex:1;"></select>
+          <span id="bossTypeInline" style="white-space:nowrap;" class="boss-type-inline"></span>
+        </div>
 
         <label for="bossMoveCombo">Moveset</label>
         <div class="combo-select" id="bossMoveComboWrap">
@@ -380,13 +380,11 @@
               <th title="Animated sprite"></th>
               <th title="This Pokémon's type(s)">Type</th>
               <th title="The fast + charge move combo used for this result — the best-performing super-effective combo found for this Pokémon">Moveset Used</th>
-              <th title="This attacker's per-player theoretical damage output, extrapolated across the full raid time limit, as a % of boss HP — not damage actually dealt in a capped run, which is why strong attackers can read over 100%" data-sort="powerPct">Power % <span class="sort-arrow">▾</span></th>
               <th title="Average time to defeat the boss in an uncapped run (continues until won, not stopped at the time limit)" data-sort="avgTimeSec" data-sort-asc="1">Time to Win <span class="sort-arrow">▾</span></th>
-              <th title="How many players — each contributing this attacker's own per-player DPS under the current settings — would it take to solo the boss within the time limit" data-sort="estimator" data-sort-asc="1" class="sorted">Estimator <span class="sort-arrow">▾</span></th>
+              <th title="How many players it would take to defeat the boss within the time limit, based on the same real 'runs until win' simulation Time to Win comes from — includes downtime from fainting/reviving/dodge-timing, not just a pure damage-output projection" data-sort="estimator" data-sort-asc="1" class="sorted">Estimator <span class="sort-arrow">▾</span></th>
               <th title="Average effective faints across all runs: whole faints, plus the fraction of max HP the finishing Pokémon had already lost by the time the boss went down" data-sort="avgDeaths" data-sort-asc="1">Fainted <span class="sort-arrow">▾</span></th>
-              <th title="Average damage dealt to the boss per second" data-sort="avgDps">DPS <span class="sort-arrow">▾</span></th>
+              <th title="Total party damage dealt to the boss per second, averaged across all N simulated runs — computed from the same sample as Time to Win, so DPS × Time to Win consistently approximates the boss's HP pool" data-sort="avgDps">DPS <span class="sort-arrow">▾</span></th>
               <th title="Average number of full-team wipes (all 6 lives lost) requiring the 15s rejoin delay" data-sort="avgRevives" data-sort-asc="1">Rejoins <span class="sort-arrow">▾</span></th>
-              <th title="View a detailed example combat log for this matchup">Log</th>
             </tr>
           </thead>
           <tbody id="top30Body"></tbody>
@@ -397,7 +395,7 @@
       <div class="footnote">
         Formula: DMG = ⌊0.5 × Power × (ATK/DEF) × STAB(1.2) × Effectiveness × Weather(1.2) × Friendship⌋ + 1 · No dodging assumed for any attacker, matching Pokebattler's "No Dodging" attack strategy · Multiplayer scales the team's damage against the boss.<br>
         Matches current raid mechanics: the boss gains energy equal to 50% of damage taken (rounded up).<br>
-        Every Pokémon is simulated 200 times (Monte Carlo) against the boss — figures below are averages across those 200 runs, using each Pokémon's first available fast + charged move. Estimator = players needed to defeat the boss within the raid's real 5-minute time limit, derived from the same 200-run average DPS.
+        Every Pokémon is simulated (Monte Carlo) against the boss — figures above are averages across all those runs. Estimator = players needed to defeat the boss within the raid's real time limit, based on the same simulated "runs until win" time as Time to Win (so it reflects real downtime from fainting/reviving, not just a pure damage-output projection). An asterisk (*) after a move name marks it as a legacy, Elite-TM-only move for that specific Pokémon.
       </div>
     </div>
   </div>
@@ -1841,10 +1839,17 @@ function typeBadges(types, showIcon){
 /** Renders a single move as a colored badge (background = the move's own type, plus its type
  * icon) — same visual treatment as typeBadges() above, but for a move name instead of a type
  * name. Shared between the boss moveset picker and the results table's "Moveset Used" column. */
-function moveBadge(id){
+/** Renders a single move as a colored badge (background = the move's own type, plus its type
+ * icon) — same visual treatment as typeBadges() above, but for a move name instead of a type
+ * name. Shared between the boss moveset picker and the results table's "Moveset Used" column.
+ * isLegacy appends a "*" right after the move name, by request — flags a move as an Elite-TM-only
+ * legacy move for the specific Pokémon it's being shown for (the boss moveset picker never passes
+ * true here, since legacy moves are already filtered out of a boss's own selectable movesets
+ * entirely — only an attacker's moveset can legitimately show one). */
+function moveBadge(id, isLegacy){
   const m = GM.moves[id];
   const t = m ? m.type : 'normal';
-  return `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${typeIconImg(t, 12)}&nbsp;&nbsp;${moveNameSync(id)}</span>`;
+  return `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${typeIconImg(t, 12)}&nbsp;&nbsp;${moveNameSync(id)}${isLegacy ? '*' : ''}</span>`;
 }
 function realTypes(types){ return (types||[]).filter(t => t && t !== 'none'); }
 function multiplier(atkType, defTypes){
@@ -2827,7 +2832,13 @@ async function rankAllAttackers(onProgress){
   // thermally-throttled phone is a run that both takes much longer AND risks the browser killing a
   // backgrounded/throttled tab partway through. Still large enough samples to be a reasonable
   // approximation; not cut so far as to risk visibly noisy rankings.
-  const N = mobile ? 120 : 200;
+  // N raised from 200 to 500 by request (desktop) — reduces standard error by ~sqrt(2.5)≈1.6x,
+  // making near-tied attackers' Time to Win/DPS/Estimator noticeably less prone to noise-driven
+  // rank flips between close performers. This is a real speed/precision tradeoff, not a free win —
+  // increases evaluateCombo's simulation volume by the same 2.5x factor for every Pokémon that
+  // reaches full confirmation (though the neutral-filtered screening pass and early-exit logic
+  // still bound how many combos get there in the first place).
+  const N = mobile ? 300 : 500;
   const SOLO_N = mobile ? 18 : 30;
   const CAPPED_N = mobile ? 12 : 20;
   const results = [];
@@ -2883,38 +2894,53 @@ async function rankAllAttackers(onProgress){
     return fastDmg/fastDur*0.4 + chargeDmg/chargeDur*0.6; // charge move weighted heavier — usually the larger share of real damage output
   }
 
-  /** Runs a full N-run Monte Carlo for one attacker+combo and reduces it to the dominant-cluster
-   * ("typical") stats — see the long comment this replaced for why the dominant cluster, not a
-   * plain mean, is used. Returns null only if somehow every run throws (shouldn't happen). */
+  /** Runs a full N-run Monte Carlo for one attacker+combo and reduces it to summary stats. Time
+   * to Win / DPS / Fainted are now averaged across ALL N runs — changed by request, after the
+   * previous "dominant cluster only" approach (average restricted to just the single most-common
+   * faint-count bucket) turned out to produce genuinely misleading comparisons between different
+   * attackers: two Pokémon with clearly different overall faint-frequency profiles could each land
+   * in a DIFFERENT bucket of their own run distribution, so their displayed stats weren't really
+   * comparable apples-to-apples even though they looked like they should be. A plain full-sample
+   * mean doesn't have that selection-bias problem. The dominant cluster concept is kept only for
+   * exampleRun below, where picking one real illustrative battle log specifically from the most
+   * common outcome still makes sense (an "average battle log" isn't a meaningful thing to show).
+   * Returns null only if somehow every run throws (shouldn't happen). */
   function evaluateCombo(cfg){
     const cfgWithLog = {...cfg, needLog:true}; // the only caller that reads the log — screening,
     // solo-DPS, and capped win-rate passes never do, so they default to skipping log construction.
     const allRuns = [];
     for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, bossCtx)); totalSims++; }
 
+    const typicalTimeSec = allRuns.reduce((s,r) => s+r.timeSec, 0) / N;
+    // DPS changed from "average of each run's own (damage÷time) ratio" to "total damage ÷ total
+    // time" across all runs — by request, so it stays consistent with Time to Win instead of being
+    // a separate, independently-noisy statistic. (Mean of ratios ≠ ratio of means in general — a
+    // few short, lucky runs could previously pull the DPS average up without a matching pull on
+    // the separately-averaged Time to Win, which is exactly the inconsistency this fixes. r.dps
+    // isn't stored as raw damage, so it's reconstructed here as r.dps*r.timeSec per run — this is
+    // exact, not an approximation, since r.dps was itself only ever damage÷time to begin with.)
+    const totalDamage = allRuns.reduce((s,r) => s + r.dps*r.timeSec, 0);
+    const totalTimeAllRuns = allRuns.reduce((s,r) => s+r.timeSec, 0);
+    const totalRevives = allRuns.reduce((s,r) => s+r.revives, 0);
+    const totalDeaths = allRuns.reduce((s,r) => s+r.deaths, 0);
+    const totalHPleft = allRuns.reduce((s,r) => s+r.aHPleft, 0);
+    const aMaxHP = allRuns[0].aMaxHP;
+    const timeoutRate = allRuns.filter(r => r.timeout).length / N;
+
+    // Pick a representative example battle for the combat-log view: group runs by their exact
+    // faint count, take the most common ("dominant") group, then within that group score each run
+    // the same way Overall is scored (Power vs. goal, Time vs. goal) and take the median by that
+    // score — matching Pokebattler's "median result based on overall rating is used for combat
+    // logs as an example" (Monte Carlo - Gold tooltip). Deliberately uncapped, unlike the display
+    // Overall below — for a fast solo clear, every winning run's Power%/Time-to-Win already blow
+    // past goals.powerGoal/ttwGoal (those goals are calibrated for Pokebattler's much larger
+    // theoretical Power%), so capping at 100 would tie every winning run at the same score and
+    // make "median" pick an arbitrary run instead of a real one.
     const faintGroups = {};
     allRuns.forEach(r => { (faintGroups[r.deaths] = faintGroups[r.deaths] || []).push(r); });
     const modalFaintCount = Object.keys(faintGroups).reduce((best, k) =>
       faintGroups[k].length > faintGroups[best].length ? k : best, Object.keys(faintGroups)[0]);
     const modalRuns = faintGroups[modalFaintCount];
-    const M = modalRuns.length;
-    const modalTimeSorted = [...modalRuns].sort((a,b) => a.timeSec - b.timeSec);
-    const typicalTimeSec = modalTimeSorted[Math.floor(M/2)].timeSec;
-    const totalDps = modalRuns.reduce((s,r) => s+r.dps, 0);
-    const totalRevives = modalRuns.reduce((s,r) => s+r.revives, 0);
-    const totalDeaths = modalRuns.reduce((s,r) => s+r.deaths, 0);
-    const totalHPleft = modalRuns.reduce((s,r) => s+r.aHPleft, 0);
-    const aMaxHP = modalRuns[0].aMaxHP;
-    const timeoutRate = allRuns.filter(r => r.timeout).length / N; // measured against the full sample
-
-    // Pick a representative example battle for the combat-log view: score every run in the
-    // dominant cluster the same way Overall is scored (Power vs. goal, Time vs. goal) and take
-    // the median by that score — matching Pokebattler's "median result based on overall rating
-    // is used for combat logs as an example" (Monte Carlo - Gold tooltip). Deliberately uncapped,
-    // unlike the display Overall below — for a fast solo clear, every winning run's Power%/
-    // Time-to-Win already blow past goals.powerGoal/ttwGoal (those goals are calibrated for
-    // Pokebattler's much larger theoretical Power%), so capping at 100 would tie every winning
-    // run at the same score and make "median" pick an arbitrary run instead of a real one.
     const scoredRuns = modalRuns.map(r => {
       const powerScore = (r.powerPct / goals.powerGoal) * 100;
       const timeScore = (goals.ttwGoal / Math.max(r.timeSec, 0.01)) * 100;
@@ -2922,8 +2948,8 @@ async function rankAllAttackers(onProgress){
     }).sort((a,b) => a.score - b.score);
     const exampleRun = scoredRuns[Math.floor(scoredRuns.length/2)].r;
 
-    const avgDeaths = totalDeaths/M;
-    const avgHPleft = totalHPleft/M;
+    const avgDeaths = totalDeaths/N;
+    const avgHPleft = totalHPleft/N;
     // "Effective" deaths, factoring in the finishing Pokémon's remaining HP: a full faint counts as
     // 1.0 as before, plus the fraction of its max HP the surviving finisher had already burned through
     // by the time the boss went down (e.g. finishing at 30% HP adds another 0.70 "partial death").
@@ -2932,7 +2958,7 @@ async function rankAllAttackers(onProgress){
     const avgDeathsWithHP = avgDeaths + (aMaxHP - avgHPleft)/aMaxHP;
 
     return {
-      typicalTimeSec, avgDps: totalDps/M, avgRevives: totalRevives/M, avgDeaths: avgDeathsWithHP, timeoutRate,
+      typicalTimeSec, avgDps: totalDamage/totalTimeAllRuns, avgRevives: totalRevives/N, avgDeaths: avgDeathsWithHP, timeoutRate,
       exampleLog: exampleRun.log, exampleWin: exampleRun.win,
       exampleTimeSec: exampleRun.timeSec, exampleDeaths: exampleRun.deaths,
       exampleRevives: exampleRun.revives, exampleBossHPleft: exampleRun.bossHPleft,
@@ -3221,11 +3247,19 @@ async function rankAllAttackers(onProgress){
       partyDps /= SOLO_N;
       const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
       r.soloDps = perPlayerDps;
-      r.estimator = tier.hp / (perPlayerDps * tier.timeLimit);
+      // Estimator now reflects the SAME "runs until win" simulation Time to Win comes from
+      // (r.avgTimeSec, already computed during screening) — changed by request, so downtime from
+      // fainting/reviving/dodge-timing counts here too, not just a pure DPS-over-time-limit
+      // projection that silently ignores it. Scaled by the configured party size since avgTimeSec
+      // reflects however many players (baseCfg.players) were actually simulated together: if that
+      // party takes avgTimeSec against a raid clock of tier.timeLimit, the same math says
+      // players × (avgTimeSec/timeLimit) players would be needed to finish in time.
+      r.estimator = baseCfg.players * (r.avgTimeSec / tier.timeLimit);
       // Power%: this attacker's (per-player) un-capped theoretical damage output extrapolated across the
       // full raid time limit, as a % of boss HP — NOT the actual damage dealt in a real (boss-HP-capped)
-      // run, which is why strong attackers read >100%. Derived straight from the same per-player DPS
-      // used for Estimator (Power% == 100/Estimator by construction).
+      // run, which is why strong attackers read >100%. Deliberately still the pure-DPS theoretical
+      // figure (unlike Estimator above) — Power% and Estimator are no longer simple reciprocals of
+      // each other now that Estimator accounts for downtime and Power% still doesn't.
       r.powerPct = (perPlayerDps * tier.timeLimit / tier.hp) * 100;
 
       const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
@@ -3333,21 +3367,23 @@ function drawTop30Rows(){
     th.classList.toggle('sorted', th.dataset.sort === key);
   });
   $('top30Body').innerHTML = sorted.map((r,i) => {
-    const origIdx = currentTop30Results.indexOf(r);
     return `
     <tr>
       <td>${i+1}</td>
       <td>${r.name}</td>
       <td>${renderSpriteImg(r.name)}</td>
       <td>${typeBadges(r.types, true)}</td>
-      <td style="white-space:nowrap;">${moveBadge(r.fastId)} <span class="combo-select-sep">/</span> ${moveBadge(r.chargeId)}</td>
-      <td class="${statTier(r.powerPct, 100, 50, true)}">${r.powerPct.toFixed(1)}%</td>
+      <td style="white-space:nowrap;">${(() => {
+        const p = GM.byId[r.speciesId];
+        const fastLegacy = p && (p.eliteFastMoves||[]).includes(r.fastId);
+        const chargeLegacy = p && (p.eliteChargedMoves||[]).includes(r.chargeId);
+        return `${moveBadge(r.fastId, fastLegacy)} <span class="combo-select-sep">/</span> ${moveBadge(r.chargeId, chargeLegacy)}`;
+      })()}</td>
       <td>${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</td>
       <td class="${statTier(r.estimator, 1.5, 3, false)}">${r.estimator.toFixed(2)}</td>
       <td>💀×${r.avgDeaths.toFixed(2)}</td>
       <td>${r.avgDps.toFixed(2)}</td>
       <td>${Math.round(r.avgRevives)}</td>
-      <td><button class="logbtn" data-logidx="${origIdx}">View</button></td>
     </tr>
   `;
   }).join('');
@@ -3890,21 +3926,25 @@ function evaluateCombo(cfg, N, bossCtx, goals){
   let simCount = 0;
   for(let i=0;i<N;i++){ allRuns.push(runSim(cfgWithLog, null, bossCtx)); simCount++; }
 
+  const typicalTimeSec = allRuns.reduce((s,r) => s+r.timeSec, 0) / N;
+  // DPS is now total damage ÷ total time across all runs, matching the main thread's own change
+  // exactly — see its own comment for why (keeps DPS consistent with Time to Win instead of being
+  // a separately-noisy mean-of-ratios statistic).
+  const totalDamage = allRuns.reduce((s,r) => s + r.dps*r.timeSec, 0);
+  const totalTimeAllRuns = allRuns.reduce((s,r) => s+r.timeSec, 0);
+  const totalRevives = allRuns.reduce((s,r) => s+r.revives, 0);
+  const totalDeaths = allRuns.reduce((s,r) => s+r.deaths, 0);
+  const totalHPleft = allRuns.reduce((s,r) => s+r.aHPleft, 0);
+  const aMaxHP = allRuns[0].aMaxHP;
+  const timeoutRate = allRuns.filter(r => r.timeout).length / N;
+
+  // exampleRun still picked from the dominant (most common faint-count) cluster specifically —
+  // mirrors the main thread's own version exactly, see its own comment for the reasoning.
   const faintGroups = {};
   allRuns.forEach(r => { (faintGroups[r.deaths] = faintGroups[r.deaths] || []).push(r); });
   const modalFaintCount = Object.keys(faintGroups).reduce((best, k) =>
     faintGroups[k].length > faintGroups[best].length ? k : best, Object.keys(faintGroups)[0]);
   const modalRuns = faintGroups[modalFaintCount];
-  const M = modalRuns.length;
-  const modalTimeSorted = [...modalRuns].sort((a,b) => a.timeSec - b.timeSec);
-  const typicalTimeSec = modalTimeSorted[Math.floor(M/2)].timeSec;
-  const totalDps = modalRuns.reduce((s,r) => s+r.dps, 0);
-  const totalRevives = modalRuns.reduce((s,r) => s+r.revives, 0);
-  const totalDeaths = modalRuns.reduce((s,r) => s+r.deaths, 0);
-  const totalHPleft = modalRuns.reduce((s,r) => s+r.aHPleft, 0);
-  const aMaxHP = modalRuns[0].aMaxHP;
-  const timeoutRate = allRuns.filter(r => r.timeout).length / N;
-
   const scoredRuns = modalRuns.map(r => {
     const powerScore = (r.powerPct / goals.powerGoal) * 100;
     const timeScore = (goals.ttwGoal / Math.max(r.timeSec, 0.01)) * 100;
@@ -3912,13 +3952,13 @@ function evaluateCombo(cfg, N, bossCtx, goals){
   }).sort((a,b) => a.score - b.score);
   const exampleRun = scoredRuns[Math.floor(scoredRuns.length/2)].r;
 
-  const avgDeaths = totalDeaths/M;
-  const avgHPleft = totalHPleft/M;
+  const avgDeaths = totalDeaths/N;
+  const avgHPleft = totalHPleft/N;
   const avgDeathsWithHP = avgDeaths + (aMaxHP - avgHPleft)/aMaxHP;
 
   return {
     simCount,
-    typicalTimeSec, avgDps: totalDps/M, avgRevives: totalRevives/M, avgDeaths: avgDeathsWithHP, timeoutRate,
+    typicalTimeSec, avgDps: totalDamage/totalTimeAllRuns, avgRevives: totalRevives/N, avgDeaths: avgDeathsWithHP, timeoutRate,
     exampleLog: exampleRun.log, exampleWin: exampleRun.win,
     exampleTimeSec: exampleRun.timeSec, exampleDeaths: exampleRun.deaths,
     exampleRevives: exampleRun.revives, exampleBossHPleft: exampleRun.bossHPleft,
@@ -4028,7 +4068,10 @@ function handleConfirmMessage(e){
     partyDps /= SOLO_N;
     const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
     r.soloDps = perPlayerDps;
-    r.estimator = tier.hp / (perPlayerDps * tier.timeLimit);
+    // Mirrors the main thread's confirmation loop exactly — see its own comment for the reasoning.
+    // r.avgTimeSec already arrived in this chunk's payload (spread straight from the screening
+    // result on the main thread before dispatch), so no extra data plumbing was needed here.
+    r.estimator = baseCfg.players * (r.avgTimeSec / tier.timeLimit);
     r.powerPct = (perPlayerDps * tier.timeLimit / tier.hp) * 100;
 
     const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
