@@ -395,7 +395,7 @@
       <div class="footnote">
         Formula: DMG = ⌊0.5 × Power × (ATK/DEF) × STAB(1.2) × Effectiveness × Weather(1.2) × Friendship⌋ + 1 · No dodging assumed for any attacker, matching Pokebattler's "No Dodging" attack strategy · Multiplayer scales the team's damage against the boss.<br>
         Matches current raid mechanics: the boss gains energy equal to 50% of damage taken (rounded up).<br>
-        Every Pokémon is simulated (Monte Carlo) against the boss — figures above are averages across all those runs. Estimator = players needed to defeat the boss within the raid's real time limit, based on the same simulated "runs until win" time as Time to Win (so it reflects real downtime from fainting/reviving, not just a pure damage-output projection). An asterisk (*) after a move name marks it as a legacy, Elite-TM-only move for that specific Pokémon.
+        Every Pokémon is simulated (Monte Carlo) against the boss — figures above are averages across all those runs. Estimator = players needed to defeat the boss within the raid's real time limit, based on the same simulated "runs until win" time as Time to Win (so it reflects real downtime from fainting/reviving, not just a pure damage-output projection).
       </div>
     </div>
   </div>
@@ -1453,7 +1453,7 @@ function buildFallbackData(){
     medicham_mega:308, mesprit:481, metagross:376, metagross_mega:376, mewtwo:150,
     mewtwo_mega_x:150, mewtwo_mega_y:150, moltres:146, moltres_galarian:146, necrozma:800,
     necrozma_dawn_wings:800, necrozma_dusk_mane:800, nihilego:793, ninetales_alolan:38,
-    palkia:484, palkia_origin:484, pheromosa:795, pidgeot_mega:18, pinsir_mega:127,
+    palkia_origin:484, pheromosa:795, pidgeot_mega:18, pinsir_mega:127,
     raichu_mega_x:26, raichu_mega_y:26, raikou:243, rayquaza:384, rayquaza_mega:384, regice:378,
     regidrago:895, regieleki:894, regigigas:486, regirock:377, registeel:379, reshiram:643,
     rhyperior:464, rillaboom:812, sableye_mega:302, salamence_mega:373, sandslash_alolan:28,
@@ -1464,7 +1464,7 @@ function buildFallbackData(){
     tornadus_incarnate:641, tornadus_therian:641, tyranitar_mega:248, urshifu_rapid_strike:892,
     urshifu_single_strike:892, uxie:480, vanilluxe:584, venusaur_mega:3, victreebel_mega:71, victreebel:71,
     vigoroth:288, virizion:640, walrein:365, weavile:461, xerneas:716, xurkitree:796,
-    yveltal:717, zacian_crowned:888, zacian_hero:888, zamazenta_crowned:889, zamazenta_hero:889,
+    yveltal:717, zacian_crowned:888, zamazenta_crowned:889,
     zeraora:807,
     delphox:655, chandelure:609, feraligatr:160, meganium:154, staraptor:398, chesnaught:652,
     golurk:623, golisopod:768, barbaracle:689, drampa:780, eelektross:604, clefable:36,
@@ -1675,7 +1675,6 @@ function buildFallbackData(){
     mk('necrozma_dusk_mane','Necrozma (Dusk Mane)',['psychic','steel'],{atk:277,def:220,hp:200},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['SUNSTEEL_STRIKE','IRON_HEAD','DARK_PULSE','OUTRAGE','FUTURE_SIGHT']),
     mk('nihilego','Nihilego',['rock','poison'],{atk:249,def:210,hp:240},['ACID','POISON_JAB','POUND'],['SLUDGE_BOMB','ROCK_SLIDE','POWER_GEM','GUNK_SHOT']),
     mk('ninetales_alolan','Ninetales (Alolan)',['ice','fairy'],{atk:170,def:193,hp:177},['POWDER_SNOW'],['BLIZZARD','DAZZLING_GLEAM']),
-    mk('palkia','Palkia',['water','dragon'],{atk:280,def:215,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL']),
     mk('palkia_origin','Palkia (Origin)',['water','dragon'],{atk:286,def:223,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL','SPACIAL_REND']),
     mk('pheromosa','Pheromosa',['bug','fighting'],{atk:316,def:85,hp:174},['BUG_BITE','LOW_KICK'],['BUG_BUZZ','FOCUS_BLAST','CLOSE_COMBAT','LUNGE']),
     mk('pidgeot_mega','Mega Pidgeot',['normal','flying'],{atk:280,def:175,hp:195},['AIR_SLASH','STEEL_WING','WING_ATTACK','GUST'],['AERIAL_ACE','AIR_CUTTER','BRAVE_BIRD','HURRICANE','FEATHER_DANCE','HEAT_WAVE','TWISTER'],['WING_ATTACK','GUST'],['AIR_CUTTER']), // confirmed directly via PvPoke's raw gamemaster.json — legacy — confirmed via gamemaster.json eliteMoves field — legacy — Air Cutter is a charge move here, distinct from Beedrill/Zubat's identically-named fast move
@@ -1746,9 +1745,7 @@ function buildFallbackData(){
     mk('xurkitree','Xurkitree',['electric'],{atk:330,def:144,hp:195},['THUNDER_SHOCK','SPARK'],['DISCHARGE','THUNDER','POWER_WHIP','DAZZLING_GLEAM']),
     mk('yveltal','Yveltal',['dark','flying'],{atk:250,def:185,hp:246},['SNARL','SUCKER_PUNCH','GUST'],['FOCUS_BLAST','HYPER_BEAM','DARK_PULSE','PSYCHIC','HURRICANE','OBLIVION_WING'],[],['OBLIVION_WING']), // corrected — Foul Play was fabricated/not real; added missing fast moves and charge moves — legacy — signature move, Elite Charged TM only
     mk('zacian_crowned','Zacian (Crowned Sword)',['fairy','steel'],{atk:332,def:240,hp:192},['METAL_CLAW','AIR_SLASH'],['BEHEMOTH_BLADE','CLOSE_COMBAT','PLAY_ROUGH','GIGA_IMPACT']),
-    mk('zacian_hero','Zacian (Hero)',['fairy'],{atk:254,def:236,hp:192},['SNARL','FIRE_FANG','METAL_CLAW','QUICK_ATTACK'],['CLOSE_COMBAT','PLAY_ROUGH','WILD_CHARGE','IRON_HEAD']),
     mk('zamazenta_crowned','Zamazenta (Crowned Shield)',['fighting','steel'],{atk:250,def:292,hp:192},['METAL_CLAW','ICE_FANG'],['BEHEMOTH_BASH','CLOSE_COMBAT','MOONBLAST','GIGA_IMPACT']),
-    mk('zamazenta_hero','Zamazenta (Hero)',['fighting'],{atk:254,def:236,hp:192},['SNARL','ICE_FANG','QUICK_ATTACK','METAL_CLAW'],['CLOSE_COMBAT','CRUNCH','IRON_HEAD','MOONBLAST']),
     mk('zapdos','Zapdos',['electric','flying'],{atk:253,def:185,hp:207},['THUNDER_SHOCK','CHARGE_BEAM'],['THUNDERBOLT','ANCIENT_POWER','DRILL_PECK','HEAT_WAVE','THUNDER','ZAP_CANNON'],['THUNDER_SHOCK']), // legacy
     mk('zapdos_galarian','Zapdos (Galarian)',['fighting','flying'],{atk:252,def:189,hp:207},['COUNTER','LOW_KICK'],['CLOSE_COMBAT','ANCIENT_POWER','BRAVE_BIRD','FLY']),
     mk('zekrom','Zekrom',['dragon','electric'],{atk:275,def:211,hp:205},['DRAGON_BREATH','CHARGE_BEAM'],['OUTRAGE','FUSION_BOLT','WILD_CHARGE','CRUNCH','FLASH_CANNON'],[],['FUSION_BOLT']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
@@ -1839,17 +1836,10 @@ function typeBadges(types, showIcon){
 /** Renders a single move as a colored badge (background = the move's own type, plus its type
  * icon) — same visual treatment as typeBadges() above, but for a move name instead of a type
  * name. Shared between the boss moveset picker and the results table's "Moveset Used" column. */
-/** Renders a single move as a colored badge (background = the move's own type, plus its type
- * icon) — same visual treatment as typeBadges() above, but for a move name instead of a type
- * name. Shared between the boss moveset picker and the results table's "Moveset Used" column.
- * isLegacy appends a "*" right after the move name, by request — flags a move as an Elite-TM-only
- * legacy move for the specific Pokémon it's being shown for (the boss moveset picker never passes
- * true here, since legacy moves are already filtered out of a boss's own selectable movesets
- * entirely — only an attacker's moveset can legitimately show one). */
-function moveBadge(id, isLegacy){
+function moveBadge(id){
   const m = GM.moves[id];
   const t = m ? m.type : 'normal';
-  return `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${typeIconImg(t, 12)}&nbsp;&nbsp;${moveNameSync(id)}${isLegacy ? '*' : ''}</span>`;
+  return `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${typeIconImg(t, 12)}&nbsp;&nbsp;${moveNameSync(id)}</span>`;
 }
 function realTypes(types){ return (types||[]).filter(t => t && t !== 'none'); }
 function multiplier(atkType, defTypes){
@@ -2053,6 +2043,7 @@ function isNeverRaidBoss(speciesName){
 const USER_EXCLUDED_EXACT = new Set([
   'articuno (galarian)','moltres (galarian)','zapdos (galarian)','manaphy','melmetal',
   'zeraora','koraidon (apex)','okidogi','pecharunt','phione','spectrier',
+  'keldeo (ordinary)','keldeo', // redundant with the kept Keldeo (Resolute), by request — Resolute is the only form that's actually ever been a real raid boss
   'mewtwo (a)','mewtwo (armored)','mewtwo (armor)' // "Mewtwo (A)" — matching multiple possible
   // live-name variants for Armored Mewtwo defensively, same reasoning as the Primal/Mega naming
   // inconsistency found earlier this session — unconfirmed which exact string PogoAPI uses.
@@ -2371,14 +2362,7 @@ function renderBossMoves(p){
       pick(el.dataset.fast, el.dataset.charge);
       $('bossMoveComboWrap').classList.remove('open');
       $('bossMoveComboBtn').setAttribute('aria-expanded', 'false');
-      // If this exact configuration was already simulated earlier in the session, show those
-      // results instantly, by request — e.g. switching the boss's moveset back to one already
-      // tried. Doesn't touch lastTotalSims, so the hint text under the table still reflects the
-      // real cumulative simulation count for the session, not just this view. Only auto-shows on
-      // a cache HIT — a genuinely new configuration still requires an explicit "Rank Every
-      // Pokémon" click to actually run, same as any other setting change.
-      const cacheKey = buildSimCacheKey();
-      if(simResultsCache.has(cacheKey)) renderTop30(simResultsCache.get(cacheKey));
+      checkCacheAndAutoShow(); // shows a cached result instantly if this exact moveset was already simulated — see its own definition below for the full reasoning
     });
   });
 
@@ -2454,6 +2438,25 @@ $('megaBoostActive').addEventListener('change', () => {
 });
 $('playersval').textContent = $('players').value;
 $('rankBtn').disabled = true;
+
+/** Same cache-hit behavior as the moveset dropdown's own click handler (see its comment) —
+ * extended here to every OTHER setting that's part of buildSimCacheKey(), by request. Switching
+ * back to any previously-simulated exact combination of boss/tier/moveset/level/weather/players/
+ * friendship/boosts now shows the saved result instantly regardless of which specific control
+ * changed, not just the moveset picker. A genuinely new combination still does nothing until
+ * "Rank Every Pokémon" is explicitly clicked — this only ever shows something that already exists.
+ */
+function checkCacheAndAutoShow(){
+  if(!selectedBossId) return;
+  const cacheKey = buildSimCacheKey();
+  if(simResultsCache.has(cacheKey)) renderTop30(simResultsCache.get(cacheKey));
+}
+['players','level','friendship','weather','bladeBoost','shieldBoost','dodgeChargeOnly',
+ 'partyPowerActive','megaBoostActive','megaBoostType'].forEach(id => {
+  const el = $(id);
+  const evt = el.type === 'range' ? 'input' : 'change';
+  el.addEventListener(evt, checkCacheAndAutoShow);
+});
 
 /* ---------------- SIMULATION CORE ---------------- */
 // Discrete 0.5s-turn architecture (replaces the old continuous-time aReady/bReady event queue).
@@ -2970,7 +2973,7 @@ async function rankAllAttackers(onProgress){
   // their simulated stats might look. Wishiwashi matched by prefix (covers both School and Solo
   // Form, since only a base name was given). Palafin (Hero) matched exactly — Palafin (Zero) was
   // not excluded and stays available.
-  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw']);
+  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo']);
   const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu'];
   function isAttackerExcluded(speciesName){
     const name = speciesName.toLowerCase();
@@ -3373,12 +3376,7 @@ function drawTop30Rows(){
       <td>${r.name}</td>
       <td>${renderSpriteImg(r.name)}</td>
       <td>${typeBadges(r.types, true)}</td>
-      <td style="white-space:nowrap;">${(() => {
-        const p = GM.byId[r.speciesId];
-        const fastLegacy = p && (p.eliteFastMoves||[]).includes(r.fastId);
-        const chargeLegacy = p && (p.eliteChargedMoves||[]).includes(r.chargeId);
-        return `${moveBadge(r.fastId, fastLegacy)} <span class="combo-select-sep">/</span> ${moveBadge(r.chargeId, chargeLegacy)}`;
-      })()}</td>
+      <td style="white-space:nowrap;">${moveBadge(r.fastId)} <span class="combo-select-sep">/</span> ${moveBadge(r.chargeId)}</td>
       <td>${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</td>
       <td class="${statTier(r.estimator, 1.5, 3, false)}">${r.estimator.toFixed(2)}</td>
       <td>💀×${r.avgDeaths.toFixed(2)}</td>
