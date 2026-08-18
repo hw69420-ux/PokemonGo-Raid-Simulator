@@ -368,6 +368,13 @@
                 <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
               </span>
             </label>
+            <label class="toggle-switch-label" for="removeMegas">
+              <span>Remove Megas</span>
+              <span class="toggle-switch">
+                <input type="checkbox" id="removeMegas">
+                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+              </span>
+            </label>
           </div>
         </div>
         <div class="hint" id="top30Hint" style="margin-bottom:10px;">&nbsp;</div>
@@ -711,6 +718,18 @@ function prettifyMoveId(id){
 }
 function moveNameSync(id){ return (GM.moves[id] && GM.moves[id].name) || prettifyMoveId(id); }
 function speciesNameSync(id){ return (GM.byId[id] && GM.byId[id].speciesName) || id; }
+/** Reverse of speciesNameSync — given a display name (as now used in the URL and JSON export
+ * instead of the raw internal speciesId, which for live-data species is an opaque "p484"-style
+ * dex-number id, by request), finds the matching entry's actual speciesId in the loaded roster.
+ * Case-insensitive exact match on speciesName. Returns null if nothing matches (e.g. a shared link
+ * naming a species this session's live-vs-fallback data doesn't currently have under that exact
+ * name) — callers already handle a missing boss id gracefully via GM.byId[id] being undefined. */
+function speciesIdByName(name){
+  if(!name || !GM.pokemon) return null;
+  const target = name.toLowerCase();
+  const match = GM.pokemon.find(p => p.speciesName.toLowerCase() === target);
+  return match ? match.speciesId : null;
+}
 
 function roundToHalfSecond(sec){ return Math.round(sec*2)/2; }
 // Memoization caches for the three move-property lookups below, keyed by moveId. Each of these
@@ -888,7 +907,14 @@ async function loadGameMaster(){
       if(!stats || (!stats.atk && !stats.def && !stats.hp)) return; // no usable base stats for this entry — skip rather than guess
       const formSuffix = (form !== 'Normal') ? `_${form}` : '';
       const speciesId = `p${p.pokemon_id}${formSuffix}`.toLowerCase();
-      const speciesName = (form !== 'Normal') ? `${p.pokemon_name} (${form})` : p.pokemon_name;
+      // Mr. Rime specifically: PogoAPI tags it with a leftover "Galarian" form value inherited from
+      // its pre-evolution (Galarian Mr. Mime), even though Mr. Rime itself has no non-Galarian
+      // counterpart to distinguish it from — showing "(Galarian)" is misleading here, and the
+      // suffix also broke its Showdown sprite lookup (which correctly expects the plain "mrrime"
+      // slug with no regional suffix at all). Forced back to its real, singular name, by request.
+      const speciesName = (nameLower === 'mr. rime' || nameLower === 'mr rime')
+        ? p.pokemon_name
+        : (form !== 'Normal') ? `${p.pokemon_name} (${form})` : p.pokemon_name;
       const types = typesByKey[key] || typesByIdFallback[p.pokemon_id];
       const eliteFastRefs = (p.elite_fast_moves||[]).filter(m => moves[m]);
       const eliteChargeRefs = (p.elite_charged_moves||[]).filter(m => moves[m] && m !== 'Struggle');
@@ -1943,29 +1969,55 @@ function speciesNameToShowdownSlug(name){
   // Confirmed from the listing: species with a hyphen in their own name lose it entirely
   // ("Ho-Oh" -> "hooh"), and the four Tapus lose their space entirely ("Tapu Koko" -> "tapukoko")
   // rather than following the usual hyphenated convention every other multi-word name uses.
-  const isTapu = /^tapu\s/i.test(base);
+  // "Mr. Mime"/"Mr. Rime" confirmed to follow the same no-separator rule ("mrrime.gif", not
+  // "mr-rime.gif") — this was a real bug (Mr. Rime's sprite was broken) until directly confirmed
+  // against Showdown's own directory listing.
+  const noSeparator = /^tapu\s/i.test(base) || /^mr\.?\s/i.test(base); // species confirmed to concatenate with no separator at all, rather than the usual hyphen
   const slugBase = base.toLowerCase()
     .replace(/[.'’]/g, '')
-    .replace(/-/g, isTapu ? '' : '')
-    .replace(/\s+/g, isTapu ? '' : '-')
+    .replace(/-/g, noSeparator ? '' : '')
+    .replace(/\s+/g, noSeparator ? '' : '-')
     .trim();
   return slugBase + suffix;
 }
-/** Builds an <img> for a species' sprite, fetched directly from Pokémon Showdown's own site (the
- * actual, guaranteed-correct source — see speciesNameToShowdownSlug's own comment for why this
- * replaced an earlier PokeAPI-numeric-id-based approach). Tries the animated GIF first, falls back
- * to Showdown's static "gen5" PNG folder on load failure (confirmed real path this session), and
- * hides itself entirely only if BOTH fail. This chain only helps with genuine 404s, though — a few
- * of the very newest Legends: Z-A additions (confirmed via Smogon's own bug tracker: Mega Zygarde,
- * and likely the other brand-new "Z" variants alongside it) have literally no sprite art anywhere
- * publicly available yet, animated or static — Showdown's own devs describe that whole batch as
- * "still in beta... no movepool, sprites, or move data implemented yet". No URL trick fixes that;
- * it'll resolve on its own once Showdown's artists catch up, same as the animated sprites will. */
+/** Handful of species confirmed (directly, by fetching the exact URL and getting real image data
+ * back rather than a 404) to have an animated sprite available on PokeAPI's numeric-ID mirror even
+ * though Showdown's own name-based "ani" folder doesn't have one — used as a third fallback tier
+ * below. Kept small and explicit rather than reintroducing the old numeric-ID system as the primary
+ * source again, since that approach had broader gaps than the name-based one when compared directly
+ * earlier this session; this only patches the specific confirmed exceptions to it. */
+const POKEAPI_NUMERIC_FALLBACK = {
+  'dialga-origin': 10245,
+  'palkia-origin': 10246,
+  'urshifu-singlestrike': 892
+};
+/** Builds an <img> for a species' sprite. For most species, fetched directly from Pokémon
+ * Showdown's own site (the actual, guaranteed-correct source — see speciesNameToShowdownSlug's
+ * own comment for why this replaced an earlier PokeAPI-numeric-id-based approach): animated GIF
+ * first, falling back to Showdown's static "gen5" PNG folder on load failure (confirmed real path
+ * this session). For the specific confirmed exceptions in POKEAPI_NUMERIC_FALLBACK above, though,
+ * PokeAPI's own numeric-ID mirror is used FIRST instead — confirmed by directly fetching those
+ * exact URLs and getting real animated image data back, for species where Showdown's own
+ * name-based "ani" folder doesn't have a working animated sprite at all — falling back to
+ * Showdown's animated-then-static chain if even that numeric URL somehow fails. Hides itself
+ * entirely only once every tier has failed. This chain only helps with genuine 404s, though — a
+ * few of the very newest Legends: Z-A additions (confirmed via Smogon's own bug tracker: Mega
+ * Zygarde, and likely the other brand-new "Z" variants alongside it) have literally no sprite art
+ * anywhere publicly available yet, animated or static — Showdown's own devs describe that whole
+ * batch as "still in beta... no movepool, sprites, or move data implemented yet". No URL trick
+ * fixes that; it'll resolve on its own once Showdown's artists catch up. */
 function renderSpriteImg(speciesName){
   const slug = speciesNameToShowdownSlug(speciesName);
   const aniUrl = `https://play.pokemonshowdown.com/sprites/ani/${slug}.gif`;
   const staticUrl = `https://play.pokemonshowdown.com/sprites/gen5/${slug}.png`;
-  return `<img class="sprite-img" src="${aniUrl}" alt="" loading="lazy" onerror="if(this.src!=='${staticUrl}'){this.src='${staticUrl}';}else{this.style.display='none';}">`;
+  const numericId = POKEAPI_NUMERIC_FALLBACK[slug];
+  if(numericId){
+    const numericUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${numericId}.gif`;
+    const onerror = `if(this.src!=='${aniUrl}'){this.src='${aniUrl}';}else if(this.src!=='${staticUrl}'){this.src='${staticUrl}';}else{this.style.display='none';}`;
+    return `<img class="sprite-img" src="${numericUrl}" alt="" loading="lazy" onerror="${onerror}">`;
+  }
+  const onerror = `if(this.src!=='${staticUrl}'){this.src='${staticUrl}';}else{this.style.display='none';}`;
+  return `<img class="sprite-img" src="${aniUrl}" alt="" loading="lazy" onerror="${onerror}">`;
 }
 
 /* ---------------- UI POPULATE ---------------- */
@@ -2120,7 +2172,7 @@ function buildSimCacheKey(){
 
 function pushStateToUrl(){
   const params = new URLSearchParams();
-  params.set('boss', selectedBossId);
+  params.set('boss', speciesNameSync(selectedBossId)); // name instead of the raw internal id (e.g. "p484"), by request — more readable, and speciesIdByName() reverses it on load
   params.set('tier', $('tier').value);
   params.set('fast', $('bossfast').value);
   params.set('charge', $('bosscharge1').value);
@@ -2150,7 +2202,7 @@ function pushStateToUrl(){
 function applyStateFromUrl(){
   const params = new URLSearchParams(location.search);
   if(!params.has('boss')) return; // no shared-state link present — leave the normal defaults alone
-  const bossId = params.get('boss');
+  const bossId = speciesIdByName(params.get('boss')) || params.get('boss'); // reverses the name-based encoding pushStateToUrl now uses; falls back to treating the param as a raw id for any old link generated before this change
   if(GM.byId[bossId]){
     selectBoss(bossId);
     $('bossSelect').value = bossId;
@@ -2409,6 +2461,10 @@ $('tier').addEventListener('change', () => {
 $('excludeUpcomingMegas').addEventListener('change', () => {
   // Applied after the sim, not as a pre-filter — see drawTop30Rows()'s own comment. If a ranking
   // hasn't been run yet, currentTop30Results is empty and this just no-ops harmlessly.
+  if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
+});
+$('removeMegas').addEventListener('change', () => {
+  // Same reasoning as excludeUpcomingMegas above — a pure render-time filter, no re-simulation needed.
   if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
 });
 $('bossMoveComboBtn').addEventListener('click', () => {
@@ -2973,12 +3029,14 @@ async function rankAllAttackers(onProgress){
   // their simulated stats might look. Wishiwashi matched by prefix (covers both School and Solo
   // Form, since only a base name was given). Palafin (Hero) matched exactly — Palafin (Zero) was
   // not excluded and stays available.
-  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo']);
+  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo','archaludon','dracozolt','arctozolt','dracovish','arctovish']); // archaludon and the 4 Galar fossil combos (dex 880-883) unreleased in GO, by request
   const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu'];
   function isAttackerExcluded(speciesName){
     const name = speciesName.toLowerCase();
     if(/\((s|shadow)\)$/.test(name.trim())) return true; // every Shadow form, by request — live data marks these with a trailing "(S)" or "(Shadow)"
     if(/\(ultimate\)$/.test(name.trim())) return true; // every "(Ultimate)" form, by request — presumably a live-data-only variant, not present in this fallback dataset
+    if(/^genesect \(/.test(name.trim())) return true; // any suffixed Genesect variant (Drive forms — cosmetic only in the mainline games), by request — same reasoning as the boss-side exclusion elsewhere in this file
+    if(name === 'koraidon' || name.startsWith('koraidon ')) return true; // unreleased in GO, by request — catches every Koraidon form (base and Apex alike), not just the Apex variant already excluded boss-side
     if(ATTACKER_EXCLUDED_EXACT.has(name)) return true;
     return ATTACKER_EXCLUDED_PREFIX.some(prefix => name === prefix || name.startsWith(prefix + ' '));
   }
@@ -3063,7 +3121,7 @@ async function rankAllAttackers(onProgress){
       pokemonToProcess.forEach((p, i) => chunks[i % workerCount].push({
         speciesId: p.speciesId, pokemonId: p.pokemonId, speciesName: speciesNameSync(p.speciesId),
         types: p.types, baseStats: p.baseStats, fastMoves: p.fastMoves, chargedMoves: p.chargedMoves,
-        isUpcomingMega: bossAutoTier(p) === 'mega_upcoming'
+        isUpcomingMega: bossAutoTier(p) === 'mega_upcoming', isMega: !!p.isMegaForm
       }));
       const progressByWorker = new Array(workerCount).fill(0);
       const reportProgress = () => {
@@ -3150,6 +3208,7 @@ async function rankAllAttackers(onProgress){
         speciesId: p.speciesId,
         pokemonId: p.pokemonId,
         isUpcomingMega: bossAutoTier(p) === 'mega_upcoming',
+        isMega: !!p.isMegaForm,
         name: speciesNameSync(p.speciesId),
         types: p.types,
         fastId: bestCombo.fastId,
@@ -3311,7 +3370,7 @@ function renderTop30(results){
 let _lastJsonBlobUrl = null;
 function updateResultsJsonLink(results){
   const exportObj = {
-    boss: { speciesId: selectedBossId, speciesName: speciesNameSync(selectedBossId) },
+    boss: speciesNameSync(selectedBossId), // name only now, not the raw internal id, by request
     tier: $('tier').value,
     tierLabel: TIERS[$('tier').value].label,
     bossMoveset: { fast: moveNameSync($('bossfast').value), charge: moveNameSync($('bosscharge1').value) },
@@ -3327,11 +3386,11 @@ function updateResultsJsonLink(results){
     generatedAt: new Date().toISOString(),
     shareableUrl: location.href,
     results: results.map(r => ({
-      speciesId: r.speciesId, name: r.name, types: r.types,
+      name: r.name, types: r.types,
       fastMove: r.fastName, chargeMove: r.chargeName,
       powerPct: r.powerPct, timeToWinSec: r.avgTimeSec, estimator: r.estimator,
       avgFainted: r.avgDeaths, avgDps: r.avgDps, avgRejoins: r.avgRevives,
-      timeoutRate: r.timeoutRate, isUpcomingMega: !!r.isUpcomingMega
+      timeoutRate: r.timeoutRate, isUpcomingMega: !!r.isUpcomingMega, isMega: !!r.isMega
     }))
   };
   const json = JSON.stringify(exportObj, null, 2);
@@ -3356,11 +3415,14 @@ let currentSort = { key: 'estimator', asc: true };
  * just a client-side sort/render pass, so clicking a header is effectively instant. */
 function drawTop30Rows(){
   const excludeUpcoming = !$('excludeUpcomingMegas').checked; // checkbox now reads "Include Upcoming Megas" — checked means include, so exclude is the inverse
+  const removeMegas = $('removeMegas').checked; // "Remove Megas" — default off, checked means strip every Mega/Primal-form result from the list entirely, by request
   // Filter (if toggled) and re-slice to the visible 30 here, at render time — not during
-  // simulation — so this whole function is a fast, sim-free re-render: toggling the checkbox
+  // simulation — so this whole function is a fast, sim-free re-render: toggling either checkbox
   // calls this directly and backfills from the confirmed buffer instantly instead of re-running
   // the Monte Carlo. currentTop30Results holds the full confirmed buffer (see CONFIRM_BUFFER).
-  const visible = (excludeUpcoming ? currentTop30Results.filter(r => !r.isUpcomingMega) : currentTop30Results)
+  const visible = currentTop30Results
+    .filter(r => !excludeUpcoming || !r.isUpcomingMega)
+    .filter(r => !removeMegas || !r.isMega)
     .slice()
     .sort((a,b) => a.avgTimeSec - b.avgTimeSec)
     .slice(0, 30);
@@ -4020,6 +4082,7 @@ self.onmessage = function(e){
       speciesId: p.speciesId,
       pokemonId: p.pokemonId,
       isUpcomingMega: p.isUpcomingMega,
+      isMega: p.isMega,
       name: p.speciesName,
       types: p.types,
       fastId: bestCombo.fastId,
