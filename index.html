@@ -16,6 +16,7 @@
     --muted:#8b95ab;
     --red:#ff4655;
     --gold:#ffc33d;
+    --orange:#ff9142;
     --teal:#33d6c0;
     --green:#4ade80;
     --mono:'JetBrains Mono', monospace;
@@ -23,7 +24,7 @@
     --body:'Inter', sans-serif;
   }
   *{box-sizing:border-box;}
-  html{font-size:18px;}
+  html{font-size:18px;overflow-y:scroll;scrollbar-gutter:stable;} /* reserves the scrollbar's width permanently, in whichever way the browser supports (scrollbar-gutter where available, overflow-y:scroll as a universally-supported fallback/backup) — otherwise, whenever the results table's row count changes (e.g. toggling "Exclude Megas") shifts the page's total height enough to show/hide the vertical scrollbar, the small resulting change in available horizontal width could flip a borderline flex-wrap decision, making the toggle row visibly "jump" position on toggle */
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
   body{
     background-image:
@@ -93,13 +94,13 @@
   .combo-select-option:last-child{border-bottom:none;}
   .combo-select-option:hover,.combo-select-option.active{background:rgba(255,195,61,0.08);}
 
-  .typebadge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:2px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:#0a0c11;font-weight:700;margin-right:6px;margin-top:4px;}
+  .typebadge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:2px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:#0a0c11;font-weight:700;margin-right:6px;margin-top:4px;white-space:nowrap;}
   #bossTypeInline .typebadge{padding:3px 8px;font-size:10.5px;margin-top:0;margin-right:4px;}
 
   button.primary{
     width:100%;margin-top:22px;padding:17px;background:var(--red);color:#fff;border:none;
     font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:1.8px;text-transform:uppercase;
-    cursor:pointer;transition:transform .08s ease, box-shadow .15s ease;
+    cursor:pointer;transition:transform .08s ease, box-shadow .15s ease;touch-action:manipulation;
   }
   button.primary:hover{box-shadow:0 0 26px rgba(255,70,85,0.5);}
   button.primary:active{transform:scale(0.98);}
@@ -144,8 +145,6 @@
   .modal-close:hover{color:var(--text);border-color:var(--text);}
   .modal-title{font-family:var(--display);font-weight:700;font-size:20px;text-transform:uppercase;letter-spacing:0.8px;margin:0 40px 4px 0;}
   .modal-sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:0.6px;}
-  .logbtn{font-family:var(--mono);font-size:11.5px;background:var(--panel-2);border:1px solid var(--border);color:var(--teal);padding:5px 10px;border-radius:2px;cursor:pointer;white-space:nowrap;}
-  .logbtn:hover{border-color:var(--teal);}
 
   .mc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14.5px;margin-top:14px;}
   .mc-table th,.mc-table td{padding:11px 13px;border-bottom:1px solid var(--border);text-align:left;}
@@ -159,7 +158,8 @@
   .stat-good{color:var(--green);}
   .rank-progress-outer{background:#0d0f14;border:1px solid var(--border);height:10px;width:100%;border-radius:2px;overflow:hidden;}
   .rank-progress-inner{height:100%;width:0%;background:linear-gradient(90deg,var(--red),var(--gold));transition:width .18s ease;}
-  .toggle-switch-label{display:flex;align-items:center;gap:10px;cursor:pointer;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);}
+  .toggle-switch-label{display:flex;align-items:center;gap:10px;cursor:pointer;font-family:var(--mono);font-size:12.5px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);white-space:nowrap;height:22px;line-height:22px;} /* explicit height (not just line-height) forces both toggle rows to an identical, predictable pixel box regardless of any subtle text-rendering difference between their two labels — line-height alone still let sub-pixel font-metric differences between the two label strings show through */
+  .toggle-switch-label span:first-child{line-height:22px;}
   .toggle-switch{position:relative;display:inline-block;width:40px;height:22px;flex-shrink:0;}
   .toggle-switch input{position:absolute;opacity:0;width:100%;height:100%;margin:0;cursor:pointer;}
   .toggle-switch-track{position:absolute;inset:0;background:var(--panel-2);border:1px solid var(--border);border-radius:11px;transition:background .15s ease;}
@@ -169,6 +169,7 @@
   .toggle-switch input:focus-visible ~ .toggle-switch-track{outline:2px solid var(--red);outline-offset:1px;}
   .stat-mid{color:var(--gold);}
   .stat-bad{color:var(--red);}
+  .stat-orange{color:var(--orange);}
   .sprite-img{width:40px;height:40px;object-fit:contain;image-rendering:pixelated;display:block;}
   .tier-icon-img{width:22px;height:22px;object-fit:contain;flex-shrink:0;border-radius:50%;}
   .tier-icon-img.tier-icon-ultra{transform:scale(1.35);} /* source PNG has extra internal padding vs. the other tier eggs — scaled up so it visually fills its circle the same amount */
@@ -195,13 +196,18 @@
     .boss-type-inline{white-space:normal !important;}
 
     /* Results table — the horizontal-scroll fallback (already in place via .mc-table-scroll) stays
-       the primary strategy, since a 12-column table can't reasonably reflow to fit a phone screen
+       the primary strategy, since a 10-column table can't reasonably reflow to fit a phone screen
        any other way, but shrinking font/padding a bit reduces how much scrolling is needed and
        makes each screenful show more rows. */
-    .mc-table{font-size:12.5px;}
-    .mc-table th,.mc-table td{padding:8px 9px;}
-    .mc-table-scroll{max-height:55vh;}
-    .sprite-img{width:32px;height:32px;}
+    .mc-table{font-size:12px;}
+    .mc-table th,.mc-table td{padding:7px 8px;}
+    .mc-table-scroll{max-height:55vh;-webkit-overflow-scrolling:touch;} /* smoother momentum scrolling on iOS while horizontally scrolling the table */
+    .sprite-img{width:28px;height:28px;}
+    /* Pokémon name stays visible while horizontally scrolling the rest of the row, so it's always
+       clear which attacker a given set of stats belongs to — the single biggest mobile-usability
+       gap in a wide table like this one. */
+    .mc-table td:nth-child(2),.mc-table th:nth-child(2){position:sticky;left:0;background:var(--panel);z-index:2;}
+    .mc-table thead th:nth-child(2){z-index:6;} /* stays above the sticky header's own z-index (5) so it doesn't get covered while both sticky axes are active at once */
 
     /* Combat log modal */
     .modal-overlay{padding:16px 8px;}
@@ -361,20 +367,22 @@
           <p class="eyebrow" id="top30Title" style="margin:0;">Top 30 Attackers</p>
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <a href="#" id="downloadJsonLink" download="raid-results.json" class="hint" style="text-decoration:underline;color:var(--teal);">⬇ Download results (JSON)</a>
-            <label class="toggle-switch-label" for="excludeUpcomingMegas">
-              <span>Include Upcoming Megas</span>
-              <span class="toggle-switch">
-                <input type="checkbox" id="excludeUpcomingMegas">
-                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-              </span>
-            </label>
-            <label class="toggle-switch-label" for="removeMegas">
-              <span>Remove Megas</span>
-              <span class="toggle-switch">
-                <input type="checkbox" id="removeMegas">
-                <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-              </span>
-            </label>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+              <label class="toggle-switch-label" for="excludeUpcomingMegas">
+                <span>Include Upcoming Megas</span>
+                <span class="toggle-switch">
+                  <input type="checkbox" id="excludeUpcomingMegas">
+                  <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                </span>
+              </label>
+              <label class="toggle-switch-label" for="excludeMegas">
+                <span>Exclude Megas</span>
+                <span class="toggle-switch">
+                  <input type="checkbox" id="excludeMegas">
+                  <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+                </span>
+              </label>
+            </div>
           </div>
         </div>
         <div class="hint" id="top30Hint" style="margin-bottom:10px;">&nbsp;</div>
@@ -386,7 +394,7 @@
               <th title="Species name">Pokémon</th>
               <th title="Animated sprite"></th>
               <th title="This Pokémon's type(s)">Type</th>
-              <th title="The fast + charge move combo used for this result — the best-performing super-effective combo found for this Pokémon">Moveset Used</th>
+              <th title="The fast + charge move combo used for this result — the best-performing super-effective combo found for this Pokémon" style="min-width:160px;">Moveset Used</th>
               <th title="Average time to defeat the boss in an uncapped run (continues until won, not stopped at the time limit)" data-sort="avgTimeSec" data-sort-asc="1">Time to Win <span class="sort-arrow">▾</span></th>
               <th title="How many players it would take to defeat the boss within the time limit, based on the same real 'runs until win' simulation Time to Win comes from — includes downtime from fainting/reviving/dodge-timing, not just a pure damage-output projection" data-sort="estimator" data-sort-asc="1" class="sorted">Estimator <span class="sort-arrow">▾</span></th>
               <th title="Average effective faints across all runs: whole faints, plus the fraction of max HP the finishing Pokémon had already lost by the time the boss went down" data-sort="avgDeaths" data-sort-asc="1">Fainted <span class="sort-arrow">▾</span></th>
@@ -433,7 +441,13 @@
  *                            around it) that both backstops live data if it fails AND
  *                            overrides it species-by-species where it's been individually
  *                            verified more accurate. THIS is where you'll make most roster
- *                            edits — stat fixes, moveset corrections, legacy-move flags.
+ *                            edits — stat fixes, moveset corrections, legacy-move flags,
+ *                            adding a new species. Search this file for "TO ADD A NEW
+ *                            POKÉMON" for the exact one-line format to add or edit an entry.
+ *      -> FAMILY_GROUPS    — a short list, further down near drawTop30Rows(), of same-species
+ *                            form pairs (e.g. Dialga / Dialga Origin) where only the
+ *                            better-performing one should show per matchup. Search "TO ADD A
+ *                            FAMILY GROUP" if a newly-added species needs the same treatment.
  *   3. HELPERS              — sprite/type-icon URL builders, name lookups, small utilities
  *   4. UI POPULATE          — builds dropdowns, wires up the custom combo-select widgets
  *   5. SIMULATION CORE      — computeBossContext/runSim/etc. — the actual battle math.
@@ -447,6 +461,12 @@
  * Worker Source" — split across these two words here so a text search for the real tag further
  * down doesn't land on this comment instead) — this is NOT executed directly; it's read as text and turned into a Web Worker via
  * a Blob URL at runtime. It's a hand-kept-in-sync duplicate of the simulation core above.
+ *
+ * QUICK INDEX — search this file for these exact phrases to jump straight to the relevant guide:
+ *   "TO ADD A NEW POKÉMON"      — new roster entry, or changing an existing one's stats/moveset
+ *   "TO ADD A NEW MOVE"         — a fast/charge move that doesn't exist in fastDefs/chargeDefs yet
+ *   "TO ADD A NEW RAID TIER"    — a new entry in the Raid Tier dropdown (Tier 5, Mega Raid, etc.)
+ *   "TO ADD A FAMILY GROUP"     — pairing up two same-species forms for best-of-N display
  * ===================================================================================== */
 /* ---------------- STATIC DATA (types, weather, CPM, tiers) ---------------- */
 const TYPE_COLORS = {
@@ -907,12 +927,14 @@ async function loadGameMaster(){
       if(!stats || (!stats.atk && !stats.def && !stats.hp)) return; // no usable base stats for this entry — skip rather than guess
       const formSuffix = (form !== 'Normal') ? `_${form}` : '';
       const speciesId = `p${p.pokemon_id}${formSuffix}`.toLowerCase();
-      // Mr. Rime specifically: PogoAPI tags it with a leftover "Galarian" form value inherited from
-      // its pre-evolution (Galarian Mr. Mime), even though Mr. Rime itself has no non-Galarian
-      // counterpart to distinguish it from — showing "(Galarian)" is misleading here, and the
-      // suffix also broke its Showdown sprite lookup (which correctly expects the plain "mrrime"
-      // slug with no regional suffix at all). Forced back to its real, singular name, by request.
-      const speciesName = (nameLower === 'mr. rime' || nameLower === 'mr rime')
+      // Mr. Rime and Sirfetch'd specifically: PogoAPI tags each with a leftover "Galarian" form
+      // value inherited from its pre-evolution (Galarian Mr. Mime / Galarian Farfetch'd), even
+      // though neither evolved form has a non-Galarian counterpart to distinguish it from —
+      // showing "(Galarian)" is misleading here, and the suffix also broke each one's Showdown
+      // sprite lookup (which correctly expects the plain "mrrime"/"sirfetchd" slug with no
+      // regional suffix at all — confirmed directly against Showdown's own sprite listing).
+      // Forced back to each one's real, singular name, by request.
+      const speciesName = (nameLower === 'mr. rime' || nameLower === 'mr rime' || nameLower === "sirfetch'd" || nameLower === 'sirfetchd')
         ? p.pokemon_name
         : (form !== 'Normal') ? `${p.pokemon_name} (${form})` : p.pokemon_name;
       const types = typesByKey[key] || typesByIdFallback[p.pokemon_id];
@@ -1470,16 +1492,16 @@ function buildFallbackData(){
     garchomp_mega:445, gardevoir_mega:282, gardevoir:282, genesect:649, gengar:94, gengar_mega:94, gigalith:526,
     giratina_altered:487, giratina_origin:487, glaceon:471, glalie_mega:362, glimmora:970,
     greninja:658, groudon:383, groudon_primal:383, guzzlord:799, gyarados_mega:130, gyarados:130, heatran:485,
-    heracross_mega:214, hitmonchan:107, ho_oh:250, houndoom_mega:229, incineroar:727,
+    heracross_mega:214, hitmonchan:107, ho_oh:250, hoopa_confined:720, hoopa_unbound:720, houndoom_mega:229, incineroar:727,
     inteleon:818, jynx:124, kangaskhan_mega:115, kartana:798, keldeo_resolute:647, kyogre:382,
     kyogre_primal:382, kyurem:646, kyurem_black:646, kyurem_white:646, landorus_incarnate:645,
     landorus_therian:645, lapras:131, latias:380, latias_mega:380, latios:381, latios_mega:381,
-    lopunny_mega:428, lucario:448, lucario_mega:448, lugia:249, lunala:792, machamp:68,
+    lopunny_mega:428, lucario:448, lucario_mega:448, lugia:249, lunala:792, lycanroc_midday:745, lycanroc_midnight:745, lycanroc_dusk:745, machamp:68,
     magnezone:462, malamar_mega:687, mamoswine:473, manectric_mega:310, mawile_mega:303,
     medicham_mega:308, mesprit:481, metagross:376, metagross_mega:376, mewtwo:150,
-    mewtwo_mega_x:150, mewtwo_mega_y:150, moltres:146, moltres_galarian:146, necrozma:800,
-    necrozma_dawn_wings:800, necrozma_dusk_mane:800, nihilego:793, ninetales_alolan:38,
-    palkia_origin:484, pheromosa:795, pidgeot_mega:18, pinsir_mega:127,
+    mewtwo_mega_x:150, mewtwo_mega_y:150, moltres:146, moltres_galarian:146,
+    necrozma:800, necrozma_dawn_wings:800, necrozma_dusk_mane:800, nihilego:793, ninetales_alolan:38,
+    palkia:484, palkia_origin:484, pheromosa:795, pidgeot_mega:18, pinsir_mega:127,
     raichu_mega_x:26, raichu_mega_y:26, raikou:243, rayquaza:384, rayquaza_mega:384, regice:378,
     regidrago:895, regieleki:894, regigigas:486, regirock:377, registeel:379, reshiram:643,
     rhyperior:464, rillaboom:812, sableye_mega:302, salamence_mega:373, sandslash_alolan:28,
@@ -1490,7 +1512,7 @@ function buildFallbackData(){
     tornadus_incarnate:641, tornadus_therian:641, tyranitar_mega:248, urshifu_rapid_strike:892,
     urshifu_single_strike:892, uxie:480, vanilluxe:584, venusaur_mega:3, victreebel_mega:71, victreebel:71,
     vigoroth:288, virizion:640, walrein:365, weavile:461, xerneas:716, xurkitree:796,
-    yveltal:717, zacian_crowned:888, zamazenta_crowned:889,
+    yveltal:717, zacian_crowned:888, zacian_hero:888, zamazenta_crowned:889, zamazenta_hero:889,
     zeraora:807,
     delphox:655, chandelure:609, feraligatr:160, meganium:154, staraptor:398, chesnaught:652,
     golurk:623, golisopod:768, barbaracle:689, drampa:780, eelektross:604, clefable:36,
@@ -1523,6 +1545,13 @@ function buildFallbackData(){
   // — pass [] for eliteFast if only eliteCharged applies, or omit both entirely if the species has
   // no legacy moves at all. Also add its National Dex number to the NATIONAL_DEX table above (used
   // for tier auto-classification) if it doesn't already have one from a related form.
+  //
+  // TO CHANGE AN EXISTING POKÉMON'S STATS OR MOVESET: search this file for mk('speciesid — every
+  // entry is exactly one line, so there's nothing else on that line to disturb. The 4th argument
+  // {atk,def,hp} is the only place stats live; the 5th/6th arguments ([fastMoves]/[chargedMoves])
+  // are the only place its moveset lives — edit those numbers/move names directly in place, no
+  // need to touch anything else on the line (including its trailing comment, if any — leave that
+  // as-is unless the comment itself is now wrong).
   //
   // TO ADD A NEW MOVE: check whether it's already defined in fastDefs/chargeDefs above (search
   // this file for its name in ALL_CAPS_WITH_UNDERSCORES). If not, add it there AND to the identical
@@ -1596,7 +1625,7 @@ function buildFallbackData(){
     mk('deoxys_attack','Deoxys (Attack)',['psychic'],{atk:414,def:46,hp:137},['POISON_JAB','ZEN_HEADBUTT'],['DARK_PULSE','PSYCHO_BOOST','ZAP_CANNON']),
     mk('deoxys_defense','Deoxys (Defense)',['psychic'],{atk:144,def:330,hp:137},['COUNTER','ZEN_HEADBUTT'],['PSYCHO_BOOST','ROCK_SLIDE','THUNDERBOLT']),
     mk('deoxys_speed','Deoxys (Speed)',['psychic'],{atk:230,def:218,hp:137},['CHARGE_BEAM','ZEN_HEADBUTT'],['PSYCHO_BOOST','SWIFT','THUNDERBOLT']),
-    mk('dialga','Dialga',['steel','dragon'],{atk:275,def:211,hp:205},['DRAGON_BREATH','METAL_CLAW'],['IRON_HEAD','THUNDER','DRACO_METEOR']),
+    mk('dialga','Dialga',['steel','dragon'],{atk:275,def:211,hp:205},['DRAGON_BREATH','METAL_CLAW'],['IRON_HEAD','THUNDER','DRACO_METEOR']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Dialga (Origin) to show, rather than a static removal
     mk('dialga_origin','Dialga (Origin)',['steel','dragon'],{atk:270,def:225,hp:205},['METAL_CLAW','DRAGON_BREATH'],['IRON_HEAD','THUNDER','DRACO_METEOR','ROAR_OF_TIME'],[],['ROAR_OF_TIME']), // legacy — official Pokemon.com raid guide confirms this with an asterisk
     mk('dragalge','Dragalge',['poison','dragon'],{atk:151,def:227,hp:163},['ACID','WATER_GUN','DRAGON_TAIL'],['AQUA_TAIL','SLUDGE_BOMB','GUNK_SHOT','HYDRO_PUMP','FOCUS_BLAST','OUTRAGE']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Acid (fast); Dragon Pulse/Sludge Wave were not real, should be Sludge Bomb/Gunk Shot/Hydro Pump/Focus Blast/Outrage
     mk('dragalge_mega','Mega Dragalge',['poison','dragon'],{atk:236,def:265,hp:163},['ACID','WATER_GUN','DRAGON_TAIL'],['AQUA_TAIL','SLUDGE_BOMB','GUNK_SHOT','HYDRO_PUMP','FOCUS_BLAST','OUTRAGE']), // moveset corrected to match base Dragalge's confirmed real kit
@@ -1628,7 +1657,7 @@ function buildFallbackData(){
     mk('gengar','Gengar',['ghost','poison'],{atk:261,def:149,hp:155},['SUCKER_PUNCH','LICK','SHADOW_CLAW','HEX'],['DARK_PULSE','FOCUS_BLAST','DRAIN_PUNCH','SHADOW_PUNCH','SHADOW_BALL','SLUDGE_BOMB','SLUDGE_WAVE','PSYCHIC'],['LICK'],['DARK_PULSE','SHADOW_PUNCH','SLUDGE_WAVE','PSYCHIC']), // added missing Drain Punch and Shadow Punch from its real 8-move charge kit — legacy — legacy
     mk('gengar_mega','Mega Gengar',['ghost','poison'],{atk:349,def:199,hp:155},['SUCKER_PUNCH','LICK','SHADOW_CLAW','HEX'],['DARK_PULSE','FOCUS_BLAST','DRAIN_PUNCH','SHADOW_PUNCH','SHADOW_BALL','SLUDGE_BOMB','SLUDGE_WAVE','PSYCHIC'],['LICK'],['DARK_PULSE','SHADOW_PUNCH','SLUDGE_WAVE','PSYCHIC']), // stats corrected via direct db.pokemongohub.net fetch — was 328/194, real is 349/199; added missing Drain Punch and Shadow Punch from its real 8-move charge kit — legacy — legacy — all four confirmed with an asterisk on gohub
     mk('gigalith','Gigalith',['rock'],{atk:226,def:201,hp:198},['MUD_SLAP','SMACK_DOWN','LOCK_ON'],['ROCK_SLIDE','SOLAR_BEAM','HEAVY_SLAM','SUPERPOWER','METEOR_BEAM'],[],['METEOR_BEAM']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-    mk('giratina_altered','Giratina (Altered)',['ghost','dragon'],{atk:187,def:225,hp:284},['DRAGON_BREATH','SHADOW_CLAW'],['ANCIENT_POWER','DRAGON_CLAW','SHADOW_SNEAK','SHADOW_FORCE'],[],['SHADOW_FORCE']), // confirmed real raid boss — added via PvPoke's raw gamemaster.json — legacy
+    mk('giratina_altered','Giratina (Altered)',['ghost','dragon'],{atk:187,def:225,hp:284},['DRAGON_BREATH','SHADOW_CLAW'],['ANCIENT_POWER','DRAGON_CLAW','SHADOW_SNEAK','SHADOW_FORCE'],[],['SHADOW_FORCE']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Giratina (Origin) to show, rather than a static removal — legacy
     mk('giratina_origin','Giratina (Origin)',['ghost','dragon'],{atk:225,def:187,hp:284},['SHADOW_CLAW','DRAGON_TAIL'],['SHADOW_BALL','OMINOUS_WIND','DRAGON_PULSE','SHADOW_FORCE'],[],['SHADOW_FORCE']), // corrected — Outrage and Draco Meteor were fabricated/not real moves for this Pokémon — legacy — signature move added during Halloween 2022 event
     mk('glaceon','Glaceon',['ice'],{atk:238,def:205,hp:136},['FROST_BREATH'],['AVALANCHE','ICE_BEAM']),
     mk('glalie_mega','Mega Glalie',['ice'],{atk:252,def:168,hp:190},['FROST_BREATH','ICE_SHARD','ROLLOUT','POWDER_SNOW'],['AVALANCHE','GYRO_BALL','SHADOW_BALL']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
@@ -1652,6 +1681,8 @@ function buildFallbackData(){
     mk('heracross_mega','Mega Heracross',['bug','fighting'],{atk:334,def:223,hp:190},['COUNTER','STRUGGLE_BUG','FURY_CUTTER'],['CLOSE_COMBAT','EARTHQUAKE','MEGAHORN','ROCK_BLAST','UPPER_HAND','ROCK_TOMB']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('hitmonchan','Hitmonchan',['fighting'],{atk:193,def:197,hp:137},['COUNTER','BULLET_PUNCH'],['FIRE_PUNCH','THUNDER_PUNCH','ICE_PUNCH','CLOSE_COMBAT','POWER_UP_PUNCH','BRICK_BREAK'],[],['BRICK_BREAK']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('ho_oh','Ho-Oh',['fire','flying'],{atk:239,def:244,hp:214},['INCINERATE','HIDDEN_POWER','EXTRASENSORY','STEEL_WING'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','BRAVE_BIRD','SACRED_FIRE'],[],['EARTHQUAKE','SACRED_FIRE']), // corrected — Fire Fang, Overheat, and Ancient Power were fabricated/not real moves for this Pokémon — legacy — Earthquake confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Sacred Fire confirmed requiring Elite TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Earthquake's flag was never actually taking effect.)
+    mk('hoopa_confined','Hoopa (Confined)',['psychic','ghost'],{atk:261,def:187,hp:218},['CONFUSION','ASTONISH'],['SHADOW_BALL','PSYCHIC','PSYBEAM']), // added — dynamic same-family exclusion (see FAMILY_GROUPS) decides which of this and Hoopa (Unbound) to show per matchup, by request — confirmed real moveset/stats via direct research this session
+    mk('hoopa_unbound','Hoopa (Unbound)',['psychic','dark'],{atk:311,def:191,hp:218},['CONFUSION','ASTONISH'],['SHADOW_BALL','PSYCHIC','DARK_PULSE']), // added — confirmed real moveset/stats via direct research this session; shares Hoopa Confined's HP exactly, notably higher ATK/DEF
     mk('houndoom_mega','Mega Houndoom',['dark','fire'],{atk:289,def:194,hp:181},['FIRE_FANG','SNARL'],['CRUNCH','FIRE_BLAST','FLAMETHROWER','FOUL_PLAY']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('incineroar','Incineroar',['fire','dark'],{atk:214,def:175,hp:216},['SNARL','DOUBLE_KICK','FIRE_FANG'],['DARK_PULSE','BRUTAL_SWING','DARKEST_LARIAT','FIRE_BLAST','BLAST_BURN','BLAZE_KICK'],[],['BLAST_BURN']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('inteleon','Inteleon',['water'],{atk:262,def:142,hp:172},['POUND','WATER_GUN'],['SHADOW_BALL','WATER_PULSE','SURF','HYDRO_CANNON','SNIPE_SHOT'],[],['HYDRO_CANNON']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
@@ -1661,7 +1692,7 @@ function buildFallbackData(){
     mk('keldeo_resolute','Keldeo (Resolute)',['water','fighting'],{atk:260,def:192,hp:209},['LOW_KICK','POISON_JAB'],['SECRET_SWORD','HYDRO_PUMP','AQUA_JET','X_SCISSOR','CLOSE_COMBAT','SACRED_SWORD'],[],['SECRET_SWORD']), // corrected — Waterfall was fabricated/not a real move; should be Poison Jab — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('kyogre','Kyogre',['water'],{atk:270,def:228,hp:205},['WATERFALL'],['ORIGIN_PULSE','SURF','HYDRO_PUMP','BLIZZARD','THUNDER','AVALANCHE'],[],['ORIGIN_PULSE']), // legacy
     mk('kyogre_primal','Primal Kyogre',['water'],{atk:353,def:268,hp:218},['WATERFALL'],['BLIZZARD','HYDRO_PUMP','THUNDER','SURF','ORIGIN_PULSE','AVALANCHE'],[],['ORIGIN_PULSE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
-    mk('kyurem','Kyurem',['dragon','ice'],{atk:246,def:170,hp:245},['DRAGON_BREATH','STEEL_WING'],['GLACIATE','DRACO_METEOR','BLIZZARD','DRAGON_CLAW'],[],['GLACIATE']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
+    mk('kyurem','Kyurem',['dragon','ice'],{atk:246,def:170,hp:245},['DRAGON_BREATH','STEEL_WING'],['GLACIATE','DRACO_METEOR','BLIZZARD','DRAGON_CLAW'],[],['GLACIATE']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Kyurem (Black)/(White) to show, rather than a static removal — legacy
     mk('kyurem_black','Kyurem (Black)',['dragon','ice'],{atk:310,def:183,hp:245},['DRAGON_TAIL','SHADOW_CLAW'],['FREEZE_SHOCK','OUTRAGE','BLIZZARD','FUSION_BOLT','STONE_EDGE','IRON_HEAD']), // corrected — Dragon Breath was fabricated; real fast moves are Dragon Tail/Shadow Claw; added missing charge moves
     mk('kyurem_white','Kyurem (White)',['dragon','ice'],{atk:310,def:183,hp:245},['DRAGON_BREATH','ICE_FANG','STEEL_WING'],['ICE_BURN','BLIZZARD','FUSION_FLARE','ANCIENT_POWER','DRAGON_PULSE','FOCUS_BLAST']), // corrected — Draco Meteor was fabricated/not real; added confirmed Fusion Flare
     mk('landorus_incarnate','Landorus (Incarnate)',['ground','flying'],{atk:261,def:182,hp:205},['MUD_SHOT','ROCK_THROW'],['EARTH_POWER','ROCK_SLIDE','OUTRAGE','FOCUS_BLAST']),
@@ -1677,6 +1708,9 @@ function buildFallbackData(){
     mk('lucario_mega_z','Mega Lucario Z',['fighting','steel'],{atk:359,def:161,hp:172},['COUNTER','BULLET_PUNCH','FORCE_PALM'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK'],['FORCE_PALM']), // inherited from base form's legacy flags, by request
     mk('lugia','Lugia',['psychic','flying'],{atk:193,def:310,hp:235},['EXTRASENSORY','DRAGON_TAIL'],['HYDRO_PUMP','SKY_ATTACK','FUTURE_SIGHT','AEROBLAST','FLY'],[],['AEROBLAST']), // corrected — Air Slash, Shadow Ball, Ancient Power, Focus Blast were all fabricated/not real moves for this Pokémon — legacy — signature move, Elite TM
     mk('lunala','Lunala',['psychic','ghost'],{atk:255,def:191,hp:264},['SHADOW_CLAW','CONFUSION','AIR_SLASH'],['SHADOW_BALL','PSYCHIC','MOONBLAST','FUTURE_SIGHT']),
+    mk('lycanroc_midday','Lycanroc (Midday)',['rock'],{atk:231,def:140,hp:181},['SUCKER_PUNCH','ROCK_THROW'],['DRILL_RUN','STONE_EDGE','CRUNCH','TRAILBLAZE']), // added — three genuinely distinct forms with different stats/movesets (not cosmetic like Tatsugiri/Minior), confirmed via direct research this session
+    mk('lycanroc_midnight','Lycanroc (Midnight)',['rock'],{atk:218,def:152,hp:198},['COUNTER','ROCK_THROW'],['STONE_EDGE','PSYCHIC_FANGS','CRUNCH','TRAILBLAZE']), // added — confirmed real moveset via direct research this session
+    mk('lycanroc_dusk','Lycanroc (Dusk)',['rock'],{atk:234,def:139,hp:181},['ROCK_THROW','SUCKER_PUNCH','COUNTER'],['STONE_EDGE','IRON_HEAD','CRUNCH','TRAILBLAZE']), // added — confirmed real moveset via direct research this session; shares both other forms' fast moves plus its own charge option (Iron Head)
     mk('machamp','Machamp',['fighting'],{atk:234,def:159,hp:207},['COUNTER'],['DYNAMIC_PUNCH','CROSS_CHOP','CLOSE_COMBAT','ROCK_SLIDE']),
     mk('magnezone','Magnezone',['electric','steel'],{atk:238,def:205,hp:172},['SPARK','CHARGE_BEAM','VOLT_SWITCH'],['WILD_CHARGE','MIRROR_SHOT','FLASH_CANNON']),
     mk('malamar_mega','Mega Malamar',['dark','psychic'],{atk:208,def:222,hp:200},['PECK','PSYCHO_CUT','PSYWAVE'],['PSYBEAM','FOUL_PLAY','SUPERPOWER','HYPER_BEAM']), // moveset corrected — was missing Peck and Psywave (fast) and Superpower/Hyper Beam (charge); Psychic was incorrectly included and isn't real
@@ -1696,16 +1730,17 @@ function buildFallbackData(){
     mk('mewtwo_mega_y','Mega Mewtwo Y',['psychic'],{atk:413,def:223,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC'],[],['HYPER_BEAM', 'PSYSTRIKE', 'SHADOW_BALL']), // inherited from base form's legacy flags, by request
     mk('moltres','Moltres',['fire','flying'],{atk:251,def:181,hp:207},['FIRE_SPIN','WING_ATTACK'],['OVERHEAT','ANCIENT_POWER','HEAT_WAVE','FIRE_BLAST','SKY_ATTACK','FLY'],[],['SKY_ATTACK']), // corrected — Fire Fang was fabricated/not real — legacy
     mk('moltres_galarian','Moltres (Galarian)',['dark','flying'],{atk:202,def:231,hp:207},['SUCKER_PUNCH','WING_ATTACK'],['PAYBACK','ANCIENT_POWER','BRAVE_BIRD','FLY']),
-    mk('necrozma','Necrozma',['psychic'],{atk:251,def:195,hp:219},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['FUTURE_SIGHT','DARK_PULSE','IRON_HEAD','OUTRAGE']), // corrected — Psychic and Focus Blast were fabricated/not real; also missing 2 fast moves
+    mk('necrozma','Necrozma',['psychic'],{atk:251,def:195,hp:219},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['FUTURE_SIGHT','DARK_PULSE','IRON_HEAD','OUTRAGE']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Necrozma (Dusk Mane)/(Dawn Wings) to show, rather than a static removal
     mk('necrozma_dawn_wings','Necrozma (Dawn Wings)',['psychic','ghost'],{atk:277,def:220,hp:200},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['MOONGEIST_BEAM','DARK_PULSE','FUTURE_SIGHT','IRON_HEAD','OUTRAGE']), // corrected — Shadow Ball replaced with confirmed Dark Pulse/Future Sight
     mk('necrozma_dusk_mane','Necrozma (Dusk Mane)',['psychic','steel'],{atk:277,def:220,hp:200},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['SUNSTEEL_STRIKE','IRON_HEAD','DARK_PULSE','OUTRAGE','FUTURE_SIGHT']),
     mk('nihilego','Nihilego',['rock','poison'],{atk:249,def:210,hp:240},['ACID','POISON_JAB','POUND'],['SLUDGE_BOMB','ROCK_SLIDE','POWER_GEM','GUNK_SHOT']),
     mk('ninetales_alolan','Ninetales (Alolan)',['ice','fairy'],{atk:170,def:193,hp:177},['POWDER_SNOW'],['BLIZZARD','DAZZLING_GLEAM']),
+    mk('palkia','Palkia',['water','dragon'],{atk:280,def:215,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Palkia (Origin) to show, rather than a static removal
     mk('palkia_origin','Palkia (Origin)',['water','dragon'],{atk:286,def:223,hp:189},['DRAGON_BREATH','DRAGON_TAIL'],['DRACO_METEOR','FIRE_BLAST','HYDRO_PUMP','AQUA_TAIL','SPACIAL_REND']),
     mk('pheromosa','Pheromosa',['bug','fighting'],{atk:316,def:85,hp:174},['BUG_BITE','LOW_KICK'],['BUG_BUZZ','FOCUS_BLAST','CLOSE_COMBAT','LUNGE']),
     mk('pidgeot_mega','Mega Pidgeot',['normal','flying'],{atk:280,def:175,hp:195},['AIR_SLASH','STEEL_WING','WING_ATTACK','GUST'],['AERIAL_ACE','AIR_CUTTER','BRAVE_BIRD','HURRICANE','FEATHER_DANCE','HEAT_WAVE','TWISTER'],['WING_ATTACK','GUST'],['AIR_CUTTER']), // confirmed directly via PvPoke's raw gamemaster.json — legacy — confirmed via gamemaster.json eliteMoves field — legacy — Air Cutter is a charge move here, distinct from Beedrill/Zubat's identically-named fast move
     mk('pinsir_mega','Mega Pinsir',['bug','flying'],{atk:305,def:231,hp:163},['BUG_BITE','FURY_CUTTER','ROCK_SMASH'],['CLOSE_COMBAT','SUBMISSION','VISE_GRIP','X_SCISSOR','SUPERPOWER'],[],['SUBMISSION']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
-    mk('pyroar','Pyroar',['fire','normal'],{atk:198,def:149,hp:181},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM','FLAME_CHARGE']), // moveset corrected — was missing Ember/Take Down (fast); Flame Charge added back to charge moves per explicit request (an earlier research pass had flagged it as not real — deferring to the more specific correction here)
+    mk('pyroar','Pyroar (Male)',['fire','normal'],{atk:198,def:149,hp:181},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM','FLAME_CHARGE']), // renamed to explicitly "(Male)", by request — confirmed no stat/moveset difference from female Pyroar (multiple sources agree), so only one needs to be shown; matches Showdown's own sprite convention where the unmarked/base name is the male form ("pyroar.gif") and "-f" is the separate female sprite ("pyroar-f.gif") — moveset corrected — was missing Ember/Take Down (fast); Flame Charge added back to charge moves per explicit request (an earlier research pass had flagged it as not real — deferring to the more specific correction here)
     mk('pyroar_mega','Mega Pyroar',['fire','normal'],{atk:273,def:198,hp:200},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM']), // moveset corrected to match base Pyroar's confirmed real kit
     mk('raichu','Raichu',['electric'],{atk:193,def:151,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Thunder Shock/Charm (fast) and Thunder/Surf/Skull Bash/Trailblaze (charge) — legacy, by request
     mk('raichu_mega_x','Mega Raichu X',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected to match base Raichu's confirmed real kit — previous entry was a much sparser earlier-session guess — inherited from base form's legacy flags, by request
@@ -1770,7 +1805,9 @@ function buildFallbackData(){
     mk('xerneas','Xerneas',['fairy'],{atk:250,def:185,hp:246},['CHARM','GEOMANCY','TACKLE','ZEN_HEADBUTT'],['DAZZLING_GLEAM','PLAY_ROUGH','MOONBLAST','CLOSE_COMBAT','GIGA_IMPACT','MEGAHORN','THUNDER'],[],['GEOMANCY']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('xurkitree','Xurkitree',['electric'],{atk:330,def:144,hp:195},['THUNDER_SHOCK','SPARK'],['DISCHARGE','THUNDER','POWER_WHIP','DAZZLING_GLEAM']),
     mk('yveltal','Yveltal',['dark','flying'],{atk:250,def:185,hp:246},['SNARL','SUCKER_PUNCH','GUST'],['FOCUS_BLAST','HYPER_BEAM','DARK_PULSE','PSYCHIC','HURRICANE','OBLIVION_WING'],[],['OBLIVION_WING']), // corrected — Foul Play was fabricated/not real; added missing fast moves and charge moves — legacy — signature move, Elite Charged TM only
+    mk('zacian_hero','Zacian (Hero)',['fairy'],{atk:254,def:236,hp:192},['SNARL','FIRE_FANG','METAL_CLAW','QUICK_ATTACK'],['CLOSE_COMBAT','PLAY_ROUGH','WILD_CHARGE','IRON_HEAD']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Zacian (Crowned Sword) to show, rather than a static removal
     mk('zacian_crowned','Zacian (Crowned Sword)',['fairy','steel'],{atk:332,def:240,hp:192},['METAL_CLAW','AIR_SLASH'],['BEHEMOTH_BLADE','CLOSE_COMBAT','PLAY_ROUGH','GIGA_IMPACT']),
+    mk('zamazenta_hero','Zamazenta (Hero)',['fighting'],{atk:254,def:236,hp:192},['SNARL','ICE_FANG','QUICK_ATTACK','METAL_CLAW'],['CLOSE_COMBAT','CRUNCH','IRON_HEAD','MOONBLAST']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Zamazenta (Crowned Shield) to show, rather than a static removal
     mk('zamazenta_crowned','Zamazenta (Crowned Shield)',['fighting','steel'],{atk:250,def:292,hp:192},['METAL_CLAW','ICE_FANG'],['BEHEMOTH_BASH','CLOSE_COMBAT','MOONBLAST','GIGA_IMPACT']),
     mk('zapdos','Zapdos',['electric','flying'],{atk:253,def:185,hp:207},['THUNDER_SHOCK','CHARGE_BEAM'],['THUNDERBOLT','ANCIENT_POWER','DRILL_PECK','HEAT_WAVE','THUNDER','ZAP_CANNON'],['THUNDER_SHOCK']), // legacy
     mk('zapdos_galarian','Zapdos (Galarian)',['fighting','flying'],{atk:252,def:189,hp:207},['COUNTER','LOW_KICK'],['CLOSE_COMBAT','ANCIENT_POWER','BRAVE_BIRD','FLY']),
@@ -1825,6 +1862,13 @@ function applyFallbackOverrides(livePokemon, liveMoves){
     // different stats instead of one correctly-overridden entry.
     const existing = byExactName.get(fp.speciesName) || byNormName.get(normalizeSpeciesName(fp.speciesName));
     if(existing){
+      existing.speciesId = fp.speciesId; // adopt the fallback's own clean id (e.g. "dialga") too, not
+      // just its stats/moveset below — otherwise a live-data-sourced entry keeps its original
+      // opaque, auto-generated id (e.g. "p483") even after every other field gets overridden, and
+      // anything keyed by speciesId elsewhere (FAMILY_GROUPS' same-species dedup, most notably)
+      // silently fails to recognize the entry at all. Confirmed to happen in practice: Dialga and
+      // Dialga (Origin) both showing in the same results list despite FAMILY_GROUPS pairing them,
+      // because the live-sourced entry's id never matched the group's registered key.
       existing.baseStats = fp.baseStats;
       existing.fastMoves = fp.fastMoves;
       existing.chargedMoves = fp.chargedMoves;
@@ -1948,6 +1992,9 @@ function speciesNameToShowdownSlug(name){
         'rapid strike':'-rapidstrike', 'single strike':'-singlestrike', // confirmed: no hyphen before strike
         'hero':'', 'sword':'-crowned', 'shield':'-crowned', 'midday':'', // Midday is Lycanroc's implicit default form — confirmed Showdown has no suffix for it (just "lycanroc.gif"), only "-midnight"/"-dusk" for the other two
         'standard':'', 'ordinary':'', // Darmanitan's "Standard" and Keldeo's "Ordinary" are each that species' implicit default form — live data names them explicitly (unlike most base forms), but Showdown's file for the default form has no suffix at all ("darmanitan.gif", "keldeo.gif")
+        'male':'', // same pattern as standard/ordinary above — Showdown's convention is the unmarked base name IS the male sprite ("pyroar.gif"), with a separate "-f" suffix only for the female sprite ("pyroar-f.gif") where one exists
+        'confined':'', // Hoopa's implicit default form — confirmed real filename is plain "hoopa.gif" with no suffix, only "Unbound" gets one ("hoopa-unbound.gif")
+        'east':'-east', 'east sea':'-east', // Gastrodon's East Sea form — confirmed real file "gastrodon-east.gif"; mapped from both possible wordings live data might use, since the generic fallback below would otherwise strip the space in "East Sea" down to "-eastsea", which isn't the real filename
         '50% forme':'', '10% forme':'-10', 'complete forme':'-complete',
         's':'' // Shadow — no distinct Showdown sprite, falls back to base
       };
@@ -2463,7 +2510,7 @@ $('excludeUpcomingMegas').addEventListener('change', () => {
   // hasn't been run yet, currentTop30Results is empty and this just no-ops harmlessly.
   if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
 });
-$('removeMegas').addEventListener('change', () => {
+$('excludeMegas').addEventListener('change', () => {
   // Same reasoning as excludeUpcomingMegas above — a pure render-time filter, no re-simulation needed.
   if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
 });
@@ -2891,13 +2938,10 @@ async function rankAllAttackers(onProgress){
   // thermally-throttled phone is a run that both takes much longer AND risks the browser killing a
   // backgrounded/throttled tab partway through. Still large enough samples to be a reasonable
   // approximation; not cut so far as to risk visibly noisy rankings.
-  // N raised from 200 to 500 by request (desktop) — reduces standard error by ~sqrt(2.5)≈1.6x,
-  // making near-tied attackers' Time to Win/DPS/Estimator noticeably less prone to noise-driven
-  // rank flips between close performers. This is a real speed/precision tradeoff, not a free win —
-  // increases evaluateCombo's simulation volume by the same 2.5x factor for every Pokémon that
-  // reaches full confirmation (though the neutral-filtered screening pass and early-exit logic
-  // still bound how many combos get there in the first place).
-  const N = mobile ? 300 : 500;
+  // N reduced from 500 to 350 (desktop) by request, and mobile scaled down proportionally to match
+  // (210, keeping the same ~0.6 mobile/desktop ratio established earlier) — trades back some of the
+  // precision gained by the earlier 200->500 raise in exchange for meaningfully faster runs.
+  const N = mobile ? 210 : 350;
   const SOLO_N = mobile ? 18 : 30;
   const CAPPED_N = mobile ? 12 : 20;
   const results = [];
@@ -3029,14 +3073,20 @@ async function rankAllAttackers(onProgress){
   // their simulated stats might look. Wishiwashi matched by prefix (covers both School and Solo
   // Form, since only a base name was given). Palafin (Hero) matched exactly — Palafin (Zero) was
   // not excluded and stays available.
-  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo','archaludon','dracozolt','arctozolt','dracovish','arctovish']); // archaludon and the 4 Galar fossil combos (dex 880-883) unreleased in GO, by request
-  const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu'];
+  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo','archaludon','dracozolt','arctozolt','dracovish','arctovish','alcremie','pyroar (female)','brambleghast','wo-chien','scovillain','rabsca']); // archaludon, alcremie, brambleghast, wo-chien, scovillain, rabsca, and the 4 Galar fossil combos (dex 880-883) unreleased in GO; pyroar (female) redundant with the kept Pyroar (Male) — confirmed no stat/moveset difference — by request
+  const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu','fezandipiti'];
   function isAttackerExcluded(speciesName){
     const name = speciesName.toLowerCase();
     if(/\((s|shadow)\)$/.test(name.trim())) return true; // every Shadow form, by request — live data marks these with a trailing "(S)" or "(Shadow)"
     if(/\(ultimate\)$/.test(name.trim())) return true; // every "(Ultimate)" form, by request — presumably a live-data-only variant, not present in this fallback dataset
     if(/^genesect \(/.test(name.trim())) return true; // any suffixed Genesect variant (Drive forms — cosmetic only in the mainline games), by request — same reasoning as the boss-side exclusion elsewhere in this file
     if(name === 'koraidon' || name.startsWith('koraidon ')) return true; // unreleased in GO, by request — catches every Koraidon form (base and Apex alike), not just the Apex variant already excluded boss-side
+    if(/^florges/.test(name.trim()) && name.trim() !== 'florges (red)' && name.trim() !== 'florges') return true; // every Florges color form except Red, by request — Florges' colors are purely cosmetic (no stat/type/moveset difference between them), so only one needs to be selectable. Spares BOTH "florges (red)" and plain "florges" — live data may report the Red form as an unmarked default with no explicit color suffix at all, same pattern seen elsewhere in this file (e.g. Lycanroc's Midday form)
+    if(name === 'meloetta (pirouette)') return true; // by request
+    if(/^tatsugiri \(/.test(name.trim())) return true; // any suffixed Tatsugiri variant (Curly/Droopy/Stretchy Forms — cosmetic only in the mainline games), by request — same pattern as the Genesect Drive-form exclusion above
+    if(name === 'minior' || name.startsWith('minior ')) return true; // unreleased in GO, by request — catches every Minior form (base Meteor and every color variant alike)
+    if(/^polteageist \(/.test(name.trim()) && name.trim() !== 'polteageist (phony)') return true; // every Polteageist color/form variant except Phony (its default), by request — confirmed no visual or statistical difference between Phony and Antique forms, so only one needs to be selectable
+    if(name === 'mabosstiff' || name.startsWith('mabosstiff ')) return true; // unreleased in GO, by request
     if(ATTACKER_EXCLUDED_EXACT.has(name)) return true;
     return ATTACKER_EXCLUDED_PREFIX.some(prefix => name === prefix || name.startsWith(prefix + ' '));
   }
@@ -3237,11 +3287,15 @@ async function rankAllAttackers(onProgress){
   }
 
   results.sort((a,b) => a.avgTimeSec - b.avgTimeSec);
-  const CONFIRM_BUFFER = mobile ? 32 : 40; // confirm more than the 30 actually shown, so toggling "Exclude
-  // Upcoming Megas" after the sim can instantly re-filter and backfill from this buffer without
-  // needing to re-run the simulation — see drawTop30Rows(), which applies the toggle and the
-  // final slice(0,30) at render time, not here. Smaller buffer on mobile (still enough headroom
-  // for the toggle to work in the common case) since this pass's cost scales directly with it.
+  const CONFIRM_BUFFER = mobile ? 50 : 70; // confirm more than the 30 actually shown, so toggling
+  // "Exclude Upcoming Megas" or "Include Mega Pokemon" after the sim can instantly re-filter and
+  // backfill from this buffer without needing to re-run the simulation — see drawTop30Rows(),
+  // which applies both toggles plus the same-family dedup and the final slice(0,30) at render
+  // time, not here. Raised from 40/32 — Megas tend to dominate a raw ranking heavily enough that
+  // a smaller buffer risked showing fewer than 30 results once they're filtered out by default
+  // (see "Include Mega Pokemon" defaulting off). Still bounded, not unlimited — a boss whose
+  // realistically-viable roster is almost entirely Megas (e.g. a Mega Raid tier boss) may still
+  // legitimately have fewer than 30 non-Mega options no matter how large this buffer gets.
   const top30 = results.slice(0, CONFIRM_BUFFER);
 
   // Estimator and Power% reflect the ACTUAL configured party's per-player efficiency — changed by
@@ -3402,32 +3456,86 @@ function updateResultsJsonLink(results){
   link.download = `raid-results-${safeName}.json`;
 }
 
-/** Tiers a metric into good/mid/bad for the color-coded stat classes. `higherIsBetter` flips the
- * direction for metrics like Estimator/Fainted/Rejoins where a LOWER number is the good outcome. */
-function statTier(value, goodAt, midAt, higherIsBetter){
-  const good = higherIsBetter ? value >= goodAt : value <= goodAt;
-  const mid = higherIsBetter ? value >= midAt : value <= midAt;
-  return good ? 'stat-good' : (mid ? 'stat-mid' : 'stat-bad');
+/** Dedicated 4-tier color coding for the Estimator column specifically, by request — relative to
+ * the BEST (lowest) Estimator actually present in the currently-visible results, not an absolute
+ * anchor like 1.0. So e.g. a boss where even the best attacker needs 1.59 players still shows that
+ * result as green (it's the best available), and a middling attacker at roughly the same ratio
+ * above the best as a truly bad one would be in an easier matchup still reads the same color.
+ *   ratio ≤ 1.10   green  (within 10% of the best result)
+ *   ratio ≤ 1.25   yellow (10–25% worse than the best)
+ *   ratio ≤ 1.50   orange (25–50% worse than the best)
+ *   ratio > 1.50   red    (50%+ worse than the best) */
+function estimatorColorClass(estimator, bestEstimator){
+  const ratio = estimator / bestEstimator;
+  if(ratio <= 1.10) return 'stat-good';
+  if(ratio <= 1.25) return 'stat-mid';
+  if(ratio <= 1.50) return 'stat-orange';
+  return 'stat-bad';
 }
 
 let currentSort = { key: 'estimator', asc: true };
+/** Species that are close variants of each other in this roster, where showing both would be
+ * redundant — you only ever want the better-performing one for a given matchup, by request.
+ * Grouped as arrays of speciesId; drawTop30Rows() keeps only the best-Estimator member of each
+ * group per render, dynamically, rather than statically deciding a "winner" ahead of time (the
+ * earlier approach, which turned out wrong for the Genies — Incarnate vs Therian genuinely trade
+ * off by matchup, e.g. Landorus Therian's Ground/Flying typing vs Incarnate's higher ATK, so
+ * neither is a blanket "better" pick the way Origin/Crowned forms are against their base forms).
+ *
+ * TO ADD A FAMILY GROUP: add one array of speciesId strings below (2 or more entries — every
+ * member must already exist as its own mk(...) entry in the roster above). Only add a group when
+ * one form is a straightforward same-species variant of another, not when they're genuinely
+ * different attackers that just happen to be related (e.g. don't group Charizard with Mega
+ * Charizard X/Y — those are legitimately worth showing side by side, not a "pick one" situation
+ * the way Dialga vs Dialga Origin is). No other file needs touching — drawTop30Rows() picks this
+ * array up automatically on every render. */
+const FAMILY_GROUPS = [
+  ['dialga','dialga_origin'],
+  ['palkia','palkia_origin'],
+  ['giratina_altered','giratina_origin'],
+  ['kyurem','kyurem_black','kyurem_white'],
+  ['necrozma','necrozma_dusk_mane','necrozma_dawn_wings'],
+  ['zacian_hero','zacian_crowned'],
+  ['zamazenta_hero','zamazenta_crowned'],
+  ['landorus_incarnate','landorus_therian'],
+  ['thundurus_incarnate','thundurus_therian'],
+  ['tornadus_incarnate','tornadus_therian'],
+  ['enamorus_incarnate','enamorus_therian'],
+  ['hoopa_confined','hoopa_unbound']
+];
+const FAMILY_GROUP_BY_SPECIES = {}; // speciesId -> the group array it belongs to, built once for fast lookup
+FAMILY_GROUPS.forEach(group => group.forEach(id => { FAMILY_GROUP_BY_SPECIES[id] = group; }));
 /** Re-sorts the already-computed results in place and redraws the table body — no re-simulation,
  * just a client-side sort/render pass, so clicking a header is effectively instant. */
 function drawTop30Rows(){
   const excludeUpcoming = !$('excludeUpcomingMegas').checked; // checkbox now reads "Include Upcoming Megas" — checked means include, so exclude is the inverse
-  const removeMegas = $('removeMegas').checked; // "Remove Megas" — default off, checked means strip every Mega/Primal-form result from the list entirely, by request
+  const excludeMegas = $('excludeMegas').checked; // "Exclude Megas" — default OFF, by request: Megas show normally unless this is explicitly turned on. Independent of "Include Upcoming Megas" above — an already-released Mega isn't affected by that other toggle either way.
+  // Same-family dedup: for every group in FAMILY_GROUPS with more than one member actually present
+  // in this buffer, keep only the one with the best (lowest) Estimator and drop the rest — always
+  // on, not a toggle, since "only show the better one" is the whole point rather than a preference.
+  const bestInFamily = new Map(); // group (by reference) -> that group's best-so-far result
+  currentTop30Results.forEach(r => {
+    const group = FAMILY_GROUP_BY_SPECIES[r.speciesId];
+    if(!group) return;
+    const cur = bestInFamily.get(group);
+    if(!cur || r.estimator < cur.estimator) bestInFamily.set(group, r);
+  });
+  const bestInFamilyIds = new Set([...bestInFamily.values()].map(r => r.speciesId));
+  const isFamilyLoser = r => FAMILY_GROUP_BY_SPECIES[r.speciesId] && !bestInFamilyIds.has(r.speciesId);
   // Filter (if toggled) and re-slice to the visible 30 here, at render time — not during
   // simulation — so this whole function is a fast, sim-free re-render: toggling either checkbox
   // calls this directly and backfills from the confirmed buffer instantly instead of re-running
   // the Monte Carlo. currentTop30Results holds the full confirmed buffer (see CONFIRM_BUFFER).
   const visible = currentTop30Results
     .filter(r => !excludeUpcoming || !r.isUpcomingMega)
-    .filter(r => !removeMegas || !r.isMega)
+    .filter(r => !excludeMegas || !r.isMega)
+    .filter(r => !isFamilyLoser(r))
     .slice()
     .sort((a,b) => a.avgTimeSec - b.avgTimeSec)
     .slice(0, 30);
   const { key, asc } = currentSort;
   const sorted = [...visible].sort((a,b) => asc ? a[key]-b[key] : b[key]-a[key]);
+  const bestEstimator = visible.length ? Math.min(...visible.map(r => r.estimator)) : 1; // reference point for estimatorColorClass — the best (lowest) Estimator among the currently-visible results, not a fixed absolute anchor, by request
   document.querySelectorAll('.mc-table th[data-sort]').forEach(th => {
     th.classList.toggle('sorted', th.dataset.sort === key);
   });
@@ -3438,9 +3546,9 @@ function drawTop30Rows(){
       <td>${r.name}</td>
       <td>${renderSpriteImg(r.name)}</td>
       <td>${typeBadges(r.types, true)}</td>
-      <td style="white-space:nowrap;">${moveBadge(r.fastId)} <span class="combo-select-sep">/</span> ${moveBadge(r.chargeId)}</td>
+      <td>${moveBadge(r.fastId)}<br>${moveBadge(r.chargeId)}</td>
       <td>${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</td>
-      <td class="${statTier(r.estimator, 1.5, 3, false)}">${r.estimator.toFixed(2)}</td>
+      <td class="${estimatorColorClass(r.estimator, bestEstimator)}">${r.estimator.toFixed(2)}</td>
       <td>💀×${r.avgDeaths.toFixed(2)}</td>
       <td>${r.avgDps.toFixed(2)}</td>
       <td>${Math.round(r.avgRevives)}</td>
