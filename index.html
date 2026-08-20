@@ -368,10 +368,10 @@
           <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
             <a href="#" id="downloadJsonLink" download="raid-results.json" class="hint" style="text-decoration:underline;color:var(--teal);">⬇ Download results (JSON)</a>
             <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-              <label class="toggle-switch-label" for="excludeUpcomingMegas">
-                <span>Include Upcoming Megas</span>
+              <label class="toggle-switch-label" for="excludeLegendary">
+                <span>Exclude Legendary</span>
                 <span class="toggle-switch">
-                  <input type="checkbox" id="excludeUpcomingMegas">
+                  <input type="checkbox" id="excludeLegendary">
                   <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
                 </span>
               </label>
@@ -1725,9 +1725,9 @@ function buildFallbackData(){
     mk('mesprit','Mesprit',['psychic'],{atk:212,def:212,hp:190},['CONFUSION','EXTRASENSORY'],['FUTURE_SIGHT','BLIZZARD','SWIFT']),
     mk('metagross','Metagross',['steel','psychic'],{atk:257,def:228,hp:190},['BULLET_PUNCH','FURY_CUTTER','SHADOW_CLAW','ZEN_HEADBUTT'],['METEOR_MASH','EARTHQUAKE','FLASH_CANNON','PSYCHIC'],['SHADOW_CLAW'],['METEOR_MASH']), // legacy — confirmed: debuted during Mega Metagross Raid Day (Oct 2025), Elite Fast TM only afterward; corrected after initially misjudging this based on a truncated source snippet — legacy — confirmed via multiple current sources: Elite Charged TM or a Community Day-style event required, not a regular TM
     mk('metagross_mega','Mega Metagross',['steel','psychic'],{atk:300,def:289,hp:190},['BULLET_PUNCH','FURY_CUTTER','SHADOW_CLAW','ZEN_HEADBUTT'],['METEOR_MASH','EARTHQUAKE','FLASH_CANNON','PSYCHIC'],['SHADOW_CLAW'],['METEOR_MASH']), // legacy — same reasoning as base Metagross above — legacy — same reasoning as base Metagross above
-    mk('mewtwo','Mewtwo',['psychic'],{atk:300,def:182,hp:214},['PSYCHO_CUT','CONFUSION','COUNTER'],['PSYSTRIKE','SHADOW_BALL','FOCUS_BLAST','ICE_BEAM','HYPER_BEAM','FLAMETHROWER','THUNDERBOLT','PSYCHIC'],[],['HYPER_BEAM','PSYSTRIKE','SHADOW_BALL']), // Counter confirmed real — GO Fest 2026 addition; added 4 missing charge moves — legacy — Hyper Beam confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Psystrike/Shadow Ball confirmed requiring Elite Charged TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Hyper Beam's flag was never actually taking effect.)
-    mk('mewtwo_mega_x','Mega Mewtwo X',['psychic','fighting'],{atk:399,def:215,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','CLOSE_COMBAT','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC'],[],['HYPER_BEAM', 'PSYSTRIKE', 'SHADOW_BALL']), // inherited from base form's legacy flags, by request
-    mk('mewtwo_mega_y','Mega Mewtwo Y',['psychic'],{atk:413,def:223,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC'],[],['HYPER_BEAM', 'PSYSTRIKE', 'SHADOW_BALL']), // inherited from base form's legacy flags, by request
+    mk('mewtwo','Mewtwo',['psychic'],{atk:300,def:182,hp:214},['PSYCHO_CUT','CONFUSION','COUNTER'],['PSYSTRIKE','SHADOW_BALL','FOCUS_BLAST','ICE_BEAM','HYPER_BEAM','FLAMETHROWER','THUNDERBOLT','PSYCHIC'],['COUNTER'],['HYPER_BEAM','PSYSTRIKE','SHADOW_BALL']), // Counter confirmed real — GO Fest 2026 addition; added 4 missing charge moves — legacy (Counter now flagged legacy too, by request) — Hyper Beam confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Psystrike/Shadow Ball confirmed requiring Elite Charged TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Hyper Beam's flag was never actually taking effect.)
+    mk('mewtwo_mega_x','Mega Mewtwo X',['psychic','fighting'],{atk:399,def:215,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC'],['COUNTER'],['HYPER_BEAM', 'PSYSTRIKE', 'SHADOW_BALL']), // inherited from base form's legacy flags, by request (now including Counter) — moveset corrected: Close Combat was not real, confirmed via multiple direct sources (db.pokemongohub.net explicitly lists its 8 real charge moves, none of them Close Combat) — the Fighting-type identity comes from Counter (fast) + Focus Blast (charge) instead, both of which it already had; charge-move pool is otherwise identical to base Mewtwo/Mega Mewtwo Y
+    mk('mewtwo_mega_y','Mega Mewtwo Y',['psychic'],{atk:413,def:223,hp:228},['PSYCHO_CUT','COUNTER','CONFUSION'],['PSYSTRIKE','FOCUS_BLAST','SHADOW_BALL','ICE_BEAM','THUNDERBOLT','FLAMETHROWER','HYPER_BEAM','PSYCHIC'],['COUNTER'],['HYPER_BEAM', 'PSYSTRIKE', 'SHADOW_BALL']), // inherited from base form's legacy flags, by request (now including Counter)
     mk('moltres','Moltres',['fire','flying'],{atk:251,def:181,hp:207},['FIRE_SPIN','WING_ATTACK'],['OVERHEAT','ANCIENT_POWER','HEAT_WAVE','FIRE_BLAST','SKY_ATTACK','FLY'],[],['SKY_ATTACK']), // corrected — Fire Fang was fabricated/not real — legacy
     mk('moltres_galarian','Moltres (Galarian)',['dark','flying'],{atk:202,def:231,hp:207},['SUCKER_PUNCH','WING_ATTACK'],['PAYBACK','ANCIENT_POWER','BRAVE_BIRD','FLY']),
     mk('necrozma','Necrozma',['psychic'],{atk:251,def:195,hp:219},['SHADOW_CLAW','PSYCHO_CUT','METAL_CLAW'],['FUTURE_SIGHT','DARK_PULSE','IRON_HEAD','OUTRAGE']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Necrozma (Dusk Mane)/(Dawn Wings) to show, rather than a static removal
@@ -1994,6 +1994,7 @@ function speciesNameToShowdownSlug(name){
         'standard':'', 'ordinary':'', // Darmanitan's "Standard" and Keldeo's "Ordinary" are each that species' implicit default form — live data names them explicitly (unlike most base forms), but Showdown's file for the default form has no suffix at all ("darmanitan.gif", "keldeo.gif")
         'male':'', // same pattern as standard/ordinary above — Showdown's convention is the unmarked base name IS the male sprite ("pyroar.gif"), with a separate "-f" suffix only for the female sprite ("pyroar-f.gif") where one exists
         'confined':'', // Hoopa's implicit default form — confirmed real filename is plain "hoopa.gif" with no suffix, only "Unbound" gets one ("hoopa-unbound.gif")
+        'phony':'', // Polteageist's implicit default form — confirmed real filename is plain "polteageist.gif" with no suffix, only "Antique" gets one ("polteageist-antique.gif")
         'east':'-east', 'east sea':'-east', // Gastrodon's East Sea form — confirmed real file "gastrodon-east.gif"; mapped from both possible wordings live data might use, since the generic fallback below would otherwise strip the space in "East Sea" down to "-eastsea", which isn't the real filename
         '50% forme':'', '10% forme':'-10', 'complete forme':'-complete',
         's':'' // Shadow — no distinct Showdown sprite, falls back to base
@@ -2235,7 +2236,7 @@ function pushStateToUrl(){
     params.set('megaBoost', '1');
     params.set('megaBoostType', $('megaBoostType').value);
   }
-  if(!$('excludeUpcomingMegas').checked) params.set('includeUpcoming', '1');
+  if($('excludeLegendary').checked) params.set('excludeLegendary', '1');
   const newUrl = `${location.pathname}?${params.toString()}`;
   history.pushState({raidcalc: true}, '', newUrl);
 }
@@ -2277,7 +2278,7 @@ function applyStateFromUrl(){
   $('megaBoostActive').checked = params.get('megaBoost') === '1';
   $('megaBoostTypeRow').style.display = $('megaBoostActive').checked ? '' : 'none';
   const megaBoostType = params.get('megaBoostType'); if(megaBoostType) $('megaBoostType').value = megaBoostType;
-  $('excludeUpcomingMegas').checked = params.get('includeUpcoming') !== '1';
+  $('excludeLegendary').checked = params.get('excludeLegendary') === '1';
   // No auto-run here, by request — a shared/bookmarked link restores the exact setup, but the
   // person still clicks "Rank Every Pokémon" themselves to actually run it.
 }
@@ -2505,13 +2506,13 @@ $('tier').addEventListener('change', () => {
   buildBossDropdown();
   selectBoss($('bossSelect').value);
 });
-$('excludeUpcomingMegas').addEventListener('change', () => {
+$('excludeLegendary').addEventListener('change', () => {
   // Applied after the sim, not as a pre-filter — see drawTop30Rows()'s own comment. If a ranking
   // hasn't been run yet, currentTop30Results is empty and this just no-ops harmlessly.
   if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
 });
 $('excludeMegas').addEventListener('change', () => {
-  // Same reasoning as excludeUpcomingMegas above — a pure render-time filter, no re-simulation needed.
+  // Same reasoning as excludeLegendary above — a pure render-time filter, no re-simulation needed.
   if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows());
 });
 $('bossMoveComboBtn').addEventListener('click', () => {
@@ -3074,7 +3075,7 @@ async function rankAllAttackers(onProgress){
   // Form, since only a base name was given). Palafin (Hero) matched exactly — Palafin (Zero) was
   // not excluded and stays available.
   const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo','archaludon','dracozolt','arctozolt','dracovish','arctovish','alcremie','pyroar (female)','brambleghast','wo-chien','scovillain','rabsca']); // archaludon, alcremie, brambleghast, wo-chien, scovillain, rabsca, and the 4 Galar fossil combos (dex 880-883) unreleased in GO; pyroar (female) redundant with the kept Pyroar (Male) — confirmed no stat/moveset difference — by request
-  const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu','fezandipiti'];
+  const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu','fezandipiti','spectrier'];
   function isAttackerExcluded(speciesName){
     const name = speciesName.toLowerCase();
     if(/\((s|shadow)\)$/.test(name.trim())) return true; // every Shadow form, by request — live data marks these with a trailing "(S)" or "(Shadow)"
@@ -3171,7 +3172,7 @@ async function rankAllAttackers(onProgress){
       pokemonToProcess.forEach((p, i) => chunks[i % workerCount].push({
         speciesId: p.speciesId, pokemonId: p.pokemonId, speciesName: speciesNameSync(p.speciesId),
         types: p.types, baseStats: p.baseStats, fastMoves: p.fastMoves, chargedMoves: p.chargedMoves,
-        isUpcomingMega: bossAutoTier(p) === 'mega_upcoming', isMega: !!p.isMegaForm
+        isLegendary: isLegendary(p), isMega: !!p.isMegaForm
       }));
       const progressByWorker = new Array(workerCount).fill(0);
       const reportProgress = () => {
@@ -3257,7 +3258,7 @@ async function rankAllAttackers(onProgress){
       results.push({
         speciesId: p.speciesId,
         pokemonId: p.pokemonId,
-        isUpcomingMega: bossAutoTier(p) === 'mega_upcoming',
+        isLegendary: isLegendary(p),
         isMega: !!p.isMegaForm,
         name: speciesNameSync(p.speciesId),
         types: p.types,
@@ -3434,7 +3435,7 @@ function updateResultsJsonLink(results){
       shieldBoost: $('shieldBoost').checked, dodgeChargeOnly: $('dodgeChargeOnly').checked,
       partyPowerActive: $('partyPowerActive').checked, megaBoostActive: $('megaBoostActive').checked,
       megaBoostType: $('megaBoostActive').checked ? $('megaBoostType').value : null,
-      includeUpcomingMegas: $('excludeUpcomingMegas').checked // checkbox reads "Include Upcoming Megas" (checked = include) despite its id, per an earlier UI change
+      excludeLegendary: $('excludeLegendary').checked, excludeMegas: $('excludeMegas').checked
     },
     totalSimulations: lastTotalSims,
     generatedAt: new Date().toISOString(),
@@ -3444,7 +3445,7 @@ function updateResultsJsonLink(results){
       fastMove: r.fastName, chargeMove: r.chargeName,
       powerPct: r.powerPct, timeToWinSec: r.avgTimeSec, estimator: r.estimator,
       avgFainted: r.avgDeaths, avgDps: r.avgDps, avgRejoins: r.avgRevives,
-      timeoutRate: r.timeoutRate, isUpcomingMega: !!r.isUpcomingMega, isMega: !!r.isMega
+      timeoutRate: r.timeoutRate, isLegendary: !!r.isLegendary, isMega: !!r.isMega
     }))
   };
   const json = JSON.stringify(exportObj, null, 2);
@@ -3484,10 +3485,13 @@ let currentSort = { key: 'estimator', asc: true };
  *
  * TO ADD A FAMILY GROUP: add one array of speciesId strings below (2 or more entries — every
  * member must already exist as its own mk(...) entry in the roster above). Only add a group when
- * one form is a straightforward same-species variant of another, not when they're genuinely
- * different attackers that just happen to be related (e.g. don't group Charizard with Mega
- * Charizard X/Y — those are legitimately worth showing side by side, not a "pick one" situation
- * the way Dialga vs Dialga Origin is). No other file needs touching — drawTop30Rows() picks this
+ * one form is a straightforward same-species variant of another that you'd realistically never
+ * want to run both of at once — e.g. two Megas of the same species (Mega Charizard X/Y, Mega
+ * Mewtwo X/Y, Mega Raichu X/Y — you can only have one Mega active anyway) or a "better" alternate
+ * form (Dialga vs Dialga Origin). Do NOT include a species' unrelated base form in one of these
+ * groups just because a Mega of it is also grouped — base Charizard/Mewtwo/Raichu each stay as
+ * their own separate, always-visible entry outside their Mega X/Y group, since they're a genuinely
+ * different (if weaker) choice, not simply "the same thing, pick one." No other file needs touching — drawTop30Rows() picks this
  * array up automatically on every render. */
 const FAMILY_GROUPS = [
   ['dialga','dialga_origin'],
@@ -3501,15 +3505,18 @@ const FAMILY_GROUPS = [
   ['thundurus_incarnate','thundurus_therian'],
   ['tornadus_incarnate','tornadus_therian'],
   ['enamorus_incarnate','enamorus_therian'],
-  ['hoopa_confined','hoopa_unbound']
+  ['hoopa_confined','hoopa_unbound'],
+  ['charizard_mega_x','charizard_mega_y'], // the two Mega forms only — NOT grouped with base Charizard, which stays independently visible (you'd realistically never use it over either Mega, but it's still a distinct, always-available entry worth its own row)
+  ['mewtwo_mega_x','mewtwo_mega_y'], // same reasoning — base Mewtwo stays out of this group
+  ['raichu_mega_x','raichu_mega_y'] // same reasoning — base Raichu stays out of this group
 ];
 const FAMILY_GROUP_BY_SPECIES = {}; // speciesId -> the group array it belongs to, built once for fast lookup
 FAMILY_GROUPS.forEach(group => group.forEach(id => { FAMILY_GROUP_BY_SPECIES[id] = group; }));
 /** Re-sorts the already-computed results in place and redraws the table body — no re-simulation,
  * just a client-side sort/render pass, so clicking a header is effectively instant. */
 function drawTop30Rows(){
-  const excludeUpcoming = !$('excludeUpcomingMegas').checked; // checkbox now reads "Include Upcoming Megas" — checked means include, so exclude is the inverse
-  const excludeMegas = $('excludeMegas').checked; // "Exclude Megas" — default OFF, by request: Megas show normally unless this is explicitly turned on. Independent of "Include Upcoming Megas" above — an already-released Mega isn't affected by that other toggle either way.
+  const excludeLegendary = $('excludeLegendary').checked; // "Exclude Legendary" — default OFF, replacing the old "Include Upcoming Megas" toggle: legendaries show normally unless this is explicitly turned on
+  const excludeMegas = $('excludeMegas').checked; // "Exclude Megas" — default OFF, by request: Megas show normally unless this is explicitly turned on. Independent of "Exclude Legendary" above.
   // Same-family dedup: for every group in FAMILY_GROUPS with more than one member actually present
   // in this buffer, keep only the one with the best (lowest) Estimator and drop the rest — always
   // on, not a toggle, since "only show the better one" is the whole point rather than a preference.
@@ -3527,7 +3534,7 @@ function drawTop30Rows(){
   // calls this directly and backfills from the confirmed buffer instantly instead of re-running
   // the Monte Carlo. currentTop30Results holds the full confirmed buffer (see CONFIRM_BUFFER).
   const visible = currentTop30Results
-    .filter(r => !excludeUpcoming || !r.isUpcomingMega)
+    .filter(r => !excludeLegendary || !r.isLegendary)
     .filter(r => !excludeMegas || !r.isMega)
     .filter(r => !isFamilyLoser(r))
     .slice()
@@ -4189,7 +4196,7 @@ self.onmessage = function(e){
     results.push({
       speciesId: p.speciesId,
       pokemonId: p.pokemonId,
-      isUpcomingMega: p.isUpcomingMega,
+      isLegendary: p.isLegendary,
       isMega: p.isMega,
       name: p.speciesName,
       types: p.types,
