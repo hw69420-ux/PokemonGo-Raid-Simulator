@@ -24,7 +24,7 @@
     --body:'Inter', sans-serif;
   }
   *{box-sizing:border-box;}
-  html{font-size:18px;overflow-y:scroll;scrollbar-gutter:stable;} /* reserves the scrollbar's width permanently, in whichever way the browser supports (scrollbar-gutter where available, overflow-y:scroll as a universally-supported fallback/backup) — otherwise, whenever the results table's row count changes (e.g. toggling "Exclude Megas") shifts the page's total height enough to show/hide the vertical scrollbar, the small resulting change in available horizontal width could flip a borderline flex-wrap decision, making the toggle row visibly "jump" position on toggle */
+  html{font-size:18px;overflow-y:scroll;scrollbar-gutter:stable;touch-action:manipulation;} /* touch-action set page-wide, not just on button.primary as before — a tap's registered coordinate can shift slightly between touchstart and touchend (the button's own :active state visibly shrinks it via transform:scale(0.98)), which could land the second half of the gesture just outside the button's exact hit area if touch-action were scoped only to the button itself, letting the browser's default double-tap-zoom detection kick in there instead. Scoping this page-wide closes that gap. overflow-y:scroll/scrollbar-gutter reserves the scrollbar's width permanently, in whichever way the browser supports (scrollbar-gutter where available, overflow-y:scroll as a universally-supported fallback/backup) — otherwise, whenever the results table's row count changes (e.g. toggling "Exclude Megas") shifts the page's total height enough to show/hide the vertical scrollbar, the small resulting change in available horizontal width could flip a borderline flex-wrap decision, making the toggle row visibly "jump" position on toggle */
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
   body{
     background-image:
@@ -537,8 +537,8 @@ const CPM = {20:0.5974,25:0.6612,30:0.7317,35:0.76156,40:0.79030001,45:0.81613,5
 //      workers via postMessage each run, not recomputed independently on their side.
 //   4. bossAutoTier() (search this file for that function name) — add the classification logic
 //      that decides which Pokémon fall into this new tier. This is the part most likely to need
-//      real thought, not just copy-paste — look at how mega_upcoming/ultrabeast/mega_legendary are
-//      each carved out from the more general mega/t5 cases for the pattern to follow. Also defined
+//      real thought, not just copy-paste — look at how ultrabeast/mega_legendary are each carved
+//      out from the more general mega/t5 cases for the pattern to follow. Also defined
 //      only once — the Worker receives an already-classified Pokémon list from the main thread.
 //   5. Repeat step 1 (TIERS only) inside the identical TIERS copy in the Worker source block near
 //      the end of the file (search "AUTO-EXTRACTED PURE SIMULATION CORE") — the Worker
@@ -551,13 +551,11 @@ const TIERS = {
   ultrabeast:{label:'Tier 5 · Ultra Beast',cpm:0.79030001,hp:15000,timeLimit:300}, // split out from Tier 5 by request — same battle stats as Legendary Tier 5, distinct only for grouping/selection purposes
   mega:{label:'Mega Raid',cpm:0.79030001,hp:9000,timeLimit:300},
   mega_legendary:{label:'Mega Raid · Legendary',cpm:0.79030001,hp:22500,timeLimit:300},
-  mega_upcoming:{label:'Upcoming Megas',cpm:0.79030001,hp:9000,timeLimit:300} // intentionally left unpopulated by request — reserved for Mega Evolutions not yet added to the roster
+  mega_upcoming:{label:'Upcoming Megas',cpm:0.79030001,hp:9000,timeLimit:300} // restored as a selectable boss tier by request, with the exact same battle parameters as the regular Mega Raid tier — still excluded from the ATTACKER list separately (see isAttackerExcluded's own filtering), just no longer excluded as a boss tier
 };
 // Real Pokebattler tier-egg icons, given directly by the user (confirmed live URLs, not guessed).
 // mega_legendary uses their "primal" egg (visually their Legendary Mega tier icon); t5 uses their
-// "legendary" egg; mega uses their standard mega egg; ultrabeast uses their ultra-beast icon;
-// mega_upcoming also uses the standard mega egg (Pokebattler has no distinct icon for a
-// not-yet-released tier, and it's still fundamentally a Mega Raid egg).
+// "legendary" egg; mega uses their standard mega egg; ultrabeast uses their ultra-beast icon.
 const TIER_ICON_URL = {
   t5: 'https://static.pokebattler.com/images/legendary_raid_egg.png',
   ultrabeast: 'https://static.pokebattler.com/images/raid_level_ultra.png',
@@ -1488,7 +1486,7 @@ function buildFallbackData(){
     charizard_mega_y:6, cloyster:91, cobalion:638, cresselia:488, darkrai:491, deoxys:386,
     deoxys_attack:386, deoxys_defense:386, deoxys_speed:386, dialga:483, dialga_origin:483,
     dragonite_mega:149, dragonite:149, emboar:500, enamorus_incarnate:905, enamorus_therian:905, entei:244,
-    eternatus:890, excadrill:530, falinks_mega:870, froslass:478, gallade_mega:475, garchomp:445,
+    eternatus:890, excadrill:530, falinks_mega:870, froslass:478, froslass_mega:478, gallade_mega:475, garchomp:445,
     garchomp_mega:445, gardevoir_mega:282, gardevoir:282, genesect:649, gengar:94, gengar_mega:94, gigalith:526,
     giratina_altered:487, giratina_origin:487, glaceon:471, glalie_mega:362, glimmora:970,
     greninja:658, groudon:383, groudon_primal:383, guzzlord:799, gyarados_mega:130, gyarados:130, heatran:485,
@@ -1647,6 +1645,7 @@ function buildFallbackData(){
     mk('feraligatr','Feraligatr',['water'],{atk:205,def:188,hp:198},['BITE','SHADOW_CLAW','WATER_GUN','WATERFALL','ICE_FANG'],['ICE_BEAM','HYDRO_PUMP','CRUNCH','HYDRO_CANNON'],['WATER_GUN'],['HYDRO_CANNON']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('feraligatr_mega','Mega Feraligatr',['water','dragon'],{atk:304,def:227,hp:198},['BITE','SHADOW_CLAW','WATER_GUN','WATERFALL','ICE_FANG'],['ICE_BEAM','HYDRO_PUMP','CRUNCH','HYDRO_CANNON'],['WATER_GUN'],['HYDRO_CANNON']), // type corrected — gains Dragon on Mega Evolution (confirmed via its "Dragonize" ability description), not pure Water like its base form — inherited from base form's legacy flags, by request — inherited from base form's legacy flags, by request
     mk('froslass','Froslass',['ice','ghost'],{atk:161,def:166,hp:137},['POWDER_SNOW'],['AVALANCHE','SHADOW_BALL']),
+    mk('froslass_mega','Mega Froslass',['ghost','ice'],{atk:265,def:178,hp:172},['HEX','POWDER_SNOW'],['SHADOW_BALL','TRIPLE_AXEL','AVALANCHE','CRUNCH']), // added — stats converted from main-series base stats (HP 70/Atk 80/Def 70/SpA 140/SpD 100/Spe 120) provided by user, via the standard post-Nov-2018 GO conversion formula (Attack: 7/8 higher + 1/8 lower stat; Defense: 5/8 higher + 3/8 lower; Stamina: 50 + 1.75×HP); moveset matches base Froslass's real kit, by request
     mk('gallade_mega','Mega Gallade',['psychic','fighting'],{atk:326,def:230,hp:169},['CONFUSION','LOW_KICK','CHARM','PSYCHO_CUT'],['CLOSE_COMBAT','LEAF_BLADE','PSYCHIC','SYNCHRONOISE'],[],['SYNCHRONOISE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
     mk('garchomp','Garchomp',['dragon','ground'],{atk:261,def:193,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER'],[],['EARTH_POWER']), // legacy — confirmed needs Elite Charged TM
     mk('garchomp_mega','Mega Garchomp',['dragon','ground'],{atk:339,def:222,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER'],[],['EARTH_POWER']), // legacy — confirmed needs Elite Charged TM
@@ -2183,7 +2182,7 @@ const UPCOMING_MEGA_SPECIES_IDS = new Set([
 ]);
 function bossAutoTier(p){
   if(isUserExcluded(p)) return null;
-  if(UPCOMING_MEGA_SPECIES_IDS.has(p.speciesId)) return 'mega_upcoming';
+  if(UPCOMING_MEGA_SPECIES_IDS.has(p.speciesId)) return 'mega_upcoming'; // restored as a selectable boss tier by request — see the identical UPCOMING_MEGA_SPECIES_IDS check in isAttackerExcluded()'s call site for the separate attacker-side exclusion, which stays in place regardless
   if(p.isMegaForm) return MEGA_LEGENDARY_DEX_IDS.has(p.pokemonId) ? 'mega_legendary' : 'mega';
   // Ultra Beasts checked independently of isLegendary()/PokeAPI's is_legendary flag — PokeAPI treats
   // "Ultra Beast" as its own separate Pokédex category, distinct from Legendary/Mythical, so once the
@@ -3092,11 +3091,9 @@ async function rankAllAttackers(onProgress){
     return ATTACKER_EXCLUDED_PREFIX.some(prefix => name === prefix || name.startsWith(prefix + ' '));
   }
 
-  // "Exclude Upcoming Megas" is applied AFTER simulation now (see drawTop30Rows()), not as a
-  // pre-filter here — so toggling it doesn't require re-running the sim, and species from that
-  // tier are still simulated so they're available the moment the toggle is unchecked.
   const pokemonToProcess = GM.pokemon.filter(p =>
     p.isFinalStage !== false &&
+    !UPCOMING_MEGA_SPECIES_IDS.has(p.speciesId) && // moved to unreleased status, by request — see isUserExcluded()'s own comment for the reasoning
     !isAttackerExcluded(p.speciesName)
   );
 
@@ -3650,7 +3647,7 @@ const TIERS = {
   ultrabeast:{label:'Tier 5 · Ultra Beast',cpm:0.79030001,hp:15000,timeLimit:300}, // split out from Tier 5 by request — same battle stats as Legendary Tier 5, distinct only for grouping/selection purposes
   mega:{label:'Mega Raid',cpm:0.79030001,hp:9000,timeLimit:300},
   mega_legendary:{label:'Mega Raid · Legendary',cpm:0.79030001,hp:22500,timeLimit:300},
-  mega_upcoming:{label:'Upcoming Megas',cpm:0.79030001,hp:9000,timeLimit:300} // intentionally left unpopulated by request — reserved for Mega Evolutions not yet added to the roster
+  mega_upcoming:{label:'Upcoming Megas',cpm:0.79030001,hp:9000,timeLimit:300}
 }
 
 const DAMAGE_WINDOW = {
