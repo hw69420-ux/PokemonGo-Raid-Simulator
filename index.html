@@ -24,7 +24,7 @@
     --body:'Inter', sans-serif;
   }
   *{box-sizing:border-box;}
-  html{font-size:18px;overflow-y:scroll;scrollbar-gutter:stable;touch-action:manipulation;} /* touch-action set page-wide, not just on button.primary as before — a tap's registered coordinate can shift slightly between touchstart and touchend (the button's own :active state visibly shrinks it via transform:scale(0.98)), which could land the second half of the gesture just outside the button's exact hit area if touch-action were scoped only to the button itself, letting the browser's default double-tap-zoom detection kick in there instead. Scoping this page-wide closes that gap. overflow-y:scroll/scrollbar-gutter reserves the scrollbar's width permanently, in whichever way the browser supports (scrollbar-gutter where available, overflow-y:scroll as a universally-supported fallback/backup) — otherwise, whenever the results table's row count changes (e.g. toggling "Exclude Megas") shifts the page's total height enough to show/hide the vertical scrollbar, the small resulting change in available horizontal width could flip a borderline flex-wrap decision, making the toggle row visibly "jump" position on toggle */
+  html{font-size:18px;overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;touch-action:manipulation;} /* overflow-x:hidden is the key fix for a mobile-specific bug: the results table has its own intentional horizontal scroll box (.mc-table-scroll, below) so only that inner box should ever scroll sideways — but without this defensive backstop on the page itself, the table's real rendered width (it has 10 columns, several with an enforced min-width) could push just slightly past its container in some mobile browsers' table-layout rounding, leaking out and giving the WHOLE PAGE an unwanted second horizontal scrollbar as soon as results render. touch-action set page-wide, not just on button.primary as before — a tap's registered coordinate can shift slightly between touchstart and touchend (the button's own :active state visibly shrinks it via transform:scale(0.98)), which could land the second half of the gesture just outside the button's exact hit area if touch-action were scoped only to the button itself, letting the browser's default double-tap-zoom detection kick in there instead. Scoping this page-wide closes that gap. overflow-y:scroll/scrollbar-gutter reserves the scrollbar's width permanently, in whichever way the browser supports (scrollbar-gutter where available, overflow-y:scroll as a universally-supported fallback/backup) — otherwise, whenever the results table's row count changes (e.g. toggling "Exclude Megas") shifts the page's total height enough to show/hide the vertical scrollbar, the small resulting change in available horizontal width could flip a borderline flex-wrap decision, making the toggle row visibly "jump" position on toggle */
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:var(--body);}
   body{
     background-image:
@@ -32,7 +32,7 @@
       radial-gradient(circle at 85% 100%, rgba(51,214,192,0.07), transparent 40%),
       repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
   }
-  .wrap{max-width:1560px;margin:0 auto;padding:36px 26px 80px;}
+  .wrap{max-width:1560px;margin:0 auto;padding:36px 26px 80px;overflow-x:hidden;}
 
   header.hud{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
   .brand{display:flex;align-items:baseline;gap:14px;}
@@ -154,6 +154,23 @@
   .mc-table th.sorted .sort-arrow{opacity:1;color:var(--gold);}
   .mc-table-scroll{max-height:70vh;overflow-y:auto;overflow-x:auto;}
   .mc-table tbody tr:nth-child(even){background:rgba(255,255,255,0.015);}
+  /* Mobile card layout (#top30Cards) — hidden by default (desktop shows the table above instead);
+     the @media (max-width:600px) block flips which of the two is visible. Each card mirrors the
+     table's own columns but stacked vertically: rank+sprite+name+type up top, moveset next, then
+     every stat as its own labeled row — no horizontal scrolling needed at all on a phone screen. */
+  #top30Cards{display:none;}
+  #top30SortRow{display:none;}
+  #mobileSortSelect{width:100%;}
+  .result-card{background:var(--panel-2);border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:10px;}
+  .result-card-head{display:flex;align-items:center;gap:12px;}
+  .result-card-rank{font-family:var(--mono);font-size:13px;color:var(--muted);flex-shrink:0;width:22px;text-align:center;}
+  .result-card-name{font-family:var(--display);font-weight:700;font-size:15px;flex:1;min-width:0;}
+  .result-card-types{display:flex;gap:6px;flex-shrink:0;}
+  .result-card-moveset{margin-top:10px;display:flex;flex-direction:column;gap:4px;}
+  .result-card-stats{margin-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;}
+  .result-card-stat{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:13px;border-top:1px solid var(--border);padding-top:6px;}
+  .result-card-stat-label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.8px;}
+  .result-card-stat-value{font-weight:600;}
   .mc-table tbody tr:hover{background:rgba(255,195,61,0.06);}
   .stat-good{color:var(--green);}
   .rank-progress-outer{background:#0d0f14;border:1px solid var(--border);height:10px;width:100%;border-radius:2px;overflow:hidden;}
@@ -182,6 +199,7 @@
      above, which only stacks the two-column layout but doesn't address padding/sizing/overflow
      risks on genuinely narrow screens). ===== */
   @media (max-width:600px){
+    #downloadJsonLink{display:none;} /* JSON export disabled entirely on mobile, by request — see updateResultsJsonLink()'s own early-return */
     .wrap{padding:18px 14px 60px;}
     .panel{padding:16px;}
     .panel + .panel{margin-top:14px;}
@@ -195,18 +213,15 @@
        lets it wrap onto a second line instead of forcing everything into one cramped row. */
     .boss-type-inline{white-space:normal !important;}
 
-    /* Results table — the horizontal-scroll fallback (already in place via .mc-table-scroll) stays
-       the primary strategy, since a 10-column table can't reasonably reflow to fit a phone screen
-       any other way, but shrinking font/padding a bit reduces how much scrolling is needed and
-       makes each screenful show more rows. */
-    .mc-table{font-size:12px;}
-    .mc-table th,.mc-table td{padding:7px 8px;}
-    .mc-table-scroll{max-height:55vh;-webkit-overflow-scrolling:touch;} /* smoother momentum scrolling on iOS while horizontally scrolling the table */
-    .sprite-img{width:28px;height:28px;}
-    /* Pokémon name stays visible while horizontally scrolling the rest of the row, so it's always
-       clear which attacker a given set of stats belongs to — the single biggest mobile-usability
-       gap in a wide table like this one. */
-    .mc-table td:nth-child(2),.mc-table th:nth-child(2){position:sticky;left:0;background:var(--panel);z-index:2;}
+    /* Results, mobile: a table can't reasonably reflow to fit a phone screen no matter how much
+       font/padding is shaved off it (10 columns is still 10 columns), so below this breakpoint the
+       table is replaced entirely by a stacked card layout (#top30Cards) — no horizontal scrolling
+       needed at all, everything reads top-to-bottom. drawTop30Rows() renders both the table body
+       AND the card list on every call; only one is ever visible at a time, controlled by CSS here. */
+    .mc-table-scroll{display:none;}
+    #top30Cards{display:block;}
+    #top30SortRow{display:block !important;}
+    .boss-type-inline{white-space:normal !important;}
     .mc-table thead th:nth-child(2){z-index:6;} /* stays above the sticky header's own z-index (5) so it doesn't get covered while both sticky axes are active at once */
 
     /* Combat log modal */
@@ -356,7 +371,7 @@
     </div>
 
     <!-- RESULTS -->
-    <div>
+    <div style="min-width:0;">
       <div class="panel" id="top30EmptyState" style="text-align:center;padding:60px 24px;">
         <div style="font-size:38px;opacity:0.5;margin-bottom:12px;">🏆</div>
         <p class="eyebrow" style="justify-content:center;">Ready When You Are</p>
@@ -364,28 +379,36 @@
       </div>
       <div class="panel" id="top30Panel" style="display:none;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
-          <p class="eyebrow" id="top30Title" style="margin:0;">Top 30 Attackers</p>
-          <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-            <a href="#" id="downloadJsonLink" download="raid-results.json" class="hint" style="text-decoration:underline;color:var(--teal);">⬇ Download results (JSON)</a>
-            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
-              <label class="toggle-switch-label" for="excludeLegendary">
-                <span>Exclude Legendary</span>
-                <span class="toggle-switch">
-                  <input type="checkbox" id="excludeLegendary">
-                  <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                </span>
-              </label>
-              <label class="toggle-switch-label" for="excludeMegas">
-                <span>Exclude Megas</span>
-                <span class="toggle-switch">
-                  <input type="checkbox" id="excludeMegas">
-                  <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
-                </span>
-              </label>
-            </div>
-          </div>
+          <p class="eyebrow" id="top30Title" style="margin:0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Top 30 Attackers</p>
+          <a href="#" id="downloadJsonLink" download="raid-results.json" class="hint" style="text-decoration:underline;color:var(--teal);flex-shrink:0;">⬇ Download results (JSON)</a>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:12px;margin-bottom:4px;">
+          <label class="toggle-switch-label" for="excludeLegendary">
+            <span>Exclude Legendary/UB</span>
+            <span class="toggle-switch">
+              <input type="checkbox" id="excludeLegendary">
+              <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+            </span>
+          </label>
+          <label class="toggle-switch-label" for="excludeMegas">
+            <span>Exclude Megas</span>
+            <span class="toggle-switch">
+              <input type="checkbox" id="excludeMegas">
+              <span class="toggle-switch-track"><span class="toggle-switch-thumb"></span></span>
+            </span>
+          </label>
         </div>
         <div class="hint" id="top30Hint" style="margin-bottom:10px;">&nbsp;</div>
+        <div id="top30SortRow" style="display:none;margin-bottom:12px;">
+          <label for="mobileSortSelect" class="hint" style="display:block;margin-bottom:6px;">Sort by</label>
+          <select id="mobileSortSelect">
+            <option value="estimator">Estimator (best first)</option>
+            <option value="avgTimeSec">Time to Win (fastest first)</option>
+            <option value="avgDps">DPS (highest first)</option>
+            <option value="avgDeaths">Fainted (fewest first)</option>
+            <option value="avgRevives">Rejoins (fewest first)</option>
+          </select>
+        </div>
         <div class="mc-table-scroll">
         <table class="mc-table">
           <thead>
@@ -405,6 +428,7 @@
           <tbody id="top30Body"></tbody>
         </table>
         </div>
+        <div id="top30Cards"></div>
       </div>
 
       <div class="footnote">
@@ -931,8 +955,12 @@ async function loadGameMaster(){
       // showing "(Galarian)" is misleading here, and the suffix also broke each one's Showdown
       // sprite lookup (which correctly expects the plain "mrrime"/"sirfetchd" slug with no
       // regional suffix at all — confirmed directly against Showdown's own sprite listing).
-      // Forced back to each one's real, singular name, by request.
-      const speciesName = (nameLower === 'mr. rime' || nameLower === 'mr rime' || nameLower === "sirfetch'd" || nameLower === 'sirfetchd')
+      // Forced back to each one's real, singular name, by request. Sirfetch'd's check uses a
+      // regex (any single character, or none, in place of the apostrophe) rather than an exact
+      // string match — confirmed via direct testing that PogoAPI's apostrophe glyph didn't match
+      // a plain ASCII ' in the original exact-match version, silently letting the "(Galarian)"
+      // suffix straight through despite the fix looking correct on paper.
+      const speciesName = (nameLower === 'mr. rime' || nameLower === 'mr rime' || /^sirfetch.?d$/.test(nameLower))
         ? p.pokemon_name
         : (form !== 'Normal') ? `${p.pokemon_name} (${form})` : p.pokemon_name;
       const types = typesByKey[key] || typesByIdFallback[p.pokemon_id];
@@ -1739,7 +1767,7 @@ function buildFallbackData(){
     mk('pheromosa','Pheromosa',['bug','fighting'],{atk:316,def:85,hp:174},['BUG_BITE','LOW_KICK'],['BUG_BUZZ','FOCUS_BLAST','CLOSE_COMBAT','LUNGE']),
     mk('pidgeot_mega','Mega Pidgeot',['normal','flying'],{atk:280,def:175,hp:195},['AIR_SLASH','STEEL_WING','WING_ATTACK','GUST'],['AERIAL_ACE','AIR_CUTTER','BRAVE_BIRD','HURRICANE','FEATHER_DANCE','HEAT_WAVE','TWISTER'],['WING_ATTACK','GUST'],['AIR_CUTTER']), // confirmed directly via PvPoke's raw gamemaster.json — legacy — confirmed via gamemaster.json eliteMoves field — legacy — Air Cutter is a charge move here, distinct from Beedrill/Zubat's identically-named fast move
     mk('pinsir_mega','Mega Pinsir',['bug','flying'],{atk:305,def:231,hp:163},['BUG_BITE','FURY_CUTTER','ROCK_SMASH'],['CLOSE_COMBAT','SUBMISSION','VISE_GRIP','X_SCISSOR','SUPERPOWER'],[],['SUBMISSION']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
-    mk('pyroar','Pyroar (Male)',['fire','normal'],{atk:198,def:149,hp:181},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM','FLAME_CHARGE']), // renamed to explicitly "(Male)", by request — confirmed no stat/moveset difference from female Pyroar (multiple sources agree), so only one needs to be shown; matches Showdown's own sprite convention where the unmarked/base name is the male form ("pyroar.gif") and "-f" is the separate female sprite ("pyroar-f.gif") — moveset corrected — was missing Ember/Take Down (fast); Flame Charge added back to charge moves per explicit request (an earlier research pass had flagged it as not real — deferring to the more specific correction here)
+    mk('pyroar','Pyroar',['fire','normal'],{atk:198,def:149,hp:181},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM','FLAME_CHARGE']), // "(Male)" suffix removed again, by request — plain "Pyroar" still correctly resolves to the male sprite ("pyroar.gif") since that's the unmarked/base filename anyway, so nothing else needs to change; confirmed no stat/moveset difference from female Pyroar (multiple sources agree), so only one needs to be shown — moveset corrected — was missing Ember/Take Down (fast); Flame Charge added back to charge moves per explicit request (an earlier research pass had flagged it as not real — deferring to the more specific correction here)
     mk('pyroar_mega','Mega Pyroar',['fire','normal'],{atk:273,def:198,hp:200},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM']), // moveset corrected to match base Pyroar's confirmed real kit
     mk('raichu','Raichu',['electric'],{atk:193,def:151,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Thunder Shock/Charm (fast) and Thunder/Surf/Skull Bash/Trailblaze (charge) — legacy, by request
     mk('raichu_mega_x','Mega Raichu X',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected to match base Raichu's confirmed real kit — previous entry was a much sparser earlier-session guess — inherited from base form's legacy flags, by request
@@ -1994,6 +2022,7 @@ function speciesNameToShowdownSlug(name){
         'male':'', // same pattern as standard/ordinary above — Showdown's convention is the unmarked base name IS the male sprite ("pyroar.gif"), with a separate "-f" suffix only for the female sprite ("pyroar-f.gif") where one exists
         'confined':'', // Hoopa's implicit default form — confirmed real filename is plain "hoopa.gif" with no suffix, only "Unbound" gets one ("hoopa-unbound.gif")
         'phony':'', // Polteageist's implicit default form — confirmed real filename is plain "polteageist.gif" with no suffix, only "Antique" gets one ("polteageist-antique.gif")
+        'amped':'', // Toxtricity's implicit default form (Low Key removed entirely from the roster, by request) — confirmed real filename is plain "toxtricity.gif" with no suffix
         'east':'-east', 'east sea':'-east', // Gastrodon's East Sea form — confirmed real file "gastrodon-east.gif"; mapped from both possible wordings live data might use, since the generic fallback below would otherwise strip the space in "East Sea" down to "-eastsea", which isn't the real filename
         '50% forme':'', '10% forme':'-10', 'complete forme':'-complete',
         's':'' // Shadow — no distinct Showdown sprite, falls back to base
@@ -2877,6 +2906,8 @@ function readGlobalConfig(){
 /* ---------------- RANK EVERY POKÉMON (200-run Monte Carlo each) ---------------- */
 $('rankBtn').addEventListener('click', async ()=>{
   if(!selectedBossId){ return; }
+  $('excludeLegendary').checked = false; // both toggles reset to their default (off) on every new run, by request — a previous run's filter choice shouldn't silently carry over and apply to a totally different matchup
+  $('excludeMegas').checked = false;
   pushStateToUrl(); // encodes this run's exact setup into the URL, Pokebattler-style — shareable/bookmarkable
 
   const cacheKey = buildSimCacheKey();
@@ -3087,6 +3118,7 @@ async function rankAllAttackers(onProgress){
     if(name === 'minior' || name.startsWith('minior ')) return true; // unreleased in GO, by request — catches every Minior form (base Meteor and every color variant alike)
     if(/^polteageist \(/.test(name.trim()) && name.trim() !== 'polteageist (phony)') return true; // every Polteageist color/form variant except Phony (its default), by request — confirmed no visual or statistical difference between Phony and Antique forms, so only one needs to be selectable
     if(name === 'mabosstiff' || name.startsWith('mabosstiff ')) return true; // unreleased in GO, by request
+    if(/^toxtricity/.test(name.trim()) && name.trim() !== 'toxtricity (amped)' && name.trim() !== 'toxtricity') return true; // every Toxtricity form except Amped (its default, kept as the standard), by request — Low Key removed entirely
     if(ATTACKER_EXCLUDED_EXACT.has(name)) return true;
     return ATTACKER_EXCLUDED_PREFIX.some(prefix => name === prefix || name.startsWith(prefix + ' '));
   }
@@ -3169,7 +3201,7 @@ async function rankAllAttackers(onProgress){
       pokemonToProcess.forEach((p, i) => chunks[i % workerCount].push({
         speciesId: p.speciesId, pokemonId: p.pokemonId, speciesName: speciesNameSync(p.speciesId),
         types: p.types, baseStats: p.baseStats, fastMoves: p.fastMoves, chargedMoves: p.chargedMoves,
-        isLegendary: isLegendary(p), isMega: !!p.isMegaForm
+        isLegendary: isLegendary(p) || ULTRA_BEAST_DEX_IDS.has(p.pokemonId), isMega: !!p.isMegaForm
       }));
       const progressByWorker = new Array(workerCount).fill(0);
       const reportProgress = () => {
@@ -3255,7 +3287,7 @@ async function rankAllAttackers(onProgress){
       results.push({
         speciesId: p.speciesId,
         pokemonId: p.pokemonId,
-        isLegendary: isLegendary(p),
+        isLegendary: isLegendary(p) || ULTRA_BEAST_DEX_IDS.has(p.pokemonId),
         isMega: !!p.isMegaForm,
         name: speciesNameSync(p.speciesId),
         types: p.types,
@@ -3285,15 +3317,16 @@ async function rankAllAttackers(onProgress){
   }
 
   results.sort((a,b) => a.avgTimeSec - b.avgTimeSec);
-  const CONFIRM_BUFFER = mobile ? 50 : 70; // confirm more than the 30 actually shown, so toggling
-  // "Exclude Upcoming Megas" or "Include Mega Pokemon" after the sim can instantly re-filter and
+  const CONFIRM_BUFFER = mobile ? 70 : 100; // confirm more than the 30 actually shown, so toggling
+  // "Exclude Legendary/UB" or "Exclude Megas" after the sim can instantly re-filter and
   // backfill from this buffer without needing to re-run the simulation — see drawTop30Rows(),
   // which applies both toggles plus the same-family dedup and the final slice(0,30) at render
-  // time, not here. Raised from 40/32 — Megas tend to dominate a raw ranking heavily enough that
-  // a smaller buffer risked showing fewer than 30 results once they're filtered out by default
-  // (see "Include Mega Pokemon" defaulting off). Still bounded, not unlimited — a boss whose
-  // realistically-viable roster is almost entirely Megas (e.g. a Mega Raid tier boss) may still
-  // legitimately have fewer than 30 non-Mega options no matter how large this buffer gets.
+  // time, not here. Raised again (70/50 -> 100/70) — Legendaries/Ultra Beasts are numerous enough,
+  // and tend to rank highly enough in a raw ranking, that combined with Megas being excluded too
+  // (both toggles can be active at once), a smaller buffer risked showing fewer than 30 results
+  // for many bosses. Still bounded, not unlimited — a boss whose realistically-viable roster is
+  // almost entirely Legendary/UB/Mega may still legitimately have fewer than 30 options left no
+  // matter how large this buffer gets.
   const top30 = results.slice(0, CONFIRM_BUFFER);
 
   // Estimator and Power% reflect the ACTUAL configured party's per-player efficiency — changed by
@@ -3421,6 +3454,7 @@ function renderTop30(results){
  * results table, so the export is self-describing rather than needing the URL alongside it. */
 let _lastJsonBlobUrl = null;
 function updateResultsJsonLink(results){
+  if(isMobileDevice()) return; // JSON export skipped entirely on mobile, by request — the button itself is also hidden via CSS, but this avoids the pointless Blob URL creation work on a device that will never show a way to trigger the download anyway
   const exportObj = {
     boss: speciesNameSync(selectedBossId), // name only now, not the raw internal id, by request
     tier: $('tier').value,
@@ -3559,6 +3593,29 @@ function drawTop30Rows(){
     </tr>
   `;
   }).join('');
+  // Mobile card layout — same data, same sort order as the table above, just rendered as stacked
+  // cards instead of table rows. Only one of #top30Body/#top30Cards is ever visible at a time
+  // (controlled by the @media (max-width:600px) block), but both are always kept in sync here so
+  // there's no extra render call needed anywhere else — resizing the window just reveals whichever
+  // was already there.
+  $('top30Cards').innerHTML = sorted.map((r,i) => `
+    <div class="result-card">
+      <div class="result-card-head">
+        <span class="result-card-rank">${i+1}</span>
+        ${renderSpriteImg(r.name)}
+        <span class="result-card-name">${r.name}</span>
+        <span class="result-card-types">${typeBadges(r.types, true)}</span>
+      </div>
+      <div class="result-card-moveset">${moveBadge(r.fastId)}${moveBadge(r.chargeId)}</div>
+      <div class="result-card-stats">
+        <div class="result-card-stat"><span class="result-card-stat-label">Time to Win</span><span class="result-card-stat-value">${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</span></div>
+        <div class="result-card-stat"><span class="result-card-stat-label">Estimator</span><span class="result-card-stat-value ${estimatorColorClass(r.estimator, bestEstimator)}">${r.estimator.toFixed(2)}</span></div>
+        <div class="result-card-stat"><span class="result-card-stat-label">Fainted</span><span class="result-card-stat-value">💀×${r.avgDeaths.toFixed(2)}</span></div>
+        <div class="result-card-stat"><span class="result-card-stat-label">DPS</span><span class="result-card-stat-value">${r.avgDps.toFixed(2)}</span></div>
+        <div class="result-card-stat"><span class="result-card-stat-label">Rejoins</span><span class="result-card-stat-value">${Math.round(r.avgRevives)}</span></div>
+      </div>
+    </div>
+  `).join('');
   return sorted;
 }
 
@@ -3574,6 +3631,15 @@ document.addEventListener('click', e => {
     else currentSort = { key, asc: th.dataset.sortAsc === '1' };
     updateResultsJsonLink(drawTop30Rows());
   }
+});
+$('mobileSortSelect').addEventListener('change', () => {
+  // Mobile's card layout has no clickable column headers to sort by, so this dropdown is the
+  // equivalent control — each option maps to the same sort keys the table headers use, always
+  // ascending except Estimator/Fainted/Rejoins/Time to Win where lower is better anyway (matching
+  // each column's own default direction above) and DPS where higher is better.
+  const key = $('mobileSortSelect').value;
+  currentSort = { key, asc: key !== 'avgDps' };
+  updateResultsJsonLink(drawTop30Rows());
 });
 function openCombatLog(r){
   if(!r || !r.exampleLog) return;
