@@ -221,11 +221,12 @@
     .mc-table-scroll{display:none;}
     #top30Cards{display:block;}
     #top30SortRow{display:block !important;}
-    /* Type icons in the card header overlapping the Pokémon name — the header row (rank + sprite +
-       name + type badges) is tight on a narrow phone screen, and the type badges (icon + text
-       label) were sized the same as desktop. Shrinking the icon specifically, plus tightening the
-       badge's own padding/font-size here, gives the name enough room to not visually collide with
-       the badges next to it. */
+    /* Type badges moved into the card's top-right corner, stacked vertically, by request — pulled
+       out of the normal header flex flow entirely (absolute positioning) so the Pokémon name has
+       the full row width to itself and never has to compete with the badges for space. */
+    .result-card{position:relative;}
+    .result-card-head{padding-right:76px;} /* reserves room so the name/sprite row doesn't run under the now-absolutely-positioned badges */
+    .result-card-types{position:absolute;top:14px;right:14px;flex-direction:column;align-items:flex-end;gap:4px;}
     .result-card-types img{width:11px !important;height:11px !important;}
     .result-card-types .typebadge{padding:2px 6px;font-size:10px;}
     .boss-type-inline{white-space:normal !important;}
