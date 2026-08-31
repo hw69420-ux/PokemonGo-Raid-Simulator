@@ -230,7 +230,6 @@
     .result-card-types img{width:11px !important;height:11px !important;}
     .result-card-types .typebadge{padding:2px 6px;font-size:10px;}
     .boss-type-inline{white-space:normal !important;}
-    .mc-table thead th:nth-child(2){z-index:6;} /* stays above the sticky header's own z-index (5) so it doesn't get covered while both sticky axes are active at once */
 
     /* Combat log modal */
     .modal-overlay{padding:16px 8px;}
@@ -1096,7 +1095,42 @@ async function loadGameMaster(){
       { speciesName:'Blacephalon', kind:'chargedMoves', moveId:'MIND_BLOWN' }, // very recently added move (per this session's research, added to the game in late Dec 2025) — real, own signature-adjacent charge move
       { speciesName:'Cinderace', kind:'chargedMoves', moveId:'PYROBALL' }, // real Community Day-exclusive signature move
       { speciesName:'Glimmora', kind:'chargedMoves', moveId:'Meteor Beam' }, // confirmed real 4th charge move (via db.pokemongohub.net) that PogoAPI's current_pokemon_moves.json omits for this species specifically — 'Meteor Beam' (not 'METEOR_BEAM') to match this array's live-data display-name convention, since GM.moves['Meteor Beam'] already exists from the general charged_moves.json fetch (used by other Pokémon like Gigalith)
-      { speciesName:'Gigalith', kind:'fastMoves', moveId:'Lock-On' } // confirmed real fast move — multiple independent sources (including db.pokemongohub.net directly) list "Lock-On / Meteor Beam" as Gigalith's actual best, current, non-legacy moveset, but PogoAPI's current_pokemon_moves.json appears to omit it, same gap pattern as Glimmora/Meteor Beam above
+      { speciesName:'Gigalith', kind:'fastMoves', moveId:'Lock-On' }, // confirmed real fast move — multiple independent sources (including db.pokemongohub.net directly) list "Lock-On / Meteor Beam" as Gigalith's actual best, current, non-legacy moveset, but PogoAPI's current_pokemon_moves.json appears to omit it, same gap pattern as Glimmora/Meteor Beam above
+      // Batch below added by request — 25 species not present in this file's own fallback roster
+      // (so a direct mk() edit isn't possible for these; the other 8 species from the same request
+      // — Audino, Chandelure, Darkrai, Deoxys (Defense), Greninja, Lugia, Raichu, Victreebel,
+      // Zeraora — already have their own mk() entries above and were edited there directly instead).
+      { speciesName:'Volbeat', kind:'fastMoves', moveId:'INFESTATION' },
+      { speciesName:'Volbeat', kind:'chargedMoves', moveId:'LUNGE' },
+      { speciesName:'Illumise', kind:'fastMoves', moveId:'INFESTATION' },
+      { speciesName:'Illumise', kind:'chargedMoves', moveId:'SHADOW_BALL' },
+      { speciesName:'Arbok', kind:'chargedMoves', moveId:'BRUTAL_SWING' },
+      { speciesName:'Arbok', kind:'chargedMoves', moveId:'WRAP' }, // Wrap is a charge move in Pokémon GO, despite reading like a fast move by name
+      { speciesName:'Aerodactyl', kind:'chargedMoves', moveId:'BRUTAL_SWING' },
+      { speciesName:'Muk (Alolan)', kind:'chargedMoves', moveId:'BRUTAL_SWING' },
+      { speciesName:'Muk (Alolan)', kind:'chargedMoves', moveId:'ICE_PUNCH' },
+      { speciesName:'Ariados', kind:'chargedMoves', moveId:'FOUL_PLAY' },
+      { speciesName:'Grafaiai', kind:'chargedMoves', moveId:'FOUL_PLAY' },
+      { speciesName:'Grafaiai', kind:'fastMoves', moveId:'SCRATCH' },
+      { speciesName:'Raichu (Alolan)', kind:'chargedMoves', moveId:'VOLT_TACKLE' },
+      { speciesName:'Grimmsnarl', kind:'chargedMoves', moveId:'DRAINING_KISS' },
+      { speciesName:'Aggron', kind:'chargedMoves', moveId:'BRICK_BREAK' },
+      { speciesName:'Kingambit', kind:'fastMoves', moveId:'LOW_KICK' },
+      { speciesName:'Gallade', kind:'chargedMoves', moveId:'SACRED_SWORD' },
+      { speciesName:'Houndoom', kind:'fastMoves', moveId:'INCINERATE' },
+      { speciesName:'Houndoom', kind:'chargedMoves', moveId:'TRAILBLAZE' },
+      { speciesName:'Mismagius', kind:'chargedMoves', moveId:'MYSTICAL_FIRE' },
+      { speciesName:'Crobat', kind:'fastMoves', moveId:'GUST' },
+      { speciesName:'Flamigo', kind:'fastMoves', moveId:'PECK' },
+      { speciesName:'Cofagrigus', kind:'chargedMoves', moveId:'ENERGY_BALL' },
+      { speciesName:'Skarmory', kind:'chargedMoves', moveId:'DRILL_RUN' },
+      { speciesName:'Bombirdier', kind:'chargedMoves', moveId:'DRILL_RUN' },
+      { speciesName:'Miltank', kind:'chargedMoves', moveId:'HIGH_HORSEPOWER' },
+      { speciesName:'Nidoking', kind:'chargedMoves', moveId:'AVALANCHE' },
+      { speciesName:'Ursaluna', kind:'fastMoves', moveId:'SCRATCH' },
+      { speciesName:'Zoroark (Hisuian)', kind:'chargedMoves', moveId:'SWIFT' },
+      { speciesName:'Toxtricity', kind:'chargedMoves', moveId:'SWIFT' },
+      { speciesName:'Snorlax', kind:'fastMoves', moveId:'PSYWAVE' }
     ];
     movepoolGapFill.forEach(fix => {
       const p = pokemon.find(pp => pp.speciesName === fix.speciesName);
@@ -1375,6 +1409,7 @@ function buildFallbackData(){
     STONE_EDGE:{type:'rock',power:105,energy:100},
     FIRE_BLAST:{type:'fire',power:140,energy:100},
     WILD_CHARGE:{type:'electric',power:90,energy:50},
+    VOLT_TACKLE:{type:'electric',power:90,energy:33}, // confirmed via multiple direct sources (Dittobase, db.pokemongohub.net) — Gyms & Raids values
     HEAVY_SLAM:{type:'steel',power:70,energy:50},
     SUPERPOWER:{type:'fighting',power:85,energy:50},
     METEOR_BEAM:{type:'rock',power:140,energy:100}, // confirmed via db.pokemongohub.net: duration 2.0s, damage window 1.1s-2.0s. Generally an Elite TM/Community Day move for many Pokémon, though neither Gigalith nor Glimmora (its only current users in this file) are flagged elite for it — neither is a raid boss anyway, so the boss-exclusion distinction doesn't apply to them
@@ -1618,7 +1653,7 @@ function buildFallbackData(){
     mk('ampharos_mega','Mega Ampharos',['electric','dragon'],{atk:294,def:203,hp:207},['CHARGE_BEAM','VOLT_SWITCH'],['POWER_GEM','THUNDER_PUNCH','THUNDER','DRAGON_PULSE','FOCUS_BLAST','ZAP_CANNON','BRUTAL_SWING','TRAILBLAZE'],[],['DRAGON_PULSE']), // moveset confirmed via db.pokemongohub.net; exact Mega ATK/DEF less directly re-confirmed this round than most entries (base Ampharos 211/169/207 is directly confirmed) — legacy — confirmed Elite TM move
     mk('articuno','Articuno',['ice','flying'],{atk:192,def:236,hp:207},['FROST_BREATH','ICE_SHARD','POWDER_SNOW'],['ICE_BEAM','ANCIENT_POWER','BLIZZARD','ICY_WIND','HURRICANE','TRIPLE_AXEL'],[],['HURRICANE']), // legacy — Elite Charge TM / special event only; Powder Snow was previously incorrectly flagged as elite fast here too — corrected via cross-referencing PvPoke's raw gamemaster.json against direct verification (no source marks it legacy)
     mk('articuno_galarian','Articuno (Galarian)',['psychic','flying'],{atk:250,def:197,hp:207},['CONFUSION','PSYCHO_CUT'],['FUTURE_SIGHT','ANCIENT_POWER','BRAVE_BIRD','FLY']),
-    mk('audino','Audino',['normal','fairy'],{atk:93,def:132,hp:216},['POUND','ZEN_HEADBUTT'],['DISARMING_VOICE','DAZZLING_GLEAM','HYPER_BEAM','BODY_SLAM']), // added, by request — matches its already-existing Mega form's confirmed real moveset (Body Slam included)
+    mk('audino','Audino',['normal','fairy'],{atk:93,def:132,hp:216},['POUND','ZEN_HEADBUTT','CHARGE_BEAM'],['DISARMING_VOICE','DAZZLING_GLEAM','HYPER_BEAM','BODY_SLAM']), // added Charge Beam (fast), by request — matches its already-existing Mega form's confirmed real moveset (Body Slam included)
     mk('audino_mega','Mega Audino',['normal','fairy'],{atk:147,def:239,hp:230},['POUND','ZEN_HEADBUTT'],['DISARMING_VOICE','DAZZLING_GLEAM','HYPER_BEAM','BODY_SLAM'],[],['BODY_SLAM']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
     mk('aurorus','Aurorus',['rock','ice'],{atk:166,def:155,hp:216},['POWDER_SNOW'],['ANCIENT_POWER','BLIZZARD']), // not a raid boss (ex-Tier 3) — attacker roster only
     mk('avalugg','Avalugg',['ice'],{atk:134,def:190,hp:225},['POWDER_SNOW'],['AVALANCHE','CRUNCH']), // not a raid boss (ex-Tier 3) — attacker roster only
@@ -1636,7 +1671,7 @@ function buildFallbackData(){
     mk('buzzwole','Buzzwole',['bug','fighting'],{atk:236,def:196,hp:216},['COUNTER','POISON_JAB'],['LUNGE','SUPERPOWER','FELL_STINGER','POWER_UP_PUNCH']), // corrected — Poison Jab was miscategorized as a charge move, and Dynamic Punch (not real for this Pokémon) was replaced with its actual charge kit
     mk('camerupt_mega','Mega Camerupt',['fire','ground'],{atk:253,def:183,hp:172},['EMBER','ROCK_SMASH','INCINERATE'],['EARTHQUAKE','OVERHEAT','SOLAR_BEAM','EARTH_POWER','SCORCHING_SANDS','ROCK_TOMB']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('celesteela','Celesteela',['steel','flying'],{atk:207,def:199,hp:219},['AIR_SLASH','SMACK_DOWN'],['HEAVY_SLAM','BODY_SLAM','IRON_HEAD','BULLDOZE']), // added missing Bulldoze
-    mk('chandelure','Chandelure',['ghost','fire'],{atk:271,def:145,hp:155},['FIRE_SPIN','HEX','INCINERATE'],['SHADOW_BALL','OVERHEAT','ENERGY_BALL','FLAME_CHARGE']), // added Energy Ball and Flame Charge to charge moves, by request
+    mk('chandelure','Chandelure',['ghost','fire'],{atk:271,def:145,hp:155},['FIRE_SPIN','HEX','INCINERATE','ASTONISH'],['SHADOW_BALL','OVERHEAT','ENERGY_BALL','FLAME_CHARGE']), // added Astonish (fast) and Energy Ball/Flame Charge to charge moves, by request
     mk('chandelure_mega','Mega Chandelure',['ghost','fire'],{atk:335,def:227,hp:155},['FIRE_SPIN','HEX','INCINERATE'],['SHADOW_BALL','OVERHEAT']),
     mk('charizard_mega_x','Mega Charizard X',['fire','dragon'],{atk:273,def:213,hp:186},['AIR_SLASH','FIRE_SPIN','DRAGON_BREATH','EMBER','WING_ATTACK'],['DRAGON_CLAW','FIRE_BLAST','OVERHEAT','BLAST_BURN','FLAMETHROWER','AIR_CUTTER'],['DRAGON_BREATH','EMBER','WING_ATTACK'],['BLAST_BURN','FLAMETHROWER']), // corrected — Draco Meteor and Crunch were fabricated/not real moves; Air Cutter confirmed real and added via PvPoke's raw gamemaster.json — legacy — legacy
     mk('charizard_mega_y','Mega Charizard Y',['fire','flying'],{atk:319,def:212,hp:186},['AIR_SLASH','FIRE_SPIN','DRAGON_BREATH','EMBER','WING_ATTACK'],['DRAGON_CLAW','FIRE_BLAST','OVERHEAT','BLAST_BURN','FLAMETHROWER','AIR_CUTTER'],['DRAGON_BREATH','EMBER','WING_ATTACK'],['BLAST_BURN','FLAMETHROWER']), // corrected — Fire Fang and Solar Beam were fabricated/not real moves; Air Cutter confirmed real and added via PvPoke's raw gamemaster.json — legacy — legacy
@@ -1651,13 +1686,13 @@ function buildFallbackData(){
     mk('crabominable','Crabominable',['ice','fighting'],{atk:207,def:135,hp:225},['BUBBLE','ROCK_SMASH'],['ICE_PUNCH','BRICK_BREAK','CRABHAMMER','POWER_UP_PUNCH','PAYBACK']), // moveset corrected — confirmed via db.pokemongohub.net; Ice Shard/Close Combat/Dynamic Punch were not real, should be Bubble (fast) and Brick Break/Crabhammer/Power-Up Punch/Payback (charge)
     mk('crabominable_mega','Mega Crabominable',['ice','fighting'],{atk:266,def:213,hp:219},['BUBBLE','ROCK_SMASH'],['ICE_PUNCH','BRICK_BREAK','CRABHAMMER','POWER_UP_PUNCH','PAYBACK']), // moveset corrected to match base Crabominable's confirmed real kit
     mk('cresselia','Cresselia',['psychic'],{atk:152,def:258,hp:260},['PSYCHO_CUT','CONFUSION'],['GRASS_KNOT','AURORA_BEAM','FUTURE_SIGHT','MOONBLAST'],[],['GRASS_KNOT']), // legacy — confirmed Elite Charged TM move
-    mk('darkrai','Darkrai',['dark'],{atk:285,def:198,hp:172},['FEINT_ATTACK','SNARL'],['DARK_PULSE','FOCUS_BLAST','SHADOW_BALL','SLUDGE_BOMB'],[],['SLUDGE_BOMB']), // confirmed real raid boss — added via PvPoke's raw gamemaster.json — legacy
+    mk('darkrai','Darkrai',['dark'],{atk:285,def:198,hp:172},['FEINT_ATTACK','SNARL','SUCKER_PUNCH'],['DARK_PULSE','FOCUS_BLAST','SHADOW_BALL','SLUDGE_BOMB','FOUL_PLAY'],[],['SLUDGE_BOMB']), // added Sucker Punch (fast) and Foul Play (charge), by request — confirmed real raid boss — added via PvPoke's raw gamemaster.json — legacy
     mk('darkrai_mega','Mega Darkrai',['dark'],{atk:325,def:265,hp:172},['FEINT_ATTACK','SNARL'],['DARK_PULSE','FOCUS_BLAST','SHADOW_BALL','SLUDGE_BOMB'],[],['SLUDGE_BOMB']), // inherited from base form's legacy flags, by request
     mk('delphox','Delphox',['fire','psychic'],{atk:213,def:198,hp:169},['SCRATCH','ZEN_HEADBUTT','FIRE_SPIN'],['FLAMETHROWER','PSYSHOCK','FLAME_CHARGE','FIRE_BLAST','PSYCHIC','BLAST_BURN','MYSTICAL_FIRE'],[],['BLAST_BURN']), // added Mystical Fire, by request — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('delphox_mega','Mega Delphox',['fire','psychic'],{atk:331,def:235,hp:181},['SCRATCH','ZEN_HEADBUTT','FIRE_SPIN'],['FLAMETHROWER','PSYSHOCK','FLAME_CHARGE','FIRE_BLAST','PSYCHIC','BLAST_BURN','MYSTICAL_FIRE'],[],['BLAST_BURN']), // added Mystical Fire to match base Delphox's updated kit, by request — inherited from base form's legacy flags, by request
     mk('deoxys','Deoxys',['psychic'],{atk:345,def:115,hp:137},['CHARGE_BEAM','ZEN_HEADBUTT'],['HYPER_BEAM','PSYCHO_BOOST','THUNDERBOLT']), // confirmed real raid boss — added via PvPoke's raw gamemaster.json
     mk('deoxys_attack','Deoxys (Attack)',['psychic'],{atk:414,def:46,hp:137},['POISON_JAB','ZEN_HEADBUTT'],['DARK_PULSE','PSYCHO_BOOST','ZAP_CANNON']),
-    mk('deoxys_defense','Deoxys (Defense)',['psychic'],{atk:144,def:330,hp:137},['COUNTER','ZEN_HEADBUTT'],['PSYCHO_BOOST','ROCK_SLIDE','THUNDERBOLT']),
+    mk('deoxys_defense','Deoxys (Defense)',['psychic'],{atk:144,def:330,hp:137},['COUNTER','ZEN_HEADBUTT','LOW_KICK'],['PSYCHO_BOOST','ROCK_SLIDE','THUNDERBOLT']), // added Low Kick (fast), by request
     mk('deoxys_speed','Deoxys (Speed)',['psychic'],{atk:230,def:218,hp:137},['CHARGE_BEAM','ZEN_HEADBUTT'],['PSYCHO_BOOST','SWIFT','THUNDERBOLT']),
     mk('dialga','Dialga',['steel','dragon'],{atk:275,def:211,hp:205},['DRAGON_BREATH','METAL_CLAW'],['IRON_HEAD','THUNDER','DRACO_METEOR']), // re-added — dynamic same-family exclusion (see FAMILY_GROUPS) now decides which of this and Dialga (Origin) to show, rather than a static removal
     mk('dialga_origin','Dialga (Origin)',['steel','dragon'],{atk:270,def:225,hp:205},['METAL_CLAW','DRAGON_BREATH'],['IRON_HEAD','THUNDER','DRACO_METEOR','ROAR_OF_TIME'],[],['ROAR_OF_TIME']), // legacy — official Pokemon.com raid guide confirms this with an asterisk
@@ -1702,7 +1737,7 @@ function buildFallbackData(){
     mk('golisopod_mega','Mega Golisopod',['bug','steel'],{atk:260,def:287,hp:181},['FURY_CUTTER','SHADOW_CLAW','METAL_CLAW','WATERFALL'],['AERIAL_ACE','AQUA_JET','X_SCISSOR','RAZOR_SHELL','LIQUIDATION']), // type corrected — gains Steel in place of Water on Mega Evolution (confirmed via multiple sources), not Bug/Water like its base form
     mk('golurk','Golurk',['ground','ghost'],{atk:184,def:132,hp:205},['MUD_SLAP','ASTONISH'],['SHADOW_PUNCH','DYNAMIC_PUNCH','EARTH_POWER','POLTERGEIST']),
     mk('golurk_mega','Mega Golurk',['ground','ghost'],{atk:284,def:202,hp:205},['MUD_SLAP','ASTONISH'],['SHADOW_PUNCH','DYNAMIC_PUNCH','EARTH_POWER','POLTERGEIST']),
-    mk('greninja','Greninja',['water','dark'],{atk:223,def:152,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON','AERIAL_ACE'],[],['HYDRO_CANNON']), // Aerial Ace corrected — it's a charge move, not a fast move (it isn't defined as a fast move anywhere in this roster's move data) — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
+    mk('greninja','Greninja',['water','dark'],{atk:223,def:152,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON','AERIAL_ACE','BRUTAL_SWING'],[],['HYDRO_CANNON']), // added Brutal Swing (charge), by request — Aerial Ace corrected — it's a charge move, not a fast move (it isn't defined as a fast move anywhere in this roster's move data) — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('greninja_mega','Mega Greninja',['water','dark'],{atk:299,def:180,hp:176},['FEINT_ATTACK','BUBBLE','WATER_SHURIKEN'],['NIGHT_SLASH','SURF','HYDRO_PUMP','HYDRO_CANNON','AERIAL_ACE'],[],['HYDRO_CANNON']), // was missing an mk() entry entirely despite being referenced in the Upcoming Megas tier set — added now with the stats given directly by the user; type confirmed unchanged from base (Water/Dark); Aerial Ace corrected to charge move, matching the fix applied to base Greninja — inherited from base form's legacy flags, by request
     mk('groudon','Groudon',['ground'],{atk:270,def:228,hp:205},['MUD_SHOT','DRAGON_TAIL'],['EARTHQUAKE','FIRE_BLAST','FIRE_PUNCH','SOLAR_BEAM','PRECIPICE_BLADES'],[],['FIRE_PUNCH','PRECIPICE_BLADES']), // corrected — Fire Fang was fabricated/not real; stats also corrected (was def:187/hp:213, real is 228/205) — legacy — Fire Punch confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Precipice Blades confirmed requires Elite Charged TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Fire Punch's flag was never actually taking effect.)
     mk('groudon_primal','Primal Groudon',['fire','ground'],{atk:353,def:268,hp:218},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','FIRE_PUNCH','PRECIPICE_BLADES'],[],['PRECIPICE_BLADES','FIRE_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
@@ -1741,7 +1776,7 @@ function buildFallbackData(){
     mk('lucario','Lucario',['fighting','steel'],{atk:236,def:144,hp:172},['COUNTER','BULLET_PUNCH','FORCE_PALM'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK','THUNDER_PUNCH'],['FORCE_PALM']), // added confirmed real fast move Force Palm (added to Lucario's movepool July 2024); Thunder Punch added to charge moves, by request — legacy — Elite Fast TM / event-exclusive
     mk('lucario_mega','Mega Lucario',['fighting','steel'],{atk:310,def:175,hp:172},['COUNTER','BULLET_PUNCH','FORCE_PALM'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK','THUNDER_PUNCH'],['FORCE_PALM']), // stats corrected via direct db.pokemongohub.net fetch — was 314/197, real is 310/175 — legacy
     mk('lucario_mega_z','Mega Lucario Z',['fighting','steel'],{atk:359,def:161,hp:172},['COUNTER','BULLET_PUNCH','FORCE_PALM'],['AURA_SPHERE','SHADOW_BALL','METEOR_MASH','FLASH_CANNON','POWER_UP_PUNCH','CLOSE_COMBAT','BLAZE_KICK'],['FORCE_PALM']), // inherited from base form's legacy flags, by request
-    mk('lugia','Lugia',['psychic','flying'],{atk:193,def:310,hp:235},['EXTRASENSORY','DRAGON_TAIL'],['HYDRO_PUMP','SKY_ATTACK','FUTURE_SIGHT','AEROBLAST','FLY'],[],['AEROBLAST']), // corrected — Air Slash, Shadow Ball, Ancient Power, Focus Blast were all fabricated/not real moves for this Pokémon — legacy — signature move, Elite TM
+    mk('lugia','Lugia',['psychic','flying'],{atk:193,def:310,hp:235},['EXTRASENSORY','DRAGON_TAIL'],['HYDRO_PUMP','SKY_ATTACK','FUTURE_SIGHT','AEROBLAST','FLY','EARTH_POWER'],[],['AEROBLAST']), // added Earth Power (charge), by request — corrected — Air Slash, Shadow Ball, Ancient Power, Focus Blast were all fabricated/not real moves for this Pokémon — legacy — signature move, Elite TM
     mk('lunala','Lunala',['psychic','ghost'],{atk:255,def:191,hp:264},['SHADOW_CLAW','CONFUSION','AIR_SLASH'],['SHADOW_BALL','PSYCHIC','MOONBLAST','FUTURE_SIGHT']),
     mk('lycanroc_midday','Lycanroc (Midday)',['rock'],{atk:231,def:140,hp:181},['SUCKER_PUNCH','ROCK_THROW'],['DRILL_RUN','STONE_EDGE','CRUNCH','TRAILBLAZE']), // added — three genuinely distinct forms with different stats/movesets (not cosmetic like Tatsugiri/Minior), confirmed via direct research this session
     mk('lycanroc_midnight','Lycanroc (Midnight)',['rock'],{atk:218,def:152,hp:198},['COUNTER','ROCK_THROW'],['STONE_EDGE','PSYCHIC_FANGS','CRUNCH','TRAILBLAZE']), // added — confirmed real moveset via direct research this session
@@ -1777,7 +1812,7 @@ function buildFallbackData(){
     mk('pinsir_mega','Mega Pinsir',['bug','flying'],{atk:305,def:231,hp:163},['BUG_BITE','FURY_CUTTER','ROCK_SMASH'],['CLOSE_COMBAT','SUBMISSION','VISE_GRIP','X_SCISSOR','SUPERPOWER'],[],['SUBMISSION']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
     mk('pyroar','Pyroar',['fire','normal'],{atk:198,def:149,hp:181},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM','FLAME_CHARGE']), // "(Male)" suffix removed again, by request — plain "Pyroar" still correctly resolves to the male sprite ("pyroar.gif") since that's the unmarked/base filename anyway, so nothing else needs to change; confirmed no stat/moveset difference from female Pyroar (multiple sources agree), so only one needs to be shown — moveset corrected — was missing Ember/Take Down (fast); Flame Charge added back to charge moves per explicit request (an earlier research pass had flagged it as not real — deferring to the more specific correction here)
     mk('pyroar_mega','Mega Pyroar',['fire','normal'],{atk:273,def:198,hp:200},['EMBER','FIRE_FANG','INCINERATE','TAKE_DOWN'],['DARK_PULSE','OVERHEAT','SOLAR_BEAM']), // moveset corrected to match base Pyroar's confirmed real kit
-    mk('raichu','Raichu',['electric'],{atk:193,def:151,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Thunder Shock/Charm (fast) and Thunder/Surf/Skull Bash/Trailblaze (charge) — legacy, by request
+    mk('raichu','Raichu',['electric'],{atk:193,def:151,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE','VOLT_TACKLE'],[],['THUNDER']), // added Volt Tackle (charge), by request — moveset corrected — confirmed via db.pokemongohub.net; was missing Thunder Shock/Charm (fast) and Thunder/Surf/Skull Bash/Trailblaze (charge) — legacy, by request
     mk('raichu_mega_x','Mega Raichu X',['electric'],{atk:277,def:203,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected to match base Raichu's confirmed real kit — previous entry was a much sparser earlier-session guess — inherited from base form's legacy flags, by request
     mk('raichu_mega_y','Mega Raichu Y',['electric'],{atk:339,def:157,hp:155},['THUNDER_SHOCK','SPARK','VOLT_SWITCH','CHARM'],['THUNDER_PUNCH','THUNDER','BRICK_BREAK','WILD_CHARGE','SURF','SKULL_BASH','TRAILBLAZE'],[],['THUNDER']), // moveset corrected — same reasoning as Mega Raichu X above — inherited from base form's legacy flags, by request
     mk('raikou','Raikou',['electric'],{atk:241,def:195,hp:207},['THUNDER_SHOCK','VOLT_SWITCH'],['THUNDER','THUNDERBOLT','SHADOW_BALL','AURA_SPHERE','WILD_CHARGE']),
@@ -1831,7 +1866,7 @@ function buildFallbackData(){
     mk('uxie','Uxie',['psychic'],{atk:156,def:270,hp:181},['CONFUSION','EXTRASENSORY'],['FUTURE_SIGHT','THUNDER','SWIFT']),
     mk('vanilluxe','Vanilluxe',['ice'],{atk:201,def:150,hp:181},['FROST_BREATH'],['BLIZZARD','SIGNAL_BEAM']),
     mk('venusaur_mega','Mega Venusaur',['grass','poison'],{atk:241,def:246,hp:190},['VINE_WHIP','RAZOR_LEAF'],['SLUDGE','PETAL_BLIZZARD','SLUDGE_BOMB','SOLAR_BEAM','FRENZY_PLANT'],[],['FRENZY_PLANT']), // legacy
-    mk('victreebel','Victreebel',['grass','poison'],{atk:208,def:150,hp:190},['RAZOR_LEAF','MAGICAL_LEAF','ACID'],['SLUDGE_BOMB','SOLAR_BEAM','LEAF_BLADE','ACID_SPRAY','LEAF_TORNADO'],['MAGICAL_LEAF']), // added — matches its already-existing Mega form's confirmed real moveset — legacy, by request (interpreting "Mystical Leaf" as Magical Leaf — no move by the former name exists)
+    mk('victreebel','Victreebel',['grass','poison'],{atk:208,def:150,hp:190},['RAZOR_LEAF','MAGICAL_LEAF','ACID','SUCKER_PUNCH'],['SLUDGE_BOMB','SOLAR_BEAM','LEAF_BLADE','ACID_SPRAY','LEAF_TORNADO'],['MAGICAL_LEAF']), // added Sucker Punch (fast), by request — matches its already-existing Mega form's confirmed real moveset — legacy, by request (interpreting "Mystical Leaf" as Magical Leaf — no move by the former name exists)
     mk('victreebel_mega','Mega Victreebel',['grass','poison'],{atk:265,def:181,hp:190},['RAZOR_LEAF','MAGICAL_LEAF','ACID'],['SLUDGE_BOMB','SOLAR_BEAM','LEAF_BLADE','ACID_SPRAY','LEAF_TORNADO'],['MAGICAL_LEAF']), // inherited from base form's legacy flags, by request
     mk('vigoroth','Vigoroth',['normal'],{atk:159,def:145,hp:190},['SCRATCH','COUNTER'],['BODY_SLAM','BRICK_BREAK','BULLDOZE','ROCK_SLIDE']),
     mk('virizion','Virizion',['grass','fighting'],{atk:192,def:229,hp:209},['DOUBLE_KICK','QUICK_ATTACK','ZEN_HEADBUTT'],['LEAF_BLADE','SACRED_SWORD','STONE_EDGE','CLOSE_COMBAT'],[],['SACRED_SWORD']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
@@ -1847,7 +1882,7 @@ function buildFallbackData(){
     mk('zapdos','Zapdos',['electric','flying'],{atk:253,def:185,hp:207},['THUNDER_SHOCK','CHARGE_BEAM'],['THUNDERBOLT','ANCIENT_POWER','DRILL_PECK','HEAT_WAVE','THUNDER','ZAP_CANNON'],['THUNDER_SHOCK']), // legacy
     mk('zapdos_galarian','Zapdos (Galarian)',['fighting','flying'],{atk:252,def:189,hp:207},['COUNTER','LOW_KICK'],['CLOSE_COMBAT','ANCIENT_POWER','BRAVE_BIRD','FLY']),
     mk('zekrom','Zekrom',['dragon','electric'],{atk:275,def:211,hp:205},['DRAGON_BREATH','CHARGE_BEAM'],['OUTRAGE','FUSION_BOLT','WILD_CHARGE','CRUNCH','FLASH_CANNON'],[],['FUSION_BOLT']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-    mk('zeraora','Zeraora',['electric'],{atk:253,def:177,hp:200},['SPARK','VOLT_SWITCH'],['DISCHARGE','WILD_CHARGE','THUNDER_PUNCH','PLASMA_FISTS']), // Plasma Fists confirmed real, current, and learnable without an Elite Charged TM
+    mk('zeraora','Zeraora',['electric'],{atk:253,def:177,hp:200},['SPARK','VOLT_SWITCH'],['DISCHARGE','WILD_CHARGE','THUNDER_PUNCH','PLASMA_FISTS','DYNAMIC_PUNCH']), // added Dynamic Punch (charge), by request — Plasma Fists confirmed real, current, and learnable without an Elite Charged TM
     mk('zeraora_mega','Mega Zeraora',['electric'],{atk:361,def:180,hp:204},['SPARK','VOLT_SWITCH'],['DISCHARGE','WILD_CHARGE','THUNDER_PUNCH','PLASMA_FISTS']),
     mk('zygarde_mega','Mega Zygarde',['dragon','ground'],{atk:403,def:181,hp:415},['DRAGON_TAIL','BITE','ZEN_HEADBUTT'],['OUTRAGE','EARTHQUAKE','CRUNCH','HYPER_BEAM','BULLDOZE']),
     mk('zygarde_10','Zygarde (10% Forme)',['dragon','ground'],{atk:205,def:173,hp:144},['DRAGON_TAIL','BITE','ZEN_HEADBUTT'],['OUTRAGE','EARTHQUAKE','CRUNCH','HYPER_BEAM','BULLDOZE']),
