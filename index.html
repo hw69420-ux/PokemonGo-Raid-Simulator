@@ -2333,7 +2333,7 @@ function buildSimCacheKey(){
   return [
     selectedBossId, $('tier').value, $('bossfast').value, $('bosscharge1').value,
     $('level').value, $('weather').value, $('players').value, $('friendship').value,
-    $('bladeBoost').checked, $('shieldBoost').checked, $('dodgeChargeOnly').checked,
+    $('bladeBoost').checked, $('dynamicPunchBoost').checked, $('shieldBoost').checked, $('dodgeChargeOnly').checked,
     $('partyPowerActive').checked, $('megaBoostActive').checked,
     $('megaBoostActive').checked ? $('megaBoostType').value : ''
   ].join('|');
@@ -2686,7 +2686,7 @@ function checkCacheAndAutoShow(){
   const cacheKey = buildSimCacheKey();
   if(simResultsCache.has(cacheKey)) renderTop30(simResultsCache.get(cacheKey));
 }
-['players','level','friendship','weather','bladeBoost','shieldBoost','dodgeChargeOnly',
+['players','level','friendship','weather','bladeBoost','dynamicPunchBoost','shieldBoost','dodgeChargeOnly',
  'partyPowerActive','megaBoostActive','megaBoostType'].forEach(id => {
   const el = $(id);
   const evt = el.type === 'range' ? 'input' : 'change';
