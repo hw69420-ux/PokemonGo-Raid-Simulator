@@ -2919,7 +2919,7 @@ function runSim(cfg, rng, bossCtx){
       const canCharge = bEnergy>=chargeB1.energy && rng() < BOSS_CHARGE_CHANCE;
       let dmg, windowSec, moveTurns, logText;
       if(canCharge){
-        dmg = whiff ? 0 : Math.floor(calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1) * megaPlusDamageMultiplier(chargeB1.moveId, !!b.isMegaForm, cfg.megaLevel));
+        dmg = whiff ? 0 : calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm * megaPlusDamageMultiplier(chargeB1.moveId, !!b.isMegaForm, cfg.megaLevel), 1); // mega multiplier folded into the SAME weatherMult slot calcDamage's own single floor already uses, matching the attacker-side approach — avoids a second, separate floor() being applied to an already-floor()'d-and-+1'd value, which could shift damage by ±1 in edge cases depending on where the mega multiplier landed relative to the rounding
         const selectionTurns = 1; // fixed 0.5s selection delay before the move's own animation starts
         moveTurns = selectionTurns + toTurns(chargeBDurSec);
         windowSec = whiff ? (moveTurns*TURN_SEC) : chargeB_window;
@@ -4198,7 +4198,7 @@ function runSim(cfg, rng, bossCtx){
       const canCharge = bEnergy>=chargeB1.energy && rng() < BOSS_CHARGE_CHANCE;
       let dmg, windowSec, moveTurns, logText;
       if(canCharge){
-        dmg = whiff ? 0 : Math.floor(calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1) * megaPlusDamageMultiplier(chargeB1.moveId, !!b.isMegaForm, cfg.megaLevel));
+        dmg = whiff ? 0 : calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm * megaPlusDamageMultiplier(chargeB1.moveId, !!b.isMegaForm, cfg.megaLevel), 1); // mega multiplier folded into the SAME weatherMult slot calcDamage's own single floor already uses, matching the attacker-side approach — avoids a second, separate floor() being applied to an already-floor()'d-and-+1'd value, which could shift damage by ±1 in edge cases depending on where the mega multiplier landed relative to the rounding
         const selectionTurns = 1; // fixed 0.5s selection delay before the move's own animation starts
         moveTurns = selectionTurns + toTurns(chargeBDurSec);
         windowSec = whiff ? (moveTurns*TURN_SEC) : chargeB_window;
