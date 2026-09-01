@@ -2010,7 +2010,7 @@ function typeBadges(types, showIcon){
  * more, maxing at "++++" for level 4. Only applies when isMegaForm is true; a non-Mega user
  * showing one of these moves (shouldn't normally happen) just gets the plain base name back. */
 function megaPlusDisplayName(baseName, isMegaForm, megaLevel){
-  if(!isMegaForm || !baseName || !baseName.endsWith('+')) return baseName;
+  if(!isMegaForm || !baseName || !baseName.endsWith('_PLUS')) return baseName;
   const level = Math.min(4, Math.max(1, megaLevel || 4));
   return baseName.slice(0, -1) + '+'.repeat(level);
 }
