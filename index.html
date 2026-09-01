@@ -302,7 +302,15 @@
         <label for="players">Number of Players <span id="playersval" style="color:var(--text)"></span></label>
         <input type="range" id="players" min="1" max="4" value="1">
 
+        <label for="megaLevel">Mega Level <span id="megaLevelval" style="color:var(--text)"></span></label>
+        <input type="range" id="megaLevel" min="1" max="4" value="4">
+        <div class="hint" style="margin-top:-6px;margin-bottom:14px;">Scales the damage of Mega-exclusive "+" moves (100% at level 1, +10% per level, 130% at level 4) — only affects a side that's actually in its Mega form.</div>
+
         <label style="display:flex;align-items:center;gap:8px;margin-top:18px;text-transform:none;font-size:13px;">
+          <input type="checkbox" id="dynamicPunchBoost" style="width:auto;">
+          Dynamic Punch+ boost (+15% damage vs. Mega Raids only)
+        </label>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="bladeBoost" style="width:auto;">
           Zacian Blade boost (+10% damage)
         </label>
@@ -624,7 +632,11 @@ const POGOAPI_MEGA_URL = 'https://pogoapi.net/api/v1/mega_pokemon.json';
  * sourced from Niantic's own GAME_MASTER data (damageWindowStartMs field). Moves not listed here
  * fall back to the move's full duration (i.e. damage assumed to land at the end) until confirmed. */
 const DAMAGE_WINDOW = {
-  ACID:0.6, ACID_SPRAY:2.1, ACROBATICS:0.6, AERIAL_ACE:2.0, AEROBLAST:3.3,
+  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0,
+  OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
+  PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
+  FUTURE_SIGHT_PLUS:1.2, // all 13 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
+  ACROBATICS:0.6, AERIAL_ACE:2.0, AEROBLAST:3.3,
   AEROBLAST_PLUS:3.3, AEROBLAST_PLUS_PLUS:3.3, AIR_CUTTER:1.6, AIR_SLASH:0.8, ANCIENT_POWER:2.85, AQUA_JET:1.6, AQUA_STEP:2.05, AQUA_TAIL:1.3,
   ASTONISH:0.6, AURA_SPHERE:1.2, AURORA_BEAM:3.3, AVALANCHE:1.5, BEAK_BLAST:1.5, BEHEMOTH_BASH:0.9, BEHEMOTH_BLADE:2.5, BITE:0.3,
   BLAST_BURN:2.95, BLAZE_KICK:0.25, BLEAKWIND_STORM:2.0, BLIZZARD:1.4, BODY_SLAM:1.3, BONE_CLUB:0.9, BOOMBURST:1.2, BRAVE_BIRD:1.0,
@@ -690,7 +702,10 @@ function damageWindowSec(moveId, fullDuration){
 // community-maintained mirror that can lag behind real game updates for individual moves. Anything
 // not listed here falls through to live API duration, then a rough estimate — see chargeDuration().
 const CHARGE_DURATION_OVERRIDES = {
-  ACID_SPRAY:3.0, AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
+  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5,
+  SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
+  VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, // all 13 Mega-exclusive "+" moves, by request
+  AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
   AQUA_STEP:3.5, AQUA_TAIL:2.0, AURA_SPHERE:2.0, AURORA_BEAM:3.5, AVALANCHE:2.5, BEHEMOTH_BASH:1.5,
   BEHEMOTH_BLADE:3.5, BLAST_BURN:3.5, BLAZE_KICK:1.0, BLEAKWIND_STORM:2.5, BLIZZARD:3.0, BODY_SLAM:2.0,
   BOOMBURST:2.5, BRAVE_BIRD:2.0, BREAKING_SWIPE:1.0, BRICK_BREAK:1.5, BRINE:2.5, BRUTAL_SWING:2.0,
@@ -1516,6 +1531,19 @@ function buildFallbackData(){
     GRASS_KNOT:{type:'grass',power:90,energy:50},
     FRENZY_PLANT:{type:'grass',power:100,energy:50}, // Community Day / event-exclusive move — real, only excluded from raid boss selection, still a legal attacker option
     ACID_SPRAY:{type:'poison',power:20,energy:50},
+    ACID_SPRAY_PLUS:{type:'poison',power:160,energy:100,name:'Acid Spray+'}, // Mega-exclusive "+" moves, by request — energy given as -100; explicit name field so the base "+" always shows correctly (moveBadge/moveNameSync scale the count of "+" up further for higher Mega Levels, see megaPlusDisplayName())
+    LIQUIDATION_PLUS:{type:'water',power:180,energy:100,name:'Liquidation+'},
+    OUTRAGE_PLUS:{type:'dragon',power:185,energy:100,name:'Outrage+'},
+    DRILL_PECK_PLUS:{type:'flying',power:170,energy:100,name:'Drill Peck+'},
+    SEED_BOMB_PLUS:{type:'grass',power:150,energy:100,name:'Seed Bomb+'},
+    MYSTICAL_FIRE_PLUS:{type:'fire',power:140,energy:100,name:'Mystical Fire+'},
+    SURF_PLUS:{type:'water',power:130,energy:100,name:'Surf+'},
+    PSYBEAM_PLUS:{type:'psychic',power:170,energy:100,name:'Psybeam+'},
+    BRICK_BREAK_PLUS:{type:'fighting',power:150,energy:100,name:'Brick Break+'},
+    VOLT_TACKLE_PLUS:{type:'electric',power:170,energy:100,name:'Volt Tackle+'},
+    DYNAMIC_PUNCH_PLUS:{type:'fighting',power:130,energy:100,name:'Dynamic Punch+'},
+    ZAP_CANNON_PLUS:{type:'electric',power:160,energy:100,name:'Zap Cannon+'},
+    FUTURE_SIGHT_PLUS:{type:'psychic',power:140,energy:100,name:'Future Sight+'},
     LEAF_TORNADO:{type:'grass',power:45,energy:33},
     LEAF_BLADE:{type:'grass',power:70,energy:33},
     FELL_STINGER:{type:'bug',power:45,energy:33},
@@ -1717,7 +1745,7 @@ function buildFallbackData(){
     mk('feraligatr_mega','Mega Feraligatr',['water','dragon'],{atk:304,def:227,hp:198},['BITE','SHADOW_CLAW','WATER_GUN','WATERFALL','ICE_FANG'],['ICE_BEAM','HYDRO_PUMP','CRUNCH','HYDRO_CANNON'],['WATER_GUN'],['HYDRO_CANNON']), // type corrected — gains Dragon on Mega Evolution (confirmed via its "Dragonize" ability description), not pure Water like its base form — inherited from base form's legacy flags, by request — inherited from base form's legacy flags, by request
     mk('froslass','Froslass',['ice','ghost'],{atk:161,def:166,hp:137},['POWDER_SNOW'],['AVALANCHE','SHADOW_BALL']),
     mk('froslass_mega','Mega Froslass',['ghost','ice'],{atk:265,def:178,hp:172},['HEX','POWDER_SNOW'],['SHADOW_BALL','TRIPLE_AXEL','AVALANCHE','CRUNCH']), // added — stats converted from main-series base stats (HP 70/Atk 80/Def 70/SpA 140/SpD 100/Spe 120) provided by user, via the standard post-Nov-2018 GO conversion formula (Attack: 7/8 higher + 1/8 lower stat; Defense: 5/8 higher + 3/8 lower; Stamina: 50 + 1.75×HP); moveset matches base Froslass's real kit, by request
-    mk('gallade_mega','Mega Gallade',['psychic','fighting'],{atk:326,def:230,hp:169},['CONFUSION','LOW_KICK','CHARM','PSYCHO_CUT'],['CLOSE_COMBAT','LEAF_BLADE','PSYCHIC','SYNCHRONOISE','SACRED_SWORD'],[],['SYNCHRONOISE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
+    mk('gallade_mega','Mega Gallade',['psychic','fighting'],{atk:326,def:230,hp:169},['CONFUSION','LOW_KICK','CHARM','PSYCHO_CUT'],['CLOSE_COMBAT','LEAF_BLADE','PSYCHIC','SYNCHRONOISE'],[],['SYNCHRONOISE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
     mk('garchomp','Garchomp',['dragon','ground'],{atk:261,def:193,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER'],[],['EARTH_POWER']), // legacy — confirmed needs Elite Charged TM
     mk('garchomp_mega','Mega Garchomp',['dragon','ground'],{atk:339,def:222,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER'],[],['EARTH_POWER']), // legacy — confirmed needs Elite Charged TM
     mk('garchomp_mega_z','Mega Garchomp Z',['dragon'],{atk:321,def:196,hp:239},['DRAGON_TAIL','MUD_SHOT'],['EARTHQUAKE','OUTRAGE','BREAKING_SWIPE','TWISTER','FIRE_BLAST','SAND_TOMB','EARTH_POWER'],[],['EARTH_POWER']), // type corrected — loses Ground on Mega Evolution, becoming pure Dragon (confirmed via multiple sources), not Dragon/Ground like its base form — inherited from base form's legacy flags, by request
@@ -1753,7 +1781,7 @@ function buildFallbackData(){
     mk('ho_oh','Ho-Oh',['fire','flying'],{atk:239,def:244,hp:214},['INCINERATE','HIDDEN_POWER','EXTRASENSORY','STEEL_WING'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','BRAVE_BIRD','SACRED_FIRE'],[],['EARTHQUAKE','SACRED_FIRE']), // corrected — Fire Fang, Overheat, and Ancient Power were fabricated/not real moves for this Pokémon — legacy — Earthquake confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Sacred Fire confirmed requiring Elite TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Earthquake's flag was never actually taking effect.)
     mk('hoopa_confined','Hoopa (Confined)',['psychic','ghost'],{atk:261,def:187,hp:218},['CONFUSION','ASTONISH'],['SHADOW_BALL','PSYCHIC','PSYBEAM']), // added — dynamic same-family exclusion (see FAMILY_GROUPS) decides which of this and Hoopa (Unbound) to show per matchup, by request — confirmed real moveset/stats via direct research this session
     mk('hoopa_unbound','Hoopa (Unbound)',['psychic','dark'],{atk:311,def:191,hp:218},['CONFUSION','ASTONISH'],['SHADOW_BALL','PSYCHIC','DARK_PULSE']), // added — confirmed real moveset/stats via direct research this session; shares Hoopa Confined's HP exactly, notably higher ATK/DEF
-    mk('houndoom_mega','Mega Houndoom',['dark','fire'],{atk:289,def:194,hp:181},['FIRE_FANG','SNARL','INCINERATE'],['CRUNCH','FIRE_BLAST','FLAMETHROWER','FOUL_PLAY']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('houndoom_mega','Mega Houndoom',['dark','fire'],{atk:289,def:194,hp:181},['FIRE_FANG','SNARL'],['CRUNCH','FIRE_BLAST','FLAMETHROWER','FOUL_PLAY']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('incineroar','Incineroar',['fire','dark'],{atk:214,def:175,hp:216},['SNARL','DOUBLE_KICK','FIRE_FANG'],['DARK_PULSE','BRUTAL_SWING','DARKEST_LARIAT','FIRE_BLAST','BLAST_BURN','BLAZE_KICK'],[],['BLAST_BURN']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('inteleon','Inteleon',['water'],{atk:262,def:142,hp:172},['POUND','WATER_GUN'],['SHADOW_BALL','WATER_PULSE','SURF','HYDRO_CANNON','SNIPE_SHOT'],[],['HYDRO_CANNON']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('jynx','Jynx',['ice','psychic'],{atk:177,def:115,hp:146},['FROST_BREATH'],['ICE_PUNCH','FOCUS_BLAST'],[],['ICE_PUNCH']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
@@ -1976,10 +2004,20 @@ function typeBadges(types, showIcon){
 /** Renders a single move as a colored badge (background = the move's own type, plus its type
  * icon) — same visual treatment as typeBadges() above, but for a move name instead of a type
  * name. Shared between the boss moveset picker and the results table's "Moveset Used" column. */
-function moveBadge(id){
+/** Scales a Mega-exclusive "+" move's displayed "+" count with the current Mega Level slider —
+ * level 1 shows one "+" (the move's own base name already has it), each level above adds one
+ * more, maxing at "++++" for level 4. Only applies when isMegaForm is true; a non-Mega user
+ * showing one of these moves (shouldn't normally happen) just gets the plain base name back. */
+function megaPlusDisplayName(baseName, isMegaForm, megaLevel){
+  if(!isMegaForm || !baseName || !baseName.endsWith('+')) return baseName;
+  const level = Math.min(4, Math.max(1, megaLevel || 4));
+  return baseName.slice(0, -1) + '+'.repeat(level);
+}
+function moveBadge(id, isMegaForm, megaLevel){
   const m = GM.moves[id];
   const t = m ? m.type : 'normal';
-  return `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${typeIconImg(t, 12)}&nbsp;&nbsp;${moveNameSync(id)}</span>`;
+  const name = megaPlusDisplayName(moveNameSync(id), isMegaForm, megaLevel);
+  return `<span class="typebadge" style="background:${TYPE_COLORS[t]||'#888'}">${typeIconImg(t, 12)}&nbsp;&nbsp;${name}</span>`;
 }
 function realTypes(types){ return (types||[]).filter(t => t && t !== 'none'); }
 function multiplier(atkType, defTypes){
@@ -2006,8 +2044,19 @@ function calcDamage(power, atk, def, stab, eff, weatherMult, friendship){
 function partyBoostMultiplier(moveType, cfg){
   let mult = 1;
   if(cfg.bladeBoost) mult *= 1.1;
+  if(cfg.dynamicPunchBoost && (cfg.tier === 'mega' || cfg.tier === 'mega_legendary')) mult *= 1.15; // "Dynamic Punch+" boost, by request — +15% damage, Mega Raid tiers only, 0% otherwise
   if(cfg.megaBoostActive) mult *= (cfg.megaBoostTypes && cfg.megaBoostTypes.includes(moveType)) ? 1.3 : 1.1;
   return mult;
+}
+/** Mega-exclusive "+" moves (Acid Spray+, Liquidation+, Outrage+, etc. — see the "_PLUS"-suffixed
+ * entries in chargeDefs) scale in damage with the "Mega Level" slider, by request: level 1 is the
+ * baseline (100%), each level above adds +10%, maxing out at level 4 (130%). Only applies when BOTH
+ * the move is one of these "+" moves AND the side using it is actually in its Mega form — a "+"
+ * move on a non-Mega user (shouldn't normally happen, but defensively handled) gets no bonus. */
+function megaPlusDamageMultiplier(moveId, isMegaForm, megaLevel){
+  if(!isMegaForm || !moveId || !moveId.endsWith('_PLUS')) return 1;
+  const level = Math.min(4, Math.max(1, megaLevel || 4));
+  return 1 + 0.1*(level-1);
 }
 function fmtTime(s){
   return `${s.toFixed(1)}s`;
@@ -2245,12 +2294,12 @@ const ULTRA_BEAST_DEX_IDS = new Set([793,794,795,796,797,798,799,803,804,805,806
 // direct consequence, since that toggle keys off this same set).
 const UPCOMING_MEGA_SPECIES_IDS = new Set([
   'baxcalibur_mega','zygarde_mega','heatran_mega','zeraora_mega','lucario_mega_z',
-  'darkrai_mega','absol_mega_z','glimmora_mega','excadrill_mega','feraligatr_mega',
+  'darkrai_mega','chandelure_mega','absol_mega_z','glimmora_mega','excadrill_mega','feraligatr_mega',
   'hawlucha_mega','garchomp_mega_z','froslass_mega','meganium_mega',
-  'emboar_mega','golurk_mega','barbaracle_mega',
-  'drampa_mega','eelektross_mega','scrafty_mega','golisopod_mega',
+  'staraptor_mega','emboar_mega','golurk_mega','barbaracle_mega',
+  'drampa_mega','eelektross_mega','clefable_mega','scrafty_mega','golisopod_mega',
   'crabominable_mega','meowstic_mega','pyroar_mega','tatsugiri_mega','scolipede_mega',
-  'chimecho_mega','dragalge_mega','chandelure_mega','staraptor_mega','clefable_mega'
+  'chimecho_mega','dragalge_mega'
 ]);
 function bossAutoTier(p){
   if(isUserExcluded(p)) return null;
@@ -2500,8 +2549,13 @@ function renderBossMoves(p){
   _lastRenderedBossMovesId = p.speciesId;
   const eliteFast = new Set(p.eliteFastMoves||[]);
   const eliteCharge = new Set(p.eliteChargedMoves||[]);
-  const bossFastOptions = p.fastMoves.filter(m => !eliteFast.has(m));
-  const bossChargeOptions = p.chargedMoves.filter(c => c !== 'STRUGGLE' && !eliteCharge.has(c));
+  // Mega-exclusive "+" moves are always legacy and attacker-only, by request — a boss never gets
+  // to use one, regardless of whether the specific species' own eliteFastMoves/eliteChargedMoves
+  // array happens to list it explicitly. Checked generically here (by the "_PLUS" moveId suffix)
+  // rather than requiring every future "+" move assignment to also remember to flag it elite/legacy
+  // per-species — this is the one general rule instead.
+  const bossFastOptions = p.fastMoves.filter(m => !eliteFast.has(m) && !m.endsWith('_PLUS'));
+  const bossChargeOptions = p.chargedMoves.filter(c => c !== 'STRUGGLE' && !eliteCharge.has(c) && !c.endsWith('_PLUS'));
 
   // Build every fast×charge combo (Pokebattler-style single moveset picker) instead of two
   // separate <select> boxes — matches how a real raid boss's moveset is actually chosen as one
@@ -2608,6 +2662,11 @@ function updateFriendshipVisibility(){
 }
 $('players').addEventListener('input', ()=> { $('playersval').textContent = $('players').value; updateFriendshipVisibility(); });
 updateFriendshipVisibility();
+$('megaLevel').addEventListener('input', ()=> {
+  $('megaLevelval').textContent = $('megaLevel').value;
+  if(currentTop30Results.length) updateResultsJsonLink(drawTop30Rows()); // live-updates the "+" count on any displayed Mega-exclusive move without re-simulating — see drawTop30Rows()'s own comment on currentMegaLevel
+});
+$('megaLevelval').textContent = $('megaLevel').value;
 $('megaBoostActive').addEventListener('change', () => {
   $('megaBoostTypeRow').style.display = $('megaBoostActive').checked ? '' : 'none';
 });
@@ -2723,7 +2782,8 @@ function runSim(cfg, rng, bossCtx){
   const fastB_stab = bTypes.includes(fastB.type)?1.2:1, fastB_eff = multiplier(fastB.type, aTypes);
   const chargeA_window = damageWindowSec(chargeA.moveId, chargeADurSec), fastA_window = damageWindowSec(fastA.moveId, fastADurSec);
   const chargeA_name = moveNameSync(chargeA.moveId), fastA_name = moveNameSync(fastA.moveId);
-  const chargeA_partyBoost = partyBoostMultiplier(chargeA.type, cfg), fastA_partyBoost = partyBoostMultiplier(fastA.type, cfg);
+  const chargeA_partyBoost = partyBoostMultiplier(chargeA.type, cfg) * megaPlusDamageMultiplier(chargeA.moveId, !!a.isMegaForm, cfg.megaLevel);
+  const fastA_partyBoost = partyBoostMultiplier(fastA.type, cfg) * megaPlusDamageMultiplier(fastA.moveId, !!a.isMegaForm, cfg.megaLevel);
   const friendshipMult = parseFloat(cfg.friendship);
 
   let aHP = aStats.hp, aEnergy=0, teamDeaths=0, totalDeaths=0, revives=0;
@@ -2858,7 +2918,7 @@ function runSim(cfg, rng, bossCtx){
       const canCharge = bEnergy>=chargeB1.energy && rng() < BOSS_CHARGE_CHANCE;
       let dmg, windowSec, moveTurns, logText;
       if(canCharge){
-        dmg = whiff ? 0 : calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1);
+        dmg = whiff ? 0 : Math.floor(calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1) * megaPlusDamageMultiplier(chargeB1.moveId, !!b.isMegaForm, cfg.megaLevel));
         const selectionTurns = 1; // fixed 0.5s selection delay before the move's own animation starts
         moveTurns = selectionTurns + toTurns(chargeBDurSec);
         windowSec = whiff ? (moveTurns*TURN_SEC) : chargeB_window;
@@ -2938,8 +2998,10 @@ function readGlobalConfig(){
     bossFastId: $('bossfast').value,
     bossCharge1Id: $('bosscharge1').value,
     bladeBoost: $('bladeBoost').checked,
+    dynamicPunchBoost: $('dynamicPunchBoost').checked,
     shieldBoost: $('shieldBoost').checked,
     megaBoostActive: $('megaBoostActive').checked,
+    megaLevel: parseInt($('megaLevel').value, 10),
     partyPowerActive: $('partyPowerActive').checked,
     dodgeChargeOnly: $('dodgeChargeOnly').checked,
     megaBoostTypes: megaBoostSpecialTypes[$('megaBoostType').value] || [$('megaBoostType').value]
@@ -3509,6 +3571,7 @@ function updateResultsJsonLink(results){
       shieldBoost: $('shieldBoost').checked, dodgeChargeOnly: $('dodgeChargeOnly').checked,
       partyPowerActive: $('partyPowerActive').checked, megaBoostActive: $('megaBoostActive').checked,
       megaBoostType: $('megaBoostActive').checked ? $('megaBoostType').value : null,
+      megaLevel: parseInt($('megaLevel').value, 10),
       excludeLegendary: $('excludeLegendary').checked, excludeMegas: $('excludeMegas').checked
     },
     totalSimulations: lastTotalSims,
@@ -3590,6 +3653,7 @@ FAMILY_GROUPS.forEach(group => group.forEach(id => { FAMILY_GROUP_BY_SPECIES[id]
  * just a client-side sort/render pass, so clicking a header is effectively instant. */
 function drawTop30Rows(){
   const excludeLegendary = $('excludeLegendary').checked; // "Exclude Legendary" — default OFF, replacing the old "Include Upcoming Megas" toggle: legendaries show normally unless this is explicitly turned on
+  const currentMegaLevel = parseInt($('megaLevel').value, 10); // read fresh on every render so dragging the slider after a sim still instantly updates the "+" count shown on any Mega-exclusive move, no re-simulation needed (the move's underlying damage was already computed with whatever level was set at simulation time — this only affects the displayed name)
   const excludeMegas = $('excludeMegas').checked; // "Exclude Megas" — default OFF, by request: Megas show normally unless this is explicitly turned on. Independent of "Exclude Legendary" above.
   // Same-family dedup: for every group in FAMILY_GROUPS with more than one member actually present
   // in this buffer, keep only the one with the best (lowest) Estimator and drop the rest — always
@@ -3627,7 +3691,7 @@ function drawTop30Rows(){
       <td>${r.name}</td>
       <td>${renderSpriteImg(r.name)}</td>
       <td>${typeBadges(r.types, true)}</td>
-      <td>${moveBadge(r.fastId)}<br>${moveBadge(r.chargeId)}</td>
+      <td>${moveBadge(r.fastId, r.isMega, currentMegaLevel)}<br>${moveBadge(r.chargeId, r.isMega, currentMegaLevel)}</td>
       <td>${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</td>
       <td class="${estimatorColorClass(r.estimator, bestEstimator)}">${r.estimator.toFixed(2)}</td>
       <td>💀×${r.avgDeaths.toFixed(2)}</td>
@@ -3649,7 +3713,7 @@ function drawTop30Rows(){
         <span class="result-card-name">${r.name}</span>
         <span class="result-card-types">${typeBadges(r.types, true)}</span>
       </div>
-      <div class="result-card-moveset">${moveBadge(r.fastId)}${moveBadge(r.chargeId)}</div>
+      <div class="result-card-moveset">${moveBadge(r.fastId, r.isMega, currentMegaLevel)}${moveBadge(r.chargeId, r.isMega, currentMegaLevel)}</div>
       <div class="result-card-stats">
         <div class="result-card-stat"><span class="result-card-stat-label">Time to Win</span><span class="result-card-stat-value">${fmtTime(r.avgTimeSec)}${r.timeoutRate>0 ? ` ⚠${Math.round(r.timeoutRate*100)}%` : ''}</span></div>
         <div class="result-card-stat"><span class="result-card-stat-label">Estimator</span><span class="result-card-stat-value ${estimatorColorClass(r.estimator, bestEstimator)}">${r.estimator.toFixed(2)}</span></div>
@@ -3760,7 +3824,11 @@ const TIERS = {
 }
 
 const DAMAGE_WINDOW = {
-  406:2.1, 407:2.1, 482:0.9, ACID:0.6, ACID_SPRAY:2.1, ACROBATICS:0.6, AERIAL_ACE:2.0, AEROBLAST:3.3,
+  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0,
+  OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
+  PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
+  FUTURE_SIGHT_PLUS:1.2, // all 13 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
+  ACROBATICS:0.6, AERIAL_ACE:2.0, AEROBLAST:3.3,
   AEROBLAST_PLUS:3.3, AEROBLAST_PLUS_PLUS:3.3, AIR_CUTTER:1.6, AIR_SLASH:0.8, ANCIENT_POWER:2.85, AQUA_JET:1.6, AQUA_STEP:2.05, AQUA_TAIL:1.3,
   ASTONISH:0.6, AURA_SPHERE:1.2, AURORA_BEAM:3.3, AVALANCHE:1.5, BEAK_BLAST:1.5, BEHEMOTH_BASH:0.9, BEHEMOTH_BLADE:2.5, BITE:0.3,
   BLAST_BURN:2.95, BLAZE_KICK:0.25, BLEAKWIND_STORM:2.0, BLIZZARD:1.4, BODY_SLAM:1.3, BONE_CLUB:0.9, BOOMBURST:1.2, BRAVE_BIRD:1.0,
@@ -3816,7 +3884,10 @@ function damageWindowSec(moveId, fullDuration){
 }
 
 const CHARGE_DURATION_OVERRIDES = {
-  ACID_SPRAY:3.0, AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
+  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5,
+  SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
+  VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, // all 13 Mega-exclusive "+" moves, by request
+  AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
   AQUA_STEP:3.5, AQUA_TAIL:2.0, AURA_SPHERE:2.0, AURORA_BEAM:3.5, AVALANCHE:2.5, BEHEMOTH_BASH:1.5,
   BEHEMOTH_BLADE:3.5, BLAST_BURN:3.5, BLAZE_KICK:1.0, BLEAKWIND_STORM:2.5, BLIZZARD:3.0, BODY_SLAM:2.0,
   BOOMBURST:2.5, BRAVE_BIRD:2.0, BREAKING_SWIPE:1.0, BRICK_BREAK:1.5, BRINE:2.5, BRUTAL_SWING:2.0,
@@ -3907,8 +3978,15 @@ function calcDamage(power, atk, def, stab, eff, weatherMult, friendship){
 function partyBoostMultiplier(moveType, cfg){
   let mult = 1;
   if(cfg.bladeBoost) mult *= 1.1;
+  if(cfg.dynamicPunchBoost && (cfg.tier === 'mega' || cfg.tier === 'mega_legendary')) mult *= 1.15; // "Dynamic Punch+" boost, by request — +15% damage, Mega Raid tiers only, 0% otherwise
   if(cfg.megaBoostActive) mult *= (cfg.megaBoostTypes && cfg.megaBoostTypes.includes(moveType)) ? 1.3 : 1.1;
   return mult;
+}
+
+function megaPlusDamageMultiplier(moveId, isMegaForm, megaLevel){
+  if(!isMegaForm || !moveId || !moveId.endsWith('_PLUS')) return 1;
+  const level = Math.min(4, Math.max(1, megaLevel || 4));
+  return 1 + 0.1*(level-1);
 }
 
 function realTypes(types){ return (types||[]).filter(t => t && t !== 'none'); }
@@ -3983,7 +4061,8 @@ function runSim(cfg, rng, bossCtx){
   const fastB_stab = bTypes.includes(fastB.type)?1.2:1, fastB_eff = multiplier(fastB.type, aTypes);
   const chargeA_window = damageWindowSec(chargeA.moveId, chargeADurSec), fastA_window = damageWindowSec(fastA.moveId, fastADurSec);
   const chargeA_name = moveNameSync(chargeA.moveId), fastA_name = moveNameSync(fastA.moveId);
-  const chargeA_partyBoost = partyBoostMultiplier(chargeA.type, cfg), fastA_partyBoost = partyBoostMultiplier(fastA.type, cfg);
+  const chargeA_partyBoost = partyBoostMultiplier(chargeA.type, cfg) * megaPlusDamageMultiplier(chargeA.moveId, !!a.isMegaForm, cfg.megaLevel);
+  const fastA_partyBoost = partyBoostMultiplier(fastA.type, cfg) * megaPlusDamageMultiplier(fastA.moveId, !!a.isMegaForm, cfg.megaLevel);
   const friendshipMult = parseFloat(cfg.friendship);
 
   let aHP = aStats.hp, aEnergy=0, teamDeaths=0, totalDeaths=0, revives=0;
@@ -4118,7 +4197,7 @@ function runSim(cfg, rng, bossCtx){
       const canCharge = bEnergy>=chargeB1.energy && rng() < BOSS_CHARGE_CHANCE;
       let dmg, windowSec, moveTurns, logText;
       if(canCharge){
-        dmg = whiff ? 0 : calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1);
+        dmg = whiff ? 0 : Math.floor(calcDamage(chargeB1.power, bStats.atk, aStats.def, chargeB_stab, chargeB_eff, chargeB_wm, 1) * megaPlusDamageMultiplier(chargeB1.moveId, !!b.isMegaForm, cfg.megaLevel));
         const selectionTurns = 1; // fixed 0.5s selection delay before the move's own animation starts
         moveTurns = selectionTurns + toTurns(chargeBDurSec);
         windowSec = whiff ? (moveTurns*TURN_SEC) : chargeB_window;
