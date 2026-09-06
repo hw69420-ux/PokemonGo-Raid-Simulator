@@ -32,7 +32,7 @@
       radial-gradient(circle at 85% 100%, rgba(51,214,192,0.07), transparent 40%),
       repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
   }
-  .wrap{max-width:1560px;margin:0 auto;padding:36px 26px 80px;overflow-x:hidden;}
+  .wrap{max-width:1920px;margin:0 auto;padding:36px 26px 80px;overflow-x:hidden;}
 
   header.hud{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:24px;margin-bottom:28px;flex-wrap:wrap;gap:14px;}
   .brand{display:flex;align-items:baseline;gap:14px;}
@@ -48,7 +48,7 @@
   .status-dot.err{background:var(--red);animation:none;}
   @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
 
-  .grid{display:grid;grid-template-columns:400px 1fr;gap:26px;}
+  .grid{display:grid;grid-template-columns:360px 1fr;gap:22px;}
   @media (max-width:980px){.grid{grid-template-columns:1fr;} html{font-size:16px;}}
 
   .panel{background:var(--panel);border:1px solid var(--border);border-radius:3px;padding:24px;}
@@ -147,7 +147,7 @@
   .modal-sub{font-family:var(--mono);font-size:12.5px;color:var(--muted);letter-spacing:0.6px;}
 
   .mc-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:14.5px;margin-top:14px;}
-  .mc-table th,.mc-table td{padding:11px 13px;border-bottom:1px solid var(--border);text-align:left;}
+  .mc-table th,.mc-table td{padding:9px 10px;border-bottom:1px solid var(--border);text-align:left;}
   .mc-table th{color:var(--muted);font-weight:500;text-transform:uppercase;font-size:11.5px;letter-spacing:1.2px;position:sticky;top:0;background:var(--panel);z-index:5;cursor:pointer;user-select:none;white-space:nowrap;}
   .mc-table th:hover{color:var(--text);}
   .mc-table th .sort-arrow{display:inline-block;margin-left:3px;font-size:9px;opacity:0.5;}
@@ -172,6 +172,23 @@
   .result-card-stat-label{color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.8px;}
   .result-card-stat-value{font-weight:600;}
   .mc-table tbody tr:hover{background:rgba(255,195,61,0.06);}
+  /* Alternate-moveset expand/collapse (results table + mobile cards), by request — a Pokémon with
+     more than one confirmed moveset gets a small triangle next to its name; clicking the row/card
+     reveals every other close-competitive moveset as its own compact line, each with the same
+     stat set (Time to Win/Estimator/Fainted/DPS/Rejoins) the primary row shows. */
+  tr.has-variants,.result-card.has-variants{cursor:pointer;}
+  .variant-expand-arrow{display:inline-block;margin-right:6px;font-size:11px;color:var(--gold);width:0.7em;}
+  /* Table version: a real <tr>/<td> row (see drawTop30Rows) so every stat lines up under its real
+     column header automatically, same as the primary row above it — no separate flex layout with
+     its own approximated widths to keep in sync with the actual table columns. */
+  .mc-table .variant-row td{background:rgba(255,255,255,0.025);border-bottom:1px dotted rgba(255,255,255,0.06);}
+  .mc-table .variant-row:last-child td{border-bottom:1px solid var(--border);}
+  /* Card version: no table columns to align to at all, so this stays a labeled flex row instead. */
+  .result-card .variant-panel{background:rgba(255,255,255,0.02);margin:12px -14px -14px;padding:10px 14px;border-top:1px solid var(--border);}
+  .result-card .variant-row{display:flex;align-items:center;gap:14px;padding:8px 0;font-family:var(--mono);font-size:13px;border-bottom:1px dotted rgba(255,255,255,0.06);}
+  .result-card .variant-row:last-child{border-bottom:none;}
+  .variant-row-moveset{flex:1;min-width:0;display:flex;align-items:center;gap:2px;flex-wrap:wrap;}
+  .variant-row-stat{flex-shrink:0;width:70px;text-align:right;}
   .stat-good{color:var(--green);}
   .rank-progress-outer{background:#0d0f14;border:1px solid var(--border);height:10px;width:100%;border-radius:2px;overflow:hidden;}
   .rank-progress-inner{height:100%;width:0%;background:linear-gradient(90deg,var(--red),var(--gold));transition:width .18s ease;}
@@ -433,7 +450,7 @@
               <th title="Species name">Pokémon</th>
               <th title="Animated sprite"></th>
               <th title="This Pokémon's type(s)">Type</th>
-              <th title="The fast + charge move combo used for this result — the best-performing super-effective combo found for this Pokémon" style="min-width:160px;">Moveset Used</th>
+              <th title="The fast + charge move combo used for this result — the best-performing super-effective combo found for this Pokémon" style="min-width:130px;">Moveset Used</th>
               <th title="Average time to defeat the boss in an uncapped run (continues until won, not stopped at the time limit)" data-sort="avgTimeSec" data-sort-asc="1">Time to Win <span class="sort-arrow">▾</span></th>
               <th title="How many players it would take to defeat the boss within the time limit, based on the same real 'runs until win' simulation Time to Win comes from — includes downtime from fainting/reviving/dodge-timing, not just a pure damage-output projection" data-sort="estimator" data-sort-asc="1" class="sorted">Estimator <span class="sort-arrow">▾</span></th>
               <th title="Average effective faints across all runs: whole faints, plus the fraction of max HP the finishing Pokémon had already lost by the time the boss went down" data-sort="avgDeaths" data-sort-asc="1">Fainted <span class="sort-arrow">▾</span></th>
@@ -3326,6 +3343,12 @@ async function rankAllAttackers(onProgress){
   const EARLY_EXIT_RATIO = 1.5; // a combo running this many times slower than the current best
   // (once MIN_SCREEN_SAMPLES samples are in) is extremely unlikely to catch up over the remaining
   // samples — stop spending screening budget on it and move to the next combo instead.
+  const ALT_MOVESET_RATIO = 1.25; // by request (raised from 1.12) — a Pokémon's OTHER movesets get fully confirmed and
+  // shown alongside its best one (grouped under the same row, expandable) if their own screening
+  // time is within this ratio of that Pokémon's own best — e.g. Mega Mewtwo X's Psycho Cut/
+  // Psystrike showing as an alternate under its Psycho Cut/Dynamic Punch+ entry. A per-Pokémon
+  // relative bar, not a roster-wide one — this is about "is this genuinely close to this specific
+  // Pokémon's own best option," not "would this rank in the top 30 against every other Pokémon."
   const workerCount = (typeof Worker !== 'undefined')
     // Capped lower on mobile — see isMobileDevice's own comment: many phone SoCs report a high
     // hardwareConcurrency that includes several power-efficiency cores which don't meaningfully
@@ -3384,7 +3407,7 @@ async function rankAllAttackers(onProgress){
         worker.postMessage({
           moves: GM.moves, bossPokemon, pokemonChunk: chunk, baseCfg,
           N, screenN: SCREEN_N, neutralThreshold: NEUTRAL_QUICK_DPS_THRESHOLD,
-          minScreenSamples: MIN_SCREEN_SAMPLES, earlyExitRatio: EARLY_EXIT_RATIO,
+          minScreenSamples: MIN_SCREEN_SAMPLES, earlyExitRatio: EARLY_EXIT_RATIO, altMovesetRatio: ALT_MOVESET_RATIO,
           goals, attackerStats: attackerStatsObj
         });
       }));
@@ -3412,6 +3435,7 @@ async function rankAllAttackers(onProgress){
       if(!fastOptions.length || !chargeOptions.length) continue;
 
       let bestCombo = null, bestScreenTime = Infinity;
+      const viableCombos = []; // every combo that cleared the viability bar, with its own quick screen time — used below to find OTHER close-competitive movesets worth confirming alongside the best one, by request
       const pStats = attackerStatsCache.get(p.speciesId);
       fastOptions.forEach(fastId => {
         chargeOptions.forEach(chargeId => {
@@ -3435,10 +3459,22 @@ async function rankAllAttackers(onProgress){
             }
           }
           const avg = t/samplesRun;
+          viableCombos.push({fastId, chargeId, avg});
           if(avg < bestScreenTime){ bestScreenTime = avg; bestCombo = {fastId, chargeId}; }
         });
       });
       if(!bestCombo) continue; // no viable combo cleared the bar for this Pokémon at all
+
+      // Alternate movesets worth fully confirming alongside the best one, by request — any OTHER
+      // combo within ALT_MOVESET_RATIO of this Pokémon's own best screening time (not a
+      // cross-Pokémon roster-wide comparison — just "is this genuinely close to this Pokémon's own
+      // best option"). Only matters for Pokémon that make the confirm buffer below; harmless to
+      // compute for every Pokémon here since it's cheap (no extra simulation, just re-reading
+      // numbers already produced by the screening pass above).
+      const candidateCombos = viableCombos
+        .filter(c => !(c.fastId === bestCombo.fastId && c.chargeId === bestCombo.chargeId))
+        .filter(c => c.avg <= bestScreenTime * ALT_MOVESET_RATIO)
+        .map(c => ({fastId: c.fastId, chargeId: c.chargeId}));
 
       const cfg = {...baseCfg, attackerId: p.speciesId, fastId: bestCombo.fastId, chargeId: bestCombo.chargeId};
       const bestStats = evaluateCombo(cfg);
@@ -3452,6 +3488,7 @@ async function rankAllAttackers(onProgress){
         types: p.types,
         fastId: bestCombo.fastId,
         chargeId: bestCombo.chargeId,
+        candidateCombos, // consumed only during confirmation, for Pokémon that make CONFIRM_BUFFER — see its own comment
         fastName: moveNameSync(bestCombo.fastId),
         chargeName: moveNameSync(bestCombo.chargeId),
         avgTimeSec: bestStats.typicalTimeSec,
@@ -3525,7 +3562,7 @@ async function rankAllAttackers(onProgress){
         worker.onerror = err => { worker.terminate(); URL.revokeObjectURL(blobUrl); reject(err); };
         worker.postMessage({
           mode: 'confirm', moves: GM.moves, bossPokemon, entriesChunk: chunk, baseCfg,
-          tier: tierData, SOLO_N, CAPPED_N
+          tier: tierData, SOLO_N, CAPPED_N, goals, N
         });
       }));
       const confirmResults = await Promise.all(confirmPromises);
@@ -3544,15 +3581,45 @@ async function rankAllAttackers(onProgress){
     await runConfirmationSingleThreaded();
   }
 
+  /** Runs the exact same confirmation math a primary top30 entry gets (soloDps/estimator/powerPct
+   * via SOLO_N runs, winPct via a separate CAPPED_N capped-run pass) against an arbitrary
+   * (speciesId, fastId, chargeId) combo, single-threaded. Shared by both the primary confirmation
+   * pass above and the alternate-moveset confirmation pass below, so the two stay consistent by
+   * construction rather than by manually keeping two copies of this math in sync. If avgTimeSec
+   * isn't already on r (true for a fresh alternate-moveset candidate, which only went through the
+   * cheap SCREEN_N screening sample, not a full confirmation-grade run), runs evaluateCombo() first
+   * to produce it and every other base stat, exactly like the primary combo got during screening. */
+  async function confirmOneComboSingleThreaded(r){
+    if(r.avgTimeSec === undefined){
+      const stats = evaluateCombo({...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId});
+      Object.assign(r, {
+        avgTimeSec: stats.typicalTimeSec, avgDps: stats.avgDps, avgRevives: stats.avgRevives,
+        avgDeaths: stats.avgDeaths, timeoutRate: stats.timeoutRate, exampleLog: stats.exampleLog,
+        exampleWin: stats.exampleWin, exampleTimeSec: stats.exampleTimeSec, exampleDeaths: stats.exampleDeaths,
+        exampleRevives: stats.exampleRevives, exampleBossHPleft: stats.exampleBossHPleft, exampleBossHPmax: stats.exampleBossHPmax
+      });
+    }
+    const soloCfg = {...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
+    let partyDps = 0;
+    for(let j=0;j<SOLO_N;j++){ partyDps += runSim(soloCfg, null, bossCtx).dps; totalSims++; }
+    partyDps /= SOLO_N;
+    const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
+    r.soloDps = perPlayerDps;
+    r.estimator = baseCfg.players * (r.avgTimeSec / tier.timeLimit);
+    r.powerPct = (perPlayerDps * tier.timeLimit / tier.hp) * 100;
+    const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
+    let wins=0;
+    for(let j=0;j<CAPPED_N;j++){
+      const cr = runSim(cappedCfg, null, bossCtx);
+      totalSims++;
+      if(cr.win) wins++;
+    }
+    r.winPct = (wins/CAPPED_N)*100;
+  }
+
   async function runConfirmationSingleThreaded(){
     for(let i=0; i<top30.length; i++){
       const r = top30[i];
-      const soloCfg = {...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
-      let partyDps = 0;
-      for(let j=0;j<SOLO_N;j++){ partyDps += runSim(soloCfg, null, bossCtx).dps; totalSims++; }
-      partyDps /= SOLO_N;
-      const perPlayerDps = partyDps / Math.max(1, baseCfg.players);
-      r.soloDps = perPlayerDps;
       // Estimator now reflects the SAME "runs until win" simulation Time to Win comes from
       // (r.avgTimeSec, already computed during screening) — changed by request, so downtime from
       // fainting/reviving/dodge-timing counts here too, not just a pure DPS-over-time-limit
@@ -3560,22 +3627,12 @@ async function rankAllAttackers(onProgress){
       // reflects however many players (baseCfg.players) were actually simulated together: if that
       // party takes avgTimeSec against a raid clock of tier.timeLimit, the same math says
       // players × (avgTimeSec/timeLimit) players would be needed to finish in time.
-      r.estimator = baseCfg.players * (r.avgTimeSec / tier.timeLimit);
       // Power%: this attacker's (per-player) un-capped theoretical damage output extrapolated across the
       // full raid time limit, as a % of boss HP — NOT the actual damage dealt in a real (boss-HP-capped)
       // run, which is why strong attackers read >100%. Deliberately still the pure-DPS theoretical
       // figure (unlike Estimator above) — Power% and Estimator are no longer simple reciprocals of
       // each other now that Estimator accounts for downtime and Power% still doesn't.
-      r.powerPct = (perPlayerDps * tier.timeLimit / tier.hp) * 100;
-
-      const cappedCfg = {...baseCfg, capped:true, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
-      let wins=0;
-      for(let j=0;j<CAPPED_N;j++){
-        const cr = runSim(cappedCfg, null, bossCtx);
-        totalSims++;
-        if(cr.win) wins++;
-      }
-      r.winPct = (wins/CAPPED_N)*100;
+      await confirmOneComboSingleThreaded(r);
       // r.avgDeaths is left as-is from the uncapped run above — the true total faint count across
       // the whole fight (which can exceed 6 if the team wipes and revives more than once), not
       // artificially capped at 6 just because that's what this separate capped-run pass measures.
@@ -3585,6 +3642,91 @@ async function rankAllAttackers(onProgress){
   }
 
   top30.sort((a,b) => a.estimator - b.estimator); // match Pokebattler: ranked by Estimator
+
+  // Every entry starts with its own already-confirmed primary combo as variants[0] — even a
+  // Pokémon with no close alternates still gets a one-item variants array, so rendering logic can
+  // treat "variants" uniformly rather than needing a separate code path for "has variants or not."
+  top30.forEach(r => { r.variants = [{...r}]; });
+
+  /** Defensive dedup: never let a variant with the same (fastId, chargeId) as one already in
+   * parent.variants (including the primary, variants[0]) get added a second time — confirmed to
+   * happen in practice for at least one species (the exact cause wasn't fully isolated, but this
+   * closes the symptom regardless of root cause, and is a reasonable safeguard either way — a
+   * Pokémon should never show the identical moveset twice in its own variant list). */
+  function pushVariantIfNew(parent, variant){
+    const dup = parent.variants.some(v => v.fastId === variant.fastId && v.chargeId === variant.chargeId);
+    if(!dup) parent.variants.push(variant);
+  }
+
+  // Alternate-moveset confirmation, by request — for every top30 entry that had OTHER movesets
+  // close enough to its own best during screening (candidateCombos, populated above), fully confirm
+  // each of those too (same soloDps/estimator/powerPct/winPct math the primary combo just went
+  // through) and group them all under that one Pokémon's entry as `variants`, sorted best-first.
+  // The primary combo's own already-confirmed stats become variants[0] — nothing about how the
+  // main row displays or sorts changes, this only adds the extra data the results screen's
+  // per-Pokémon expand menu reads from.
+  const variantJobs = []; // flat list across every top30 entry, for a single combined Worker dispatch
+  top30.forEach((r, parentIdx) => {
+    (r.candidateCombos||[]).forEach(c => variantJobs.push({parentIdx, fastId: c.fastId, chargeId: c.chargeId}));
+  });
+  if(variantJobs.length){
+    if(workerCount > 1){
+      try {
+        const bossPokemon = GM.byId[baseCfg.bossId];
+        const tierData = TIERS[baseCfg.tier];
+        const jobEntries = variantJobs.map(job => {
+          const parent = top30[job.parentIdx];
+          return {
+            speciesId: parent.speciesId, fastId: job.fastId, chargeId: job.chargeId,
+            baseStats: GM.byId[parent.speciesId].baseStats, isMegaForm: !!GM.byId[parent.speciesId].isMegaForm,
+            types: GM.byId[parent.speciesId].types // real bug fix — this was missing entirely, silently
+            // zeroing out STAB (1.2x) for every alternate-moveset variant's damage calc, since
+            // runSim() reads the attacker's own types via GM.byId to determine it. The primary
+            // combo's confirmation was never affected (it's built via a full {...r} spread that
+            // already carried types along), only this newer alternate-variant path was missing it.
+          };
+        });
+        const chunks = Array.from({length: workerCount}, () => []);
+        jobEntries.forEach((entry, i) => chunks[i % workerCount].push(entry));
+        const variantPromises = chunks.map(chunk => new Promise((resolve, reject) => {
+          if(!chunk.length) return resolve({entries: [], simCount: 0});
+          const workerSrc = document.getElementById('simWorkerSource').textContent;
+          const blobUrl = URL.createObjectURL(new Blob([workerSrc], {type:'application/javascript'}));
+          const worker = new Worker(blobUrl);
+          worker.onmessage = e => {
+            if(e.data.type === 'done'){ worker.terminate(); URL.revokeObjectURL(blobUrl); resolve(e.data); }
+          };
+          worker.onerror = err => { worker.terminate(); URL.revokeObjectURL(blobUrl); reject(err); };
+          worker.postMessage({ mode:'confirm', moves: GM.moves, bossPokemon, entriesChunk: chunk, baseCfg, tier: tierData, SOLO_N, CAPPED_N, goals, N });
+        }));
+        const variantResults = await Promise.all(variantPromises);
+        const byKey = new Map();
+        variantResults.forEach(res => { res.entries.forEach(e => byKey.set(e.speciesId+'|'+e.fastId+'|'+e.chargeId, e)); totalSims += res.simCount; });
+        variantJobs.forEach(job => {
+          const parent = top30[job.parentIdx];
+          const confirmed = byKey.get(parent.speciesId+'|'+job.fastId+'|'+job.chargeId);
+          if(confirmed) pushVariantIfNew(parent, confirmed);
+        });
+      } catch(variantErr){
+        console.warn('[RaidCalc] Web Worker alternate-moveset confirmation failed, falling back to single-threaded:', variantErr);
+        for(const job of variantJobs){
+          const parent = top30[job.parentIdx];
+          const variant = {speciesId: parent.speciesId, pokemonId: parent.pokemonId, isLegendary: parent.isLegendary, isMega: parent.isMega, name: parent.name, types: parent.types, fastId: job.fastId, chargeId: job.chargeId, fastName: moveNameSync(job.fastId), chargeName: moveNameSync(job.chargeId)};
+          await confirmOneComboSingleThreaded(variant); // avgTimeSec isn't set yet — this runs evaluateCombo() first automatically, see its own comment
+          pushVariantIfNew(parent, variant);
+        }
+      }
+    } else {
+      for(const job of variantJobs){
+        const parent = top30[job.parentIdx];
+        const variant = {speciesId: parent.speciesId, pokemonId: parent.pokemonId, isLegendary: parent.isLegendary, isMega: parent.isMega, name: parent.name, types: parent.types, fastId: job.fastId, chargeId: job.chargeId, fastName: moveNameSync(job.fastId), chargeName: moveNameSync(job.chargeId)};
+        await confirmOneComboSingleThreaded(variant); // avgTimeSec isn't set yet — this runs evaluateCombo() first automatically, see its own comment
+        pushVariantIfNew(parent, variant);
+      }
+    }
+    top30.forEach(r => r.variants.sort((a,b) => a.estimator - b.estimator));
+  }
+
   lastTotalSims = totalSims;
   return top30;
 }
@@ -3681,6 +3823,29 @@ function drawTop30Rows(){
     .slice()
     .sort((a,b) => a.avgTimeSec - b.avgTimeSec)
     .slice(0, 30);
+  // Alternate-moveset visibility cutoff, by request — an alternate variant only shows in a
+  // Pokémon's expand menu if it would ALSO beat the 30th-ranked Pokémon's own best Estimator (i.e.
+  // it's genuinely competitive enough to independently belong in this list), not just "close to
+  // this Pokémon's own best" (that looser bar is what decided which alternates got fully confirmed
+  // during simulation in the first place — see rankAllAttackers' ALT_MOVESET_RATIO; this is a
+  // stricter, second filter applied only at render time). With fewer than 30 results visible at
+  // all, there's no meaningful "30th place" to compare against, so every confirmed variant shows.
+  const variantCutoff = visible.length >= 30 ? visible[29].estimator : Infinity;
+  visible.forEach(r => {
+    // Final dedup guard, right before rendering — belt-and-braces on top of pushVariantIfNew() in
+    // rankAllAttackers (which is meant to prevent this at the source): confirmed to still show up
+    // in practice at least once (a Mega Malamar entry displaying the exact same Psywave/Psybeam+
+    // moveset twice, identical stats and all), so this closes the symptom unconditionally at
+    // render time regardless of how a duplicate (fastId, chargeId) pair ends up in r.variants.
+    const seen = new Set();
+    const dedupedVariants = (r.variants||[r]).filter(v => {
+      const key = v.fastId + '|' + v.chargeId;
+      if(seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+    r.visibleVariants = dedupedVariants.filter((v,i) => i === 0 || v.estimator <= variantCutoff);
+  });
   const { key, asc } = currentSort;
   const sorted = [...visible].sort((a,b) => asc ? a[key]-b[key] : b[key]-a[key]);
   const bestEstimator = visible.length ? Math.min(...visible.map(r => r.estimator)) : 1; // reference point for estimatorColorClass — the best (lowest) Estimator among the currently-visible results, not a fixed absolute anchor, by request
@@ -3688,10 +3853,33 @@ function drawTop30Rows(){
     th.classList.toggle('sorted', th.dataset.sort === key);
   });
   $('top30Body').innerHTML = sorted.map((r,i) => {
+    const hasVariants = r.visibleVariants && r.visibleVariants.length > 1;
+    const expandCell = hasVariants ? `<span class="variant-expand-arrow">▸</span>` : '';
+    // Each alternate is its own real <tr> with the SAME 10 <td> columns as the primary row (blank
+    // for #/Pokémon/Sprite/Type, which the primary row right above it already shows) — by request,
+    // so every stat lines up under its real column header instead of a separate flex layout with
+    // its own approximated widths that drifted out of alignment with the actual table columns.
+    // Individually hidden via display:none (not wrapped in their own <tbody>, which was a real
+    // HTML-validity bug here — a <tbody> can't nest inside the existing <tbody id="top30Body">
+    // these rows already live in, so the browser's parser silently closed and reopened tbody
+    // boundaries around it, corrupting the intended structure and making expand/collapse unreliable).
+    const variantRows = hasVariants ? r.visibleVariants.slice(1).map(v => `
+    <tr class="variant-row" data-variant-group="${i}" style="display:none;">
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>${moveBadge(v.fastId)}<br>${moveBadge(v.chargeId)}</td>
+      <td>${fmtTime(v.avgTimeSec)}</td>
+      <td class="${estimatorColorClass(v.estimator, bestEstimator)}">${v.estimator.toFixed(2)}</td>
+      <td>💀×${v.avgDeaths.toFixed(2)}</td>
+      <td>${v.avgDps.toFixed(2)}</td>
+      <td>${Math.round(v.avgRevives)}</td>
+    </tr>`).join('') : '';
     return `
-    <tr>
+    <tr class="${hasVariants ? 'has-variants' : ''}" data-variant-toggle="${i}">
       <td>${i+1}</td>
-      <td>${formNameDisplay(r.name)}</td>
+      <td>${expandCell}${formNameDisplay(r.name)}</td>
       <td>${renderSpriteImg(r.name)}</td>
       <td>${typeBadges(r.types, true)}</td>
       <td>${moveBadge(r.fastId)}<br>${moveBadge(r.chargeId)}</td>
@@ -3701,6 +3889,7 @@ function drawTop30Rows(){
       <td>${r.avgDps.toFixed(2)}</td>
       <td>${Math.round(r.avgRevives)}</td>
     </tr>
+    ${variantRows}
   `;
   }).join('');
   // Mobile card layout — same data, same sort order as the table above, just rendered as stacked
@@ -3708,12 +3897,23 @@ function drawTop30Rows(){
   // (controlled by the @media (max-width:600px) block), but both are always kept in sync here so
   // there's no extra render call needed anywhere else — resizing the window just reveals whichever
   // was already there.
-  $('top30Cards').innerHTML = sorted.map((r,i) => `
-    <div class="result-card">
+  $('top30Cards').innerHTML = sorted.map((r,i) => {
+    const hasVariants = r.visibleVariants && r.visibleVariants.length > 1;
+    const variantRows = hasVariants ? r.visibleVariants.slice(1).map(v => `
+      <div class="variant-row">
+        <span class="variant-row-moveset">${moveBadge(v.fastId)}${moveBadge(v.chargeId)}</span>
+        <span class="variant-row-stat">${fmtTime(v.avgTimeSec)}</span>
+        <span class="variant-row-stat ${estimatorColorClass(v.estimator, bestEstimator)}">${v.estimator.toFixed(2)}</span>
+        <span class="variant-row-stat">💀×${v.avgDeaths.toFixed(2)}</span>
+        <span class="variant-row-stat">${v.avgDps.toFixed(2)}</span>
+        <span class="variant-row-stat">${Math.round(v.avgRevives)}</span>
+      </div>`).join('') : '';
+    return `
+    <div class="result-card ${hasVariants ? 'has-variants' : ''}" data-variant-toggle="card${i}">
       <div class="result-card-head">
         <span class="result-card-rank">${i+1}</span>
         ${renderSpriteImg(r.name)}
-        <span class="result-card-name">${formNameDisplay(r.name)}</span>
+        <span class="result-card-name">${hasVariants ? `<span class="variant-expand-arrow">▸</span>` : ''}${formNameDisplay(r.name)}</span>
         <span class="result-card-types">${typeBadges(r.types, true)}</span>
       </div>
       <div class="result-card-moveset">${moveBadge(r.fastId)}${moveBadge(r.chargeId)}</div>
@@ -3724,8 +3924,10 @@ function drawTop30Rows(){
         <div class="result-card-stat"><span class="result-card-stat-label">DPS</span><span class="result-card-stat-value">${r.avgDps.toFixed(2)}</span></div>
         <div class="result-card-stat"><span class="result-card-stat-label">Rejoins</span><span class="result-card-stat-value">${Math.round(r.avgRevives)}</span></div>
       </div>
+      ${hasVariants ? `<div class="variant-panel" id="variantPanelcard${i}" style="display:none;">${variantRows}</div>` : ''}
     </div>
-  `).join('');
+  `;
+  }).join('');
   return sorted;
 }
 
@@ -3740,6 +3942,25 @@ document.addEventListener('click', e => {
     if(currentSort.key === key) currentSort.asc = !currentSort.asc;
     else currentSort = { key, asc: th.dataset.sortAsc === '1' };
     updateResultsJsonLink(drawTop30Rows());
+  }
+  // Alternate-moveset expand/collapse, by request — clicking a Pokémon with more than one
+  // confirmed variant toggles every other close-competitive moveset that got fully simulated
+  // alongside the primary one. Table layout: each alternate is its own <tr data-variant-group>
+  // (no wrapping container — a <tbody> can't validly nest inside the existing results <tbody>, so
+  // each row is toggled individually instead). Card layout: a single <div id="variantPanelcard…">
+  // block, which CAN validly hold its own children, so that one stays as one panel.
+  const toggleEl = e.target.closest('[data-variant-toggle]');
+  if(toggleEl && !e.target.closest('[data-logidx]')){
+    const idx = toggleEl.dataset.variantToggle;
+    const groupRows = document.querySelectorAll('[data-variant-group="' + idx + '"]');
+    const panel = document.getElementById('variantPanel' + idx);
+    const nowOpen = groupRows.length
+      ? groupRows[0].style.display === 'none'
+      : (panel ? panel.style.display === 'none' : false);
+    groupRows.forEach(row => { row.style.display = nowOpen ? '' : 'none'; });
+    if(panel) panel.style.display = nowOpen ? '' : 'none';
+    const arrow = toggleEl.querySelector('.variant-expand-arrow');
+    if(arrow) arrow.textContent = nowOpen ? '▾' : '▸';
   }
 });
 $('mobileSortSelect').addEventListener('change', () => {
@@ -4342,7 +4563,7 @@ function evaluateCombo(cfg, N, bossCtx, goals){
 // Worker sends back: { type:'progress', done } periodically, then { type:'done', results, simCount }
 self.onmessage = function(e){
   if(e.data.mode === 'confirm'){ handleConfirmMessage(e); return; }
-  const { moves, bossPokemon, pokemonChunk, baseCfg, N, screenN, neutralThreshold, attackerStats, minScreenSamples, earlyExitRatio } = e.data;
+  const { moves, bossPokemon, pokemonChunk, baseCfg, N, screenN, neutralThreshold, attackerStats, minScreenSamples, earlyExitRatio, altMovesetRatio } = e.data;
   GM = { moves, byId: { [baseCfg.bossId]: bossPokemon } };
   const bossCtx = computeBossContext(baseCfg);
   const bossTypes = bossCtx.bTypes;
@@ -4358,6 +4579,7 @@ self.onmessage = function(e){
     if(!fastOptions.length || !chargeOptions.length) continue;
 
     let bestCombo = null, bestScreenTime = Infinity;
+    const viableCombos = []; // mirrors the main thread's single-threaded fallback exactly — see its own comment for the reasoning
     const pStats = attackerStats[p.speciesId];
     fastOptions.forEach(fastId => {
       chargeOptions.forEach(chargeId => {
@@ -4379,10 +4601,16 @@ self.onmessage = function(e){
           }
         }
         const avg = t/samplesRun;
+        viableCombos.push({fastId, chargeId, avg});
         if(avg < bestScreenTime){ bestScreenTime = avg; bestCombo = {fastId, chargeId}; }
       });
     });
     if(!bestCombo) continue;
+
+    const candidateCombos = viableCombos
+      .filter(c => !(c.fastId === bestCombo.fastId && c.chargeId === bestCombo.chargeId))
+      .filter(c => c.avg <= bestScreenTime * altMovesetRatio)
+      .map(c => ({fastId: c.fastId, chargeId: c.chargeId}));
 
     const cfg = {...baseCfg, attackerId: p.speciesId, fastId: bestCombo.fastId, chargeId: bestCombo.chargeId};
     const bestStats = evaluateCombo(cfg, N, bossCtx, goals);
@@ -4397,6 +4625,7 @@ self.onmessage = function(e){
       types: p.types,
       fastId: bestCombo.fastId,
       chargeId: bestCombo.chargeId,
+      candidateCombos,
       fastName: moveNameSync(bestCombo.fastId),
       chargeName: moveNameSync(bestCombo.chargeId),
       avgTimeSec: bestStats.typicalTimeSec,
@@ -4426,13 +4655,27 @@ self.onmessage = function(e){
  * this phase — previously always single-threaded even when screening was parallelized — gets the
  * same speedup. */
 function handleConfirmMessage(e){
-  const { moves, bossPokemon, entriesChunk, baseCfg, tier, SOLO_N, CAPPED_N } = e.data;
+  const { moves, bossPokemon, entriesChunk, baseCfg, tier, SOLO_N, CAPPED_N, goals } = e.data;
   GM = { moves, byId: { [baseCfg.bossId]: bossPokemon } };
   const bossCtx = computeBossContext(baseCfg);
   let simCount = 0;
 
   entriesChunk.forEach(r => {
-    GM.byId[r.speciesId] = { speciesId: r.speciesId, baseStats: r.baseStats, isMegaForm: !!r.isMegaForm }; // isMegaForm added — real bug fix, see the main-thread chunk-building comment for the full explanation
+    GM.byId[r.speciesId] = { speciesId: r.speciesId, baseStats: r.baseStats, isMegaForm: !!r.isMegaForm, types: r.types }; // isMegaForm added — real bug fix, see the main-thread chunk-building comment for the full explanation. types added — separate real bug fix: without it, STAB (1.2x) silently never applied to any alternate-moveset variant's damage calc, since this object doubles as the attacker runSim() reads types from
+    // A fresh alternate-moveset candidate (see the main thread's variant-confirmation dispatch)
+    // only went through the cheap screening sample, not a full confirmation-grade run — run
+    // evaluateCombo() first to produce avgTimeSec and every other base stat, exactly like the
+    // primary combo got during screening, before the confirmation math below needs avgTimeSec.
+    if(r.avgTimeSec === undefined){
+      const stats = evaluateCombo({...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId}, e.data.N || 350, bossCtx, goals);
+      simCount += stats.simCount;
+      Object.assign(r, {
+        avgTimeSec: stats.typicalTimeSec, avgDps: stats.avgDps, avgRevives: stats.avgRevives,
+        avgDeaths: stats.avgDeaths, timeoutRate: stats.timeoutRate, exampleLog: stats.exampleLog,
+        exampleWin: stats.exampleWin, exampleTimeSec: stats.exampleTimeSec, exampleDeaths: stats.exampleDeaths,
+        exampleRevives: stats.exampleRevives, exampleBossHPleft: stats.exampleBossHPleft, exampleBossHPmax: stats.exampleBossHPmax
+      });
+    }
     const soloCfg = {...baseCfg, attackerId: r.speciesId, fastId: r.fastId, chargeId: r.chargeId};
     let partyDps = 0;
     for(let j=0;j<SOLO_N;j++){ partyDps += runSim(soloCfg, null, bossCtx).dps; simCount++; }
@@ -4441,7 +4684,8 @@ function handleConfirmMessage(e){
     r.soloDps = perPlayerDps;
     // Mirrors the main thread's confirmation loop exactly — see its own comment for the reasoning.
     // r.avgTimeSec already arrived in this chunk's payload (spread straight from the screening
-    // result on the main thread before dispatch), so no extra data plumbing was needed here.
+    // result on the main thread before dispatch) for a primary combo, or was just computed above
+    // for a fresh alternate-moveset candidate.
     r.estimator = baseCfg.players * (r.avgTimeSec / tier.timeLimit);
     r.powerPct = (perPlayerDps * tier.timeLimit / tier.hp) * 100;
 
