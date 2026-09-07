@@ -3653,13 +3653,16 @@ async function rankAllAttackers(onProgress){
   // treat "variants" uniformly rather than needing a separate code path for "has variants or not."
   top30.forEach(r => { r.variants = [{...r}]; });
 
-  /** Defensive dedup: never let a variant with the same (fastId, chargeId) as one already in
-   * parent.variants (including the primary, variants[0]) get added a second time — confirmed to
-   * happen in practice for at least one species (the exact cause wasn't fully isolated, but this
-   * closes the symptom regardless of root cause, and is a reasonable safeguard either way — a
-   * Pokémon should never show the identical moveset twice in its own variant list). */
+  /** Defensive dedup: never let a variant with the same DISPLAYED moveset (compared by name, not
+   * raw fastId/chargeId — see drawTop30Rows' own render-time guard for why: two technically-
+   * different move IDs can still resolve to the same displayed name, e.g. a live-data key vs. this
+   * roster's own ALL_CAPS one for what's really the same move) as one already in parent.variants
+   * (including the primary, variants[0]) get added a second time — confirmed to happen in practice
+   * for at least one species. Catching it here too (not just at render time) also avoids wasting a
+   * full confirmation-grade simulation on a combo that was always going to get filtered out anyway. */
   function pushVariantIfNew(parent, variant){
-    const dup = parent.variants.some(v => v.fastId === variant.fastId && v.chargeId === variant.chargeId);
+    const key = moveNameSync(variant.fastId) + '|' + moveNameSync(variant.chargeId);
+    const dup = parent.variants.some(v => (moveNameSync(v.fastId) + '|' + moveNameSync(v.chargeId)) === key);
     if(!dup) parent.variants.push(variant);
   }
 
@@ -3841,10 +3844,15 @@ function drawTop30Rows(){
     // rankAllAttackers (which is meant to prevent this at the source): confirmed to still show up
     // in practice at least once (a Mega Malamar entry displaying the exact same Psywave/Psybeam+
     // moveset twice, identical stats and all), so this closes the symptom unconditionally at
-    // render time regardless of how a duplicate (fastId, chargeId) pair ends up in r.variants.
+    // render time regardless of how a duplicate (fastId, chargeId) pair ends up in r.variants. Key
+    // is the DISPLAYED move names (moveNameSync), not the raw fastId/chargeId strings — confirmed
+    // this still let a visual duplicate through once (Zapdos (Galarian)'s Counter/Fly), which points
+    // at two technically-different internal move IDs (e.g. a live-data key vs. this roster's own
+    // ALL_CAPS one) resolving to the same displayed name — the raw-ID key missed that case, but a
+    // name-based key can't, since "look the same" is exactly what this guard needs to prevent.
     const seen = new Set();
     const dedupedVariants = (r.variants||[r]).filter(v => {
-      const key = v.fastId + '|' + v.chargeId;
+      const key = moveNameSync(v.fastId) + '|' + moveNameSync(v.chargeId);
       if(seen.has(key)) return false;
       seen.add(key);
       return true;
