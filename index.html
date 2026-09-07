@@ -76,8 +76,9 @@
   .combo-select-btn:focus{outline:2px solid var(--red);outline-offset:1px;}
   .combo-select-caret{color:var(--muted);font-size:11px;flex-shrink:0;transition:transform .12s ease;}
   .combo-select.open .combo-select-caret{transform:rotate(180deg);}
-  .combo-select-label-inner{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;overflow:hidden;min-width:0;flex:1;}
-  .combo-select-label-inner .typebadge,.combo-select-option .typebadge{min-width:0;flex-shrink:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;}
+  .combo-select-label-inner{display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0;flex:1;overflow:hidden;}
+  .combo-select-label-inner .typebadge,.combo-select-option .typebadge{flex-shrink:0;white-space:nowrap;display:inline-flex;padding:3px 7px;font-size:10px;margin-right:0;margin-top:0;}
+  .combo-select-label-inner .typebadge img,.combo-select-option .typebadge img{width:10px !important;height:10px !important;}
   .combo-select-sep{color:var(--muted);flex-shrink:0;display:inline-block;width:1px;} /* was a literal "/" character before, by request — now nearly zero gap between the two move badges */
   .combo-select-panel{
     position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:50;
@@ -95,7 +96,8 @@
   .combo-select-option:hover,.combo-select-option.active{background:rgba(255,195,61,0.08);}
 
   .typebadge{display:inline-flex;align-items:center;padding:4px 11px;border-radius:2px;font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:0.6px;color:#0a0c11;font-weight:700;margin-right:6px;margin-top:4px;white-space:nowrap;}
-  #bossTypeInline .typebadge{padding:2px 6px;font-size:9px;margin-top:0;margin-right:0;}
+  #bossTypeInline .typebadge{padding:5px 12px;font-size:12.5px;margin-top:0;margin-right:0;}
+  #bossTypeInline .typebadge img{width:16px !important;height:16px !important;}
 
   button.primary{
     width:100%;margin-top:22px;padding:17px;background:var(--red);color:#fff;border:none;
@@ -229,8 +231,8 @@
        vertically next to the dropdown (see #bossTypeInline's own base rule) same as desktop, kept
        explicit here too so it can't accidentally be affected by any other mobile-only rule, and
        sized down a bit further since screen space is tighter. */
-    .boss-type-inline{white-space:normal !important;display:flex !important;flex-direction:column !important;gap:2px !important;}
-    #bossTypeInline .typebadge{padding:1px 5px;font-size:8px;}
+    .boss-type-inline{flex-wrap:wrap;}
+    #bossTypeInline .typebadge{padding:4px 10px;font-size:11px;}
 
     /* Results, mobile: a table can't reasonably reflow to fit a phone screen no matter how much
        font/padding is shaved off it (10 columns is still 10 columns), so below this breakpoint the
@@ -347,7 +349,7 @@
         <div id="partyPowerRow">
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
           <input type="checkbox" id="partyPowerActive" style="width:auto;">
-          Party Power in use (36-point bar fills from fast-move hits at 36/n per party of n, doubles the next charged attack for everyone when full)
+          Party Power in use
         </label>
         </div>
         <label style="display:flex;align-items:center;gap:8px;margin-top:8px;text-transform:none;font-size:13px;">
@@ -377,10 +379,10 @@
         </select>
 
         <label for="bossSelect">Pokémon</label>
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <span id="bossSpriteImg" style="flex-shrink:0;"></span>          <select id="bossSelect" style="flex:1;"></select>
-          <span id="bossTypeInline" style="white-space:nowrap;display:flex;flex-direction:column;gap:3px;" class="boss-type-inline"></span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span id="bossSpriteImg" style="flex-shrink:0;"></span>          <select id="bossSelect" style="flex:1;min-width:0;"></select>
         </div>
+        <div id="bossTypeInline" style="display:flex;gap:8px;margin-top:8px;justify-content:center;" class="boss-type-inline"></div>
 
         <label for="bossMoveCombo">Moveset</label>
         <div class="combo-select" id="bossMoveComboWrap">
@@ -2522,6 +2524,7 @@ function selectBoss(id){
   if(!p) return;
   selectedBossId = id;
   $('rankBtn').disabled = false; // stays disabled (see onDataReady) until an actual boss is picked, by request — nothing pre-selected on load
+  $('bossSelect').title = formNameDisplay(p.speciesName); // shows the full name as a hover tooltip if the native <select> ever still has to truncate it on a genuinely narrow window
   const autoTier = bossAutoTier(p);
   if(autoTier){ $('tier').value = autoTier; syncTierComboDisplay(); }
   renderBossMoves(p);
