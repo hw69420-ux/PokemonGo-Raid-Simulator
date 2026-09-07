@@ -3408,7 +3408,7 @@ async function rankAllAttackers(onProgress){
           moves: GM.moves, bossPokemon, pokemonChunk: chunk, baseCfg,
           N, screenN: SCREEN_N, neutralThreshold: NEUTRAL_QUICK_DPS_THRESHOLD,
           minScreenSamples: MIN_SCREEN_SAMPLES, earlyExitRatio: EARLY_EXIT_RATIO, altMovesetRatio: ALT_MOVESET_RATIO,
-          goals, attackerStats: attackerStatsObj
+          goals, attackerStats: attackerStatsObj, mobile
         });
       }));
       const workerStartTime = performance.now();
@@ -3470,8 +3470,10 @@ async function rankAllAttackers(onProgress){
       // cross-Pokémon roster-wide comparison — just "is this genuinely close to this Pokémon's own
       // best option"). Only matters for Pokémon that make the confirm buffer below; harmless to
       // compute for every Pokémon here since it's cheap (no extra simulation, just re-reading
-      // numbers already produced by the screening pass above).
-      const candidateCombos = viableCombos
+      // numbers already produced by the screening pass above). Skipped entirely on mobile, by
+      // request — mobile goes back to calculating only the single best moveset per Pokémon, same
+      // as before this whole feature existed, to keep its simulation workload down.
+      const candidateCombos = mobile ? [] : viableCombos
         .filter(c => !(c.fastId === bestCombo.fastId && c.chargeId === bestCombo.chargeId))
         .filter(c => c.avg <= bestScreenTime * ALT_MOVESET_RATIO)
         .map(c => ({fastId: c.fastId, chargeId: c.chargeId}));
@@ -4563,7 +4565,7 @@ function evaluateCombo(cfg, N, bossCtx, goals){
 // Worker sends back: { type:'progress', done } periodically, then { type:'done', results, simCount }
 self.onmessage = function(e){
   if(e.data.mode === 'confirm'){ handleConfirmMessage(e); return; }
-  const { moves, bossPokemon, pokemonChunk, baseCfg, N, screenN, neutralThreshold, attackerStats, minScreenSamples, earlyExitRatio, altMovesetRatio } = e.data;
+  const { moves, bossPokemon, pokemonChunk, baseCfg, N, screenN, neutralThreshold, attackerStats, minScreenSamples, earlyExitRatio, altMovesetRatio, mobile } = e.data;
   GM = { moves, byId: { [baseCfg.bossId]: bossPokemon } };
   const bossCtx = computeBossContext(baseCfg);
   const bossTypes = bossCtx.bTypes;
@@ -4607,7 +4609,7 @@ self.onmessage = function(e){
     });
     if(!bestCombo) continue;
 
-    const candidateCombos = viableCombos
+    const candidateCombos = mobile ? [] : viableCombos
       .filter(c => !(c.fastId === bestCombo.fastId && c.chargeId === bestCombo.chargeId))
       .filter(c => c.avg <= bestScreenTime * altMovesetRatio)
       .map(c => ({fastId: c.fastId, chargeId: c.chargeId}));
