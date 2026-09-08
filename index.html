@@ -3346,7 +3346,7 @@ async function rankAllAttackers(onProgress){
   const EARLY_EXIT_RATIO = 1.5; // a combo running this many times slower than the current best
   // (once MIN_SCREEN_SAMPLES samples are in) is extremely unlikely to catch up over the remaining
   // samples — stop spending screening budget on it and move to the next combo instead.
-  const ALT_MOVESET_RATIO = 1.25; // by request (raised from 1.12) — a Pokémon's OTHER movesets get fully confirmed and
+  const ALT_MOVESET_RATIO = 1.10; // by request (lowered from 1.25) — a Pokémon's OTHER movesets get fully confirmed and
   // shown alongside its best one (grouped under the same row, expandable) if their own screening
   // time is within this ratio of that Pokémon's own best — e.g. Mega Mewtwo X's Psycho Cut/
   // Psystrike showing as an alternate under its Psycho Cut/Dynamic Punch+ entry. A per-Pokémon
