@@ -650,7 +650,7 @@ const DAMAGE_WINDOW = {
   ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0,
   OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
   PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
-  FUTURE_SIGHT_PLUS:1.2, // all 13 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
+  FUTURE_SIGHT_PLUS:1.2, FELL_STINGER_PLUS:1.6, DARK_PULSE_PLUS:1.4, // all 15 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
   ACROBATICS:0.6, AERIAL_ACE:2.0, AEROBLAST:3.3,
   AEROBLAST_PLUS:3.3, AEROBLAST_PLUS_PLUS:3.3, AIR_CUTTER:1.6, AIR_SLASH:0.8, ANCIENT_POWER:2.85, AQUA_JET:1.6, AQUA_STEP:2.05, AQUA_TAIL:1.3,
   ASTONISH:0.6, AURA_SPHERE:1.2, AURORA_BEAM:3.3, AVALANCHE:1.5, BEAK_BLAST:1.5, BEHEMOTH_BASH:0.9, BEHEMOTH_BLADE:2.5, BITE:0.3,
@@ -719,7 +719,7 @@ function damageWindowSec(moveId, fullDuration){
 const CHARGE_DURATION_OVERRIDES = {
   ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5,
   SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
-  VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, // all 13 Mega-exclusive "+" moves, by request
+  VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, FELL_STINGER_PLUS:2.0, DARK_PULSE_PLUS:3.0, // all 15 Mega-exclusive "+" moves, by request
   AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
   AQUA_STEP:3.5, AQUA_TAIL:2.0, AURA_SPHERE:2.0, AURORA_BEAM:3.5, AVALANCHE:2.5, BEHEMOTH_BASH:1.5,
   BEHEMOTH_BLADE:3.5, BLAST_BURN:3.5, BLAZE_KICK:1.0, BLEAKWIND_STORM:2.5, BLIZZARD:3.0, BODY_SLAM:2.0,
@@ -1661,6 +1661,7 @@ function buildFallbackData(){
     LEAF_TORNADO:{type:'grass',power:45,energy:33},
     LEAF_BLADE:{type:'grass',power:70,energy:33},
     FELL_STINGER:{type:'bug',power:45,energy:33},
+    FELL_STINGER_PLUS:{type:'bug',power:140,energy:100,name:'Fell Stinger+'}, // Mega-exclusive "+" move, by request — same pattern as the other 13 "+" moves — energy given as -100
     GUNK_SHOT:{type:'poison',power:130,energy:100},
     DISCHARGE:{type:'electric',power:65,energy:33},
     // NOTE: the following four are less rigorously confirmed than most of this session's values —
@@ -1670,6 +1671,7 @@ function buildFallbackData(){
     BRICK_BREAK:{type:'fighting',power:40,energy:33},
     DRILL_PECK:{type:'flying',power:70,energy:33},
     DARK_PULSE:{type:'dark',power:80,energy:50}, // fixing a bookkeeping gap — window was confirmed earlier this session but power/energy/duration were never actually added
+    DARK_PULSE_PLUS:{type:'dark',power:150,energy:100,name:'Dark Pulse+'}, // Mega-exclusive "+" move, by request (German name given: Finsteraura, confirmed = Dark Pulse) — same pattern as the other 14 "+" moves — energy given as -100
     SACRED_SWORD:{type:'fighting',power:50,energy:33} // corrected — was 60/33 (flagged last time as unconfirmed general knowledge); now confirmed via db.pokemongohub.net
   };
   Object.entries(fastDefs).forEach(([id,d]) => moves[id] = {moveId:id,name:moveNameSync(id),...d});
@@ -1806,7 +1808,7 @@ function buildFallbackData(){
     mk('baxcalibur','Baxcalibur',['dragon','ice'],{atk:254,def:168,hp:229},['ICE_FANG','DRAGON_BREATH'],['AVALANCHE','BLIZZARD','ICY_WIND','DRAGON_CLAW','OUTRAGE','GLAIVE_RUSH'],[],['GLAIVE_RUSH']), // legacy — Community Day exclusive move
     mk('baxcalibur_mega','Mega Baxcalibur',['dragon','ice'],{atk:331,def:221,hp:243},['ICE_FANG','DRAGON_BREATH'],['AVALANCHE','BLIZZARD','ICY_WIND','DRAGON_CLAW','OUTRAGE','GLAIVE_RUSH'],[],['GLAIVE_RUSH']), // legacy — Community Day exclusive move; also excluded from this species' raid boss moveset once it has one, per request
     mk('beartic','Beartic',['ice'],{atk:233,def:152,hp:216},['POWDER_SNOW','CHARM'],['ICE_PUNCH','PLAY_ROUGH']), // not a raid boss (ex-Tier 3) — attacker roster only; stats corrected (was atk:181, real is 233) and CHARM added (confirmed part of its best moveset) while restoring
-    mk('beedrill_mega','Mega Beedrill',['bug','poison'],{atk:303,def:148,hp:163},['BUG_BITE','INFESTATION','POISON_JAB','POISON_STING'],['AERIAL_ACE','SLUDGE_BOMB','X_SCISSOR','FELL_STINGER','DRILL_RUN'],['BUG_BITE'],['DRILL_RUN']), // confirmed directly via PvPoke's raw gamemaster.json
+    mk('beedrill_mega','Mega Beedrill',['bug','poison'],{atk:303,def:148,hp:163},['BUG_BITE','INFESTATION','POISON_JAB','POISON_STING'],['AERIAL_ACE','SLUDGE_BOMB','X_SCISSOR','FELL_STINGER','DRILL_RUN','FELL_STINGER_PLUS'],['BUG_BITE'],['DRILL_RUN']), // added Fell Stinger+ (charge), by request — confirmed directly via PvPoke's raw gamemaster.json
     mk('blacephalon','Blacephalon',['fire','ghost'],{atk:315,def:148,hp:142},['ASTONISH','INCINERATE'],['SHADOW_BALL','OVERHEAT','MYSTICAL_FIRE','MIND_BLOWN'],[],['MIND_BLOWN']), // legacy — confirmed by user, reverting my earlier misread of a news article
     mk('blastoise_mega','Mega Blastoise',['water'],{atk:264,def:237,hp:188},['BITE','ROLLOUT','WATER_GUN'],['ICE_BEAM','SKULL_BASH','FLASH_CANNON','HYDRO_PUMP','HYDRO_CANNON'],[],['HYDRO_CANNON']), // confirmed via direct db.pokemongohub.net fetch — legacy
     mk('blaziken_mega','Mega Blaziken',['fire','fighting'],{atk:329,def:168,hp:190},['COUNTER','EMBER','FIRE_SPIN'],['FOCUS_BLAST','AURA_SPHERE','OVERHEAT','BLAST_BURN','BLAZE_KICK','BRAVE_BIRD','STONE_EDGE'],[],['BLAST_BURN','STONE_EDGE']), // stats corrected via direct db.pokemongohub.net fetch — was 292/158, real is 329/168; also added missing Ember (fast) and Focus Blast (charge) from its real full kit. Confirmed current active Mega raid boss — legacy — both confirmed with an asterisk on gohub
@@ -1895,7 +1897,7 @@ function buildFallbackData(){
     mk('ho_oh','Ho-Oh',['fire','flying'],{atk:239,def:244,hp:214},['INCINERATE','HIDDEN_POWER','EXTRASENSORY','STEEL_WING'],['EARTHQUAKE','FIRE_BLAST','SOLAR_BEAM','BRAVE_BIRD','SACRED_FIRE'],[],['EARTHQUAKE','SACRED_FIRE']), // corrected — Fire Fang, Overheat, and Ancient Power were fabricated/not real moves for this Pokémon — legacy — Earthquake confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification; Sacred Fire confirmed requiring Elite TM. (Fixed a real bug here: these were two separate assignments to the same property, so the second was silently overwriting the first — Earthquake's flag was never actually taking effect.)
     mk('hoopa_confined','Hoopa (Confined)',['psychic','ghost'],{atk:261,def:187,hp:218},['CONFUSION','ASTONISH'],['SHADOW_BALL','PSYCHIC','PSYBEAM']), // added, by request — confirmed real moveset/stats via direct research this session; shown separately from Hoopa (Unbound) rather than deduplicated
     mk('hoopa_unbound','Hoopa (Unbound)',['psychic','dark'],{atk:311,def:191,hp:218},['CONFUSION','ASTONISH'],['SHADOW_BALL','PSYCHIC','DARK_PULSE']), // added — confirmed real moveset/stats via direct research this session; shares Hoopa Confined's HP exactly, notably higher ATK/DEF
-    mk('houndoom_mega','Mega Houndoom',['dark','fire'],{atk:289,def:194,hp:181},['FIRE_FANG','SNARL'],['CRUNCH','FIRE_BLAST','FLAMETHROWER','FOUL_PLAY']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('houndoom_mega','Mega Houndoom',['dark','fire'],{atk:289,def:194,hp:181},['FIRE_FANG','SNARL'],['CRUNCH','FIRE_BLAST','FLAMETHROWER','FOUL_PLAY','DARK_PULSE_PLUS']), // added Dark Pulse+ (charge), by request — confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('incineroar','Incineroar',['fire','dark'],{atk:214,def:175,hp:216},['SNARL','DOUBLE_KICK','FIRE_FANG'],['DARK_PULSE','BRUTAL_SWING','DARKEST_LARIAT','FIRE_BLAST','BLAST_BURN','BLAZE_KICK'],[],['BLAST_BURN']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('inteleon','Inteleon',['water'],{atk:262,def:142,hp:172},['POUND','WATER_GUN'],['SHADOW_BALL','WATER_PULSE','SURF','HYDRO_CANNON','SNIPE_SHOT'],[],['HYDRO_CANNON']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('jynx','Jynx',['ice','psychic'],{atk:177,def:115,hp:146},['FROST_BREATH'],['ICE_PUNCH','FOCUS_BLAST'],[],['ICE_PUNCH']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
@@ -4131,7 +4133,7 @@ const DAMAGE_WINDOW = {
   ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0,
   OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
   PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
-  FUTURE_SIGHT_PLUS:1.2, // all 13 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
+  FUTURE_SIGHT_PLUS:1.2, FELL_STINGER_PLUS:1.6, DARK_PULSE_PLUS:1.4, // all 15 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
   ACROBATICS:0.6, AERIAL_ACE:2.0, AEROBLAST:3.3,
   AEROBLAST_PLUS:3.3, AEROBLAST_PLUS_PLUS:3.3, AIR_CUTTER:1.6, AIR_SLASH:0.8, ANCIENT_POWER:2.85, AQUA_JET:1.6, AQUA_STEP:2.05, AQUA_TAIL:1.3,
   ASTONISH:0.6, AURA_SPHERE:1.2, AURORA_BEAM:3.3, AVALANCHE:1.5, BEAK_BLAST:1.5, BEHEMOTH_BASH:0.9, BEHEMOTH_BLADE:2.5, BITE:0.3,
@@ -4190,7 +4192,7 @@ function damageWindowSec(moveId, fullDuration){
 const CHARGE_DURATION_OVERRIDES = {
   ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5,
   SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
-  VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, // all 13 Mega-exclusive "+" moves, by request
+  VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, FELL_STINGER_PLUS:2.0, DARK_PULSE_PLUS:3.0, // all 15 Mega-exclusive "+" moves, by request
   AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
   AQUA_STEP:3.5, AQUA_TAIL:2.0, AURA_SPHERE:2.0, AURORA_BEAM:3.5, AVALANCHE:2.5, BEHEMOTH_BASH:1.5,
   BEHEMOTH_BLADE:3.5, BLAST_BURN:3.5, BLAZE_KICK:1.0, BLEAKWIND_STORM:2.5, BLIZZARD:3.0, BODY_SLAM:2.0,
