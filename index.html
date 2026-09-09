@@ -930,7 +930,15 @@ function isLegendaryPokemonId(pokemonId){
  * FULLY MERGED roster (after applyFallbackOverrides, or on the fallback-only array in the
  * loadFallback() path) — not inside buildFallbackData() itself, which only ever sees the fallback
  * dataset in isolation and would miss any base form that's live-data-only. */
-function applyMegaMovepoolInheritance(pokemonList){
+function applyMegaMovepoolInheritance(pokemonList, moves){
+  // Dedup by DISPLAYED move name, not the raw id string — confirmed this was the actual bug behind
+  // the visible duplicate: a live-data base form can carry a move under its own display-name-style
+  // id (e.g. "Brick Break") while this roster's own Mega entry already has the same real move under
+  // its ALL_CAPS fallback id ("BRICK_BREAK") — two different strings, same real move, so a plain
+  // Set-based union (comparing the raw ids) let both through, and the boss moveset picker then
+  // showed what looked like the identical move twice, since both ids resolve to the same displayed
+  // name. `moves` is passed in directly (not GM.moves) because this runs before GM.moves is set.
+  const nameOf = id => (moves[id] && moves[id].name) || id;
   pokemonList.forEach(p => {
     const baseNameMatch = p.speciesName.match(/^(Mega|Primal)\s+(.+?)(\s+(X|Y|Z))?$/i);
     if(!baseNameMatch) return;
@@ -940,7 +948,15 @@ function applyMegaMovepoolInheritance(pokemonList){
     ['fastMoves','chargedMoves','eliteFastMoves','eliteChargedMoves'].forEach(kind => {
       const baseList = base[kind] || [];
       const ownList = p[kind] || [];
-      p[kind] = [...new Set([...ownList, ...baseList])];
+      const seen = new Set();
+      const merged = [];
+      [...ownList, ...baseList].forEach(id => {
+        const key = nameOf(id);
+        if(seen.has(key)) return;
+        seen.add(key);
+        merged.push(id);
+      });
+      p[kind] = merged;
     });
   });
 }
@@ -1273,7 +1289,7 @@ async function loadGameMaster(){
     // have real per-species/per-move gaps this session). Runs before GM is populated so every
     // downstream consumer (boss dropdown, attacker ranking, etc.) sees the corrected data.
     applyFallbackOverrides(pokemon, moves);
-    applyMegaMovepoolInheritance(pokemon);
+    applyMegaMovepoolInheritance(pokemon, moves);
 
     GM.moves = moves;
     GM.pokemon = pokemon;
@@ -2022,7 +2038,7 @@ function buildFallbackData(){
  * entirely — assigns straight to GM, same as this function always did before the refactor. */
 function loadFallback(){
   const data = buildFallbackData();
-  applyMegaMovepoolInheritance(data.pokemon);
+  applyMegaMovepoolInheritance(data.pokemon, data.moves);
   GM.moves = data.moves;
   GM.pokemon = data.pokemon;
   GM.byId = {};
