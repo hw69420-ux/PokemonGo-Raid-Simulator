@@ -912,6 +912,38 @@ function isLegendaryPokemonId(pokemonId){
   return LEGENDARY_IDS.has(pokemonId) || MYTHICAL_IDS.has(pokemonId);
 }
 
+/** RULE, by request: a Mega/Primal form's movepool always includes everything its base form can
+ * learn — automatically, not by manually re-typing the base's fastMoves/chargedMoves into every
+ * Mega's own mk() line and having to remember to keep the two in sync by hand (confirmed this
+ * session, repeatedly, that hand-syncing drifts — 15 real base/Mega mismatches were found and
+ * fixed in one pass earlier). A Mega's own mk() call only needs to list what's genuinely EXTRA for
+ * that form (Mega-exclusive "+" moves, a signature move the base doesn't get, etc.) — this step
+ * unions that with the base's full movepool afterward. Legacy/elite flags are unioned the same
+ * way, so a move flagged legacy on the base is automatically flagged legacy on every Mega too,
+ * matching the "mega mirrors base's legacy flags" convention already used throughout this roster.
+ * Matches by the Mega's DISPLAYED NAME (stripping the "Mega "/"Primal " prefix and an optional
+ * trailing " X"/" Y"/" Z"), not by speciesId — confirmed the speciesId approach was a real, live
+ * bug for any Mega whose own base form has no fallback mk() entry of its own (e.g. Mega Aggron,
+ * Mega Skarmory): that base form only exists via live data, under an opaque auto-generated
+ * speciesId like "p306", never the clean "aggron" a speciesId-based match would have looked for —
+ * so the earlier version of this rule silently never found those bases at all. Must run on the
+ * FULLY MERGED roster (after applyFallbackOverrides, or on the fallback-only array in the
+ * loadFallback() path) — not inside buildFallbackData() itself, which only ever sees the fallback
+ * dataset in isolation and would miss any base form that's live-data-only. */
+function applyMegaMovepoolInheritance(pokemonList){
+  pokemonList.forEach(p => {
+    const baseNameMatch = p.speciesName.match(/^(Mega|Primal)\s+(.+?)(\s+(X|Y|Z))?$/i);
+    if(!baseNameMatch) return;
+    const baseName = baseNameMatch[2];
+    const base = pokemonList.find(pp => pp.speciesName === baseName);
+    if(!base) return;
+    ['fastMoves','chargedMoves','eliteFastMoves','eliteChargedMoves'].forEach(kind => {
+      const baseList = base[kind] || [];
+      const ownList = p[kind] || [];
+      p[kind] = [...new Set([...ownList, ...baseList])];
+    });
+  });
+}
 async function loadGameMaster(){
   const dot = document.getElementById('statusDot');
   const text = document.getElementById('statusText');
@@ -1219,29 +1251,6 @@ async function loadGameMaster(){
       }
     });
 
-    // RULE, by request: a Mega/Primal form's movepool always includes everything its base form
-    // can learn — automatically, not by manually re-typing the base's fastMoves/chargedMoves into
-    // every Mega's own mk() line and having to remember to keep the two in sync by hand (confirmed
-    // this session, repeatedly, that hand-syncing drifts — 15 real base/Mega mismatches were found
-    // and fixed in one pass earlier). A Mega's own mk() call only needs to list what's genuinely
-    // EXTRA for that form (Mega-exclusive "+" moves, a signature move the base doesn't get, etc.) —
-    // this step unions that with the base's full movepool afterward. Legacy/elite flags are unioned
-    // the same way, so a move flagged legacy on the base is automatically flagged legacy on every
-    // Mega too, matching the "mega mirrors base's legacy flags" convention already used throughout
-    // this roster. Matches speciesId patterns like "alakazam_mega", "charizard_mega_x",
-    // "absol_mega_z" — anything ending in "_mega", optionally followed by "_x"/"_y"/"_z".
-    pokemon.forEach(p => {
-      const baseMatch = p.speciesId.match(/^(.+)_mega(_x|_y|_z)?$/);
-      if(!baseMatch) return;
-      const base = pokemon.find(pp => pp.speciesId === baseMatch[1]);
-      if(!base) return;
-      ['fastMoves','chargedMoves','eliteFastMoves','eliteChargedMoves'].forEach(kind => {
-        const baseList = base[kind] || [];
-        const ownList = p[kind] || [];
-        p[kind] = [...new Set([...ownList, ...baseList])];
-      });
-    });
-
     // Move-stats gap-fill: ensure a specific real move has its power/energy/duration defined even
     // if PogoAPI's live fast_moves.json/charged_moves.json is missing or incomplete for it (same
     // rationale as the other gap-fills above — only fills in if genuinely absent, never overrides
@@ -1264,6 +1273,7 @@ async function loadGameMaster(){
     // have real per-species/per-move gaps this session). Runs before GM is populated so every
     // downstream consumer (boss dropdown, attacker ranking, etc.) sees the corrected data.
     applyFallbackOverrides(pokemon, moves);
+    applyMegaMovepoolInheritance(pokemon);
 
     GM.moves = moves;
     GM.pokemon = pokemon;
@@ -2012,6 +2022,7 @@ function buildFallbackData(){
  * entirely — assigns straight to GM, same as this function always did before the refactor. */
 function loadFallback(){
   const data = buildFallbackData();
+  applyMegaMovepoolInheritance(data.pokemon);
   GM.moves = data.moves;
   GM.pokemon = data.pokemon;
   GM.byId = {};
