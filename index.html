@@ -1325,6 +1325,11 @@ async function loadGameMaster(){
       // move from the Tier 3 fallback group into Tier 5), then re-apply auto-tier for whichever
       // boss is currently selected.
       buildBossDropdown();
+      initTierCombo(); // rebuilds the tier dropdown's own option list (and its per-tier "(N)" counts)
+      // too, not just the selected button's label via syncTierComboDisplay below — confirmed this
+      // was a real bug: the button showed the freshly-recomputed count, but the dropdown panel's
+      // own option rows were built once at initial load and never refreshed, so they kept showing
+      // the smaller pre-confirmation count indefinitely.
       if(selectedBossId && GM.byId[selectedBossId]){
         const autoTier = bossAutoTier(GM.byId[selectedBossId]);
         if(autoTier){ $('tier').value = autoTier; syncTierComboDisplay(); updateBossInfo(); }
