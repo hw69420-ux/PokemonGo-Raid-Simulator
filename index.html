@@ -674,7 +674,7 @@ const POGOAPI_MEGA_URL = 'https://pogoapi.net/api/v1/mega_pokemon.json';
  * sourced from Niantic's own GAME_MASTER data (damageWindowStartMs field). Moves not listed here
  * fall back to the move's full duration (i.e. damage assumed to land at the end) until confirmed. */
 const DAMAGE_WINDOW = {
-  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0,
+  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0, BRAVE_BIRD_PLUS:1.0,
   OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
   PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
   FUTURE_SIGHT_PLUS:1.2, FELL_STINGER_PLUS:1.6, DARK_PULSE_PLUS:1.4, // all 15 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
@@ -744,7 +744,7 @@ function damageWindowSec(moveId, fullDuration){
 // community-maintained mirror that can lag behind real game updates for individual moves. Anything
 // not listed here falls through to live API duration, then a rough estimate — see chargeDuration().
 const CHARGE_DURATION_OVERRIDES = {
-  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5,
+  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5, BRAVE_BIRD_PLUS:2.0,
   SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
   VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, FELL_STINGER_PLUS:2.0, DARK_PULSE_PLUS:3.0, // all 15 Mega-exclusive "+" moves, by request
   AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
@@ -1741,6 +1741,7 @@ function buildFallbackData(){
     FELL_STINGER_PLUS:{type:'bug',power:140,energy:100,name:'Fell Stinger+'}, // Mega-exclusive "+" move, by request — same pattern as the other 13 "+" moves — energy given as -100
     GUNK_SHOT:{type:'poison',power:130,energy:100},
     DISCHARGE:{type:'electric',power:65,energy:33},
+    BRAVE_BIRD_PLUS:{type:'flying',power:150,energy:100},
     // NOTE: the following four are less rigorously confirmed than most of this session's values —
     // no clean current citation found despite searching; from well-established general knowledge.
     POWER_WHIP:{type:'grass',power:90,energy:50},
@@ -2110,9 +2111,9 @@ function buildFallbackData(){
     mk('solgaleo','Solgaleo',['psychic','steel'],{atk:255,def:191,hp:264},['ZEN_HEADBUTT','FIRE_SPIN'],['IRON_HEAD','FLAMETHROWER','SOLAR_BEAM','PSYCHIC_FANGS']), // corrected — Psycho Cut and Focus Blast were fabricated/not real; Sunsteel Strike confirmed exclusive to Dusk Mane Necrozma only, not Solgaleo itself
     mk('stakataka','Stakataka',['rock','steel'],{atk:213,def:298,hp:156},['TAKE_DOWN','ROCK_THROW'],['STONE_EDGE','FLASH_CANNON','BULLDOZE']),
     mk('staraptor','Staraptor',['normal','flying'],{atk:234,def:140,hp:198},['WING_ATTACK','QUICK_ATTACK','GUST','SAND_ATTACK'],['HEAT_WAVE','CLOSE_COMBAT','BRAVE_BIRD','FLY'],['GUST']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-    mk('staraptor_mega','Mega Staraptor',['fighting','flying'],{atk:278,def:207,hp:198},['WING_ATTACK','QUICK_ATTACK','GUST','SAND_ATTACK'],['HEAT_WAVE','CLOSE_COMBAT','BRAVE_BIRD','FLY'],['GUST']), // type corrected — gains Fighting in place of Normal on Mega Evolution (confirmed via multiple sources), not Normal/Flying like its base form — inherited from base form's legacy flags, by request
+    mk('staraptor_mega','Mega Staraptor',['fighting','flying'],{atk:278,def:207,hp:198},['WING_ATTACK','QUICK_ATTACK','GUST','SAND_ATTACK'],['HEAT_WAVE','CLOSE_COMBAT','BRAVE_BIRD','FLY','BRAVE_BIRD_PLUS'],['GUST']), // type corrected — gains Fighting in place of Normal on Mega Evolution (confirmed via multiple sources), not Normal/Flying like its base form — inherited from base form's legacy flags, by request
     mk('starmie','Starmie',['water','psychic'],{atk:210,def:184,hp:155},['TACKLE','WATER_GUN','HIDDEN_POWER','PSYWAVE'],['PSYBEAM','ICE_BEAM','AQUA_JET','POWER_GEM','THUNDER','HYDRO_PUMP','PSYCHIC','SURF'],['TACKLE']), // added — matches its already-existing Mega form's confirmed real moveset — legacy, by request
-    mk('starmie_mega','Mega Starmie',['water','psychic'],{atk:276,def:229,hp:155},['TACKLE','WATER_GUN','HIDDEN_POWER','PSYWAVE'],['PSYBEAM','ICE_BEAM','AQUA_JET','POWER_GEM','THUNDER','HYDRO_PUMP','PSYCHIC','SURF','LIQUIDATION_PLUS'],['TACKLE']), // added Liquidation+ (charge), by request — placed on the Mega form specifically (not base Starmie, where an earlier version of this assignment was found) since only a Mega form actually benefits from the Mega Level slider's power boost, matching every other "+" move assignment in this roster — stats corrected via user-provided data — was 229/155, real is 276/229 — inherited from base form's legacy flags, by request
+    mk('starmie_mega','Mega Starmie',['water','psychic'],{atk:276,def:229,hp:155},['TACKLE','WATER_GUN','HIDDEN_POWER','PSYWAVE'],['PSYBEAM','ICE_BEAM','AQUA_JET','POWER_GEM','THUNDER','HYDRO_PUMP','PSYCHIC','SURF',''],['TACKLE']), // added Liquidation+ (charge), by request — placed on the Mega form specifically (not base Starmie, where an earlier version of this assignment was found) since only a Mega form actually benefits from the Mega Level slider's power boost, matching every other "+" move assignment in this roster — stats corrected via user-provided data — was 229/155, real is 276/229 — inherited from base form's legacy flags, by request
     mk('steelix_mega','Mega Steelix',['steel','ground'],{atk:212,def:327,hp:181},['DRAGON_TAIL','IRON_TAIL','THUNDER_FANG'],['CRUNCH','EARTHQUAKE','HEAVY_SLAM','PSYCHIC_FANGS','BREAKING_SWIPE']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('suicune','Suicune',['water'],{atk:180,def:235,hp:225},['SNARL','EXTRASENSORY','HIDDEN_POWER','ICE_FANG','WATER_GUN'],['ICE_BEAM','BUBBLE_BEAM','WATER_PULSE','SCALD','HYDRO_PUMP'],['HIDDEN_POWER']), // corrected — Waterfall was fabricated; Suicune famously had no Water-type fast move until Water Gun was added Dec 2025 — legacy
     mk('swampert_mega','Mega Swampert',['water','ground'],{atk:283,def:218,hp:225},['MUD_SHOT','WATER_GUN'],['EARTHQUAKE','SLUDGE_WAVE','SURF','HYDRO_CANNON','MUDDY_WATER','SLUDGE'],[],['HYDRO_CANNON']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
@@ -4287,7 +4288,7 @@ const TIERS = {
 }
 
 const DAMAGE_WINDOW = {
-  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0,
+  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0, BRAVE_BIRD_PLUS:1.0,
   OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
   PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
   FUTURE_SIGHT_PLUS:1.2, FELL_STINGER_PLUS:1.6, DARK_PULSE_PLUS:1.4, // all 15 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
@@ -4347,7 +4348,7 @@ function damageWindowSec(moveId, fullDuration){
 }
 
 const CHARGE_DURATION_OVERRIDES = {
-  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5,
+  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5, BRAVE_BIRD_PLUS:2.0,
   SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
   VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, FELL_STINGER_PLUS:2.0, DARK_PULSE_PLUS:3.0, // all 15 Mega-exclusive "+" moves, by request
   AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
