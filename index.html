@@ -579,6 +579,33 @@ const WEATHER = {
 };
 const CPM = {20:0.5974,25:0.6612,30:0.7317,35:0.76156,40:0.79030001,45:0.81613,50:0.84029999};
 // ================================================================================================
+// BEGINNER'S GUIDE TO RAID TIERS — read this first if you've never edited code before.
+//
+// TIERS (right below) lists every raid difficulty category (Tier 5, Mega Raid, etc.) and the
+// numbers that describe how tough that category's boss is. A real example, read left to right:
+//   t5:{label:'Tier 5 · Legendary',cpm:0.79030001,hp:15000,timeLimit:300},
+//   t5                 — the tier's internal ID, used elsewhere in the file to refer to this tier.
+//                         Changing this ID would break every other place that mentions "t5" — safe
+//                         to leave alone even if you're changing the other numbers.
+//   label:'...'         — the text shown in the Raid Tier dropdown. Change this freely; it's just
+//                         display text and doesn't affect the simulation math at all.
+//   cpm:0.79030001      — "CP Multiplier," basically the raid boss's effective level. This is
+//                         almost always the same number (0.79030001, which is level 40) for every
+//                         tier — don't change this unless you're certain a specific tier's boss
+//                         really does battle at a different level in the real game.
+//   hp:15000            — the boss's total HP for this tier. Bigger number = the boss takes longer
+//                         to defeat (more total damage needed) in every simulation for this tier.
+//                         This is the number most likely to actually change over time as the real
+//                         game gets balance updates — safe to just update this one number if
+//                         Niantic changes a tier's boss HP.
+//   timeLimit:300        — how many seconds real players get to finish this raid (usually 300 = 5
+//                         minutes). Used to calculate the "Estimator" (how many players are needed)
+//                         — a smaller number here makes every Pokémon's Estimator worse (need more
+//                         players) for that tier, since there's less time to work with.
+// Changing hp or timeLimit only affects that ONE tier line — every other tier stays exactly as it
+// was. A typo in a number (missing/extra zero) won't cause an error, it'll just make every raid in
+// that tier simulate as unrealistically easy or hard.
+// ================================================================================================
 // TO ADD A NEW RAID TIER: touch all of these, in order —
 //   1. TIERS (below) — add {key: {label, cpm, hp, timeLimit}}. hp/timeLimit are the raid boss's
 //      actual battle stats for that tier; cpm is almost always 0.79030001 (level 40) unless the
@@ -1365,6 +1392,33 @@ async function loadGameMaster(){
  * covers, while everything outside that set still comes straight from PogoAPI as before. */
 function buildFallbackData(){
   const moves = {};
+  // ============================================================================================
+  // BEGINNER'S GUIDE TO FAST MOVES — read this first if you've never edited code before.
+  //
+  // Each line below defines one "fast" move — the tap-to-attack move every Pokémon uses between
+  // its big charge attacks. A real example:
+  //   COUNTER:{type:'fighting',power:13,energyGain:9,cooldown:1000},
+  //   COUNTER            — the move's internal ID. ALWAYS ALL CAPS WITH UNDERSCORES for spaces
+  //                         (e.g. QUICK_ATTACK). This exact spelling is what a Pokémon's own
+  //                         fastMoves list (further down this file) must reference to use this move
+  //                         — mistype it in one place and the two won't match up.
+  //   type:'fighting'    — the move's type, lowercase, a real type name. Determines whether it's
+  //                         super effective, resisted, or neutral against a given raid boss.
+  //   power:13           — how much damage one use of this move does before other multipliers
+  //                         (STAB, type effectiveness, etc.) are applied. Bigger number = more
+  //                         damage per hit. Change this and every Pokémon that knows this move
+  //                         immediately hits harder or softer with it, everywhere in the app.
+  //   energyGain:9        — how much energy one use of this move builds up toward the Pokémon's
+  //                         charge move (which needs a set amount of energy — see chargeDefs below
+  //                         — before it can be used). Bigger number = charge moves come faster.
+  //   cooldown:1000       — how long, in milliseconds (1000 = 1 second), this move's own animation
+  //                         takes before the Pokémon can act again. Smaller number = this move (and
+  //                         therefore this Pokémon) attacks more often per second.
+  // Changing any of these four numbers only affects THIS move, for every Pokémon that knows it —
+  // there's no per-Pokémon override, so a change here is global. A typo in the number itself (an
+  // extra zero, a missing digit) won't cause an error, it'll just make every Pokémon using this
+  // move noticeably too strong or too weak without any warning.
+  // ============================================================================================
   const fastDefs = {
     COUNTER:{type:'fighting',power:13,energyGain:9,cooldown:1000},
     PSYCHO_CUT:{type:'psychic',power:4,energyGain:7,cooldown:500},
@@ -1446,6 +1500,24 @@ function buildFallbackData(){
     FORCE_PALM:{type:'fighting',power:10,energyGain:16,cooldown:1000},
     ROLLOUT:{type:'rock',power:15,energyGain:19,cooldown:1500}
   };
+  // ============================================================================================
+  // BEGINNER'S GUIDE TO CHARGE MOVES — the "big attack," costs energy (built up by fast moves,
+  // above) to use. A real example:
+  //   DYNAMIC_PUNCH:{type:'fighting',power:85,energy:50},
+  //   DYNAMIC_PUNCH      — internal ID, same ALL_CAPS rule as fast moves above — must match exactly
+  //                         wherever a Pokémon's chargedMoves list (further down) references it.
+  //   type:'fighting'    — the move's type, same meaning as for fast moves above.
+  //   power:85           — damage from one use, before other multipliers — same idea as fast moves,
+  //                         but charge moves are usually much stronger per hit since they're used
+  //                         far less often.
+  //   energy:50           — how much energy this move COSTS to use (the opposite of a fast move's
+  //                         energyGain) — the Pokémon needs to have built up at least this much
+  //                         energy from its fast move first. Bigger number = this attack takes
+  //                         longer to "charge up" and use.
+  // Same rule as fast moves: a change here affects every Pokémon that knows this move, everywhere
+  // in the app, and a typo in a number just quietly makes this move too strong or too weak rather
+  // than causing a visible error.
+  // ============================================================================================
   const chargeDefs = {
     DYNAMIC_PUNCH:{type:'fighting',power:85,energy:50},
     CROSS_CHOP:{type:'fighting',power:50,energy:50},
@@ -1751,6 +1823,50 @@ function buildFallbackData(){
     return {speciesId:id,speciesName:name,pokemonId,types,baseStats:base,fastMoves:fast,chargedMoves:charge,released:true,isFinalStage:true,isMegaForm,eliteFastMoves:eliteFast||[],eliteChargedMoves:eliteCharge||[]};
   };
   // ============================================================================================
+  // BEGINNER'S GUIDE TO THIS SECTION — read this first if you've never edited code before.
+  //
+  // Below is a long list of lines that each look like this (a real, working example):
+  //   mk('pikachu','Pikachu',['electric'],{atk:112,def:96,hp:111},['THUNDER_SHOCK','QUICK_ATTACK'],['THUNDERBOLT','WILD_CHARGE']),
+  // Every one of these lines describes ONE Pokémon. Reading it left to right:
+  //   'pikachu'                        — an internal ID, always lowercase with no spaces (use an
+  //                                       underscore for a space, e.g. 'mr_mime'). Nothing else in
+  //                                       the file needs to match this exactly except this one line
+  //                                       — it's just how the code refers to this Pokémon internally.
+  //   'Pikachu'                        — the name shown on screen. Can have spaces, capitals,
+  //                                       apostrophes, anything — this is what the user actually sees.
+  //   ['electric']                     — its type(s). Two types look like ['electric','steel'].
+  //                                       Must be lowercase, must be a real type name (normal, fire,
+  //                                       water, grass, electric, ice, fighting, poison, ground,
+  //                                       flying, psychic, bug, rock, ghost, dragon, dark, steel,
+  //                                       fairy) — a misspelled type silently breaks type-effectiveness
+  //                                       math for this Pokémon (it'll just never match anything).
+  //   {atk:112,def:96,hp:111}          — its stats. Bigger atk = hits harder. Bigger def = takes less
+  //                                       damage. Bigger hp = takes more hits before fainting. These
+  //                                       are the actual Pokémon GO base stats (not main-series ones)
+  //                                       — changing a number here changes how well this Pokémon does
+  //                                       in every simulation, nothing else. A typo here (e.g. an
+  //                                       extra digit) makes this Pokémon unrealistically strong or
+  //                                       weak but won't cause an error — it'll just quietly give
+  //                                       wrong results for that one Pokémon specifically.
+  //   ['THUNDER_SHOCK','QUICK_ATTACK'] — its "fast" moves (tap-to-attack, no energy cost). Every name
+  //                                       here MUST already exist in the fastDefs list above (search
+  //                                       this file for "THUNDER_SHOCK:" to see it defined) — if you
+  //                                       type a fast move name that isn't defined there, this
+  //                                       Pokémon just won't be able to use it (silently skipped).
+  //   ['THUNDERBOLT','WILD_CHARGE']    — its "charge" moves (the big attack, costs energy to use).
+  //                                       Same rule: must already exist in chargeDefs above.
+  //
+  // Small mistakes that will break this specific line (the file may stop working entirely, or this
+  // Pokémon just vanishes from the list — either way, undo your change if something like this happens):
+  //   - Forgetting a comma between arguments, or between this line and the next one
+  //   - Using regular quotes (") instead of straight single quotes (') — copy an existing line and
+  //     only change the parts you mean to change, rather than typing a whole new line from scratch
+  //   - Forgetting a closing bracket ] or brace }
+  //   - Using the same 'speciesid' twice for two different lines (only the second one will work)
+  //
+  // Below the list is a shorter guide ("TO ADD A NEW POKÉMON") covering the two optional extra
+  // arguments (for legacy/Elite-TM-only moves) that the example above doesn't use.
+  // ============================================================================================
   // THE ROSTER — sorted alphabetically by display name (base form, then its Mega/Primal variants
   // immediately after — e.g. Abomasnow, Mega Abomasnow, Absol, Mega Absol, Mega Absol Z, ...), so
   // finding or adding a species is just "search for its name" or "scroll to the right letter."
@@ -1761,8 +1877,11 @@ function buildFallbackData(){
   // Add two more array arguments only if it has legacy/Elite-TM-only moves:
   //   mk( 'speciesid', 'Display Name', [types], {atk,def,hp}, [fastMoves], [chargedMoves], [eliteFast], [eliteCharged] ),
   // — pass [] for eliteFast if only eliteCharged applies, or omit both entirely if the species has
-  // no legacy moves at all. Also add its National Dex number to the NATIONAL_DEX table above (used
-  // for tier auto-classification) if it doesn't already have one from a related form.
+  // no legacy moves at all. A move listed here shows a "legacy" tag and gets excluded from what a
+  // RAID BOSS can use (it's rare/limited-time in the real game), but a regular attacker can still
+  // use it freely — this only restricts the boss side. Also add its National Dex number to the
+  // NATIONAL_DEX table above (used for tier auto-classification) if it doesn't already have one
+  // from a related form.
   //
   // TO CHANGE AN EXISTING POKÉMON'S STATS OR MOVESET: search this file for mk('speciesid — every
   // entry is exactly one line, so there's nothing else on that line to disturb. The 4th argument
@@ -2375,6 +2494,26 @@ function isNeverRaidBoss(speciesName){
   const base = name.replace(/\s*\([^)]*\)\s*/g, '').trim();
   return NEVER_RAID_BOSS_NAMES.has(base) && !name.includes('(unbound)'); // e.g. bare "Zygarde" forms, but never override an explicit non-excluded form like Hoopa (Unbound)
 }
+// ================================================================================================
+// BEGINNER'S GUIDE TO THE TWO LISTS BELOW — read this first if you've never edited code before.
+//
+// These two lists remove specific Pokémon from the RAID BOSS dropdown only — a Pokémon on either
+// list can still be picked as an ATTACKER, this only affects what shows up when choosing a boss.
+//
+// USER_EXCLUDED_EXACT — a plain list of exact names (all lowercase) to hide. To hide one more
+// specific Pokémon, add its name, in lowercase, in quotes, followed by a comma — e.g. to hide
+// "Registeel", add 'registeel', anywhere in the list below. To UN-hide one, delete its line (or
+// just delete the text between its quotes and the comma). A form name needs its parenthetical
+// exactly as it's shown on screen, lowercased — e.g. 'articuno (galarian)' for Galarian Articuno.
+// Getting the spelling slightly wrong (extra space, wrong parenthesis) just means it silently
+// won't match anything — no error, the Pokémon just still shows up in the dropdown as before.
+//
+// USER_EXCLUDED_PREFIX — same idea, but hides EVERY form of a species at once (every Arceus type,
+// every Urshifu style, etc.) by matching just the first word of the name. Add a new lowercase name
+// here (in quotes, with a comma) to hide a whole species and all its variants; remove one to bring
+// them all back. Careful: a short/common prefix here would accidentally hide unrelated Pokémon
+// whose name happens to start with the same word — keep entries here to real species names.
+// ================================================================================================
 // Explicitly excluded by request, regardless of category or raid-boss history. Split into exact
 // matches (a single specific form only, e.g. just Galarian Articuno — base/Shadow Articuno etc.
 // stay) and prefix matches (every variant of that species, e.g. all 18 Arceus types, all Silvally
@@ -3346,6 +3485,19 @@ async function rankAllAttackers(onProgress){
     };
   }
 
+  // ==============================================================================================
+  // BEGINNER'S GUIDE TO THE TWO LISTS BELOW — same idea as the boss-side USER_EXCLUDED lists
+  // earlier in this file, but these two remove a Pokémon from the ATTACKER options instead — the
+  // list you get after clicking "Rank Every Pokémon vs This Boss." A Pokémon removed here can
+  // still be picked as a raid BOSS, this only affects the attacker side.
+  //
+  // ATTACKER_EXCLUDED_EXACT — exact names (lowercase) to hide from the attacker list. Add a new
+  // lowercase name in quotes, followed by a comma, to hide one more specific Pokémon/form; delete
+  // an existing entry (its quoted name and the comma after it) to bring it back.
+  //
+  // ATTACKER_EXCLUDED_PREFIX — same idea but hides every form of a species at once, matching just
+  // the first word of the name — same behavior as USER_EXCLUDED_PREFIX described earlier.
+  // ==============================================================================================
   // Attacker-list exclusions by request — not offered as attacker options regardless of how good
   // their simulated stats might look. Wishiwashi matched by prefix (covers both School and Solo
   // Form, since only a base name was given). Palafin (Hero) matched exactly — Palafin (Zero) was
