@@ -679,7 +679,7 @@ const POGOAPI_MEGA_URL = 'https://pogoapi.net/api/v1/mega_pokemon.json';
  * sourced from Niantic's own GAME_MASTER data (damageWindowStartMs field). Moves not listed here
  * fall back to the move's full duration (i.e. damage assumed to land at the end) until confirmed. */
 const DAMAGE_WINDOW = {
-  NIGHT_SHADE_PLUS:2.0, DISCHAGE_PLUS:1.7,ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0, BRAVE_BIRD_PLUS:1.0,
+  OMINOUS_WIND_PLUS:2.05, NIGHT_SHADE_PLUS:2.0, DISCHAGE_PLUS:1.7,ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0, BRAVE_BIRD_PLUS:1.0,
   OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
   PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
   FUTURE_SIGHT_PLUS:1.2, FELL_STINGER_PLUS:1.6, DARK_PULSE_PLUS:1.4, // all 15 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
@@ -749,7 +749,7 @@ function damageWindowSec(moveId, fullDuration){
 // community-maintained mirror that can lag behind real game updates for individual moves. Anything
 // not listed here falls through to live API duration, then a rough estimate — see chargeDuration().
 const CHARGE_DURATION_OVERRIDES = {
-  NIGHT_SHADE_PLUS:2.5, DISCHARGE_PLUS:2.5, ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5, BRAVE_BIRD_PLUS:2.0,
+  OMINOUS_WIND_PLUS:2.5, NIGHT_SHADE_PLUS:2.5, DISCHARGE_PLUS:2.5, ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5, BRAVE_BIRD_PLUS:2.0,
   SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
   VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, FELL_STINGER_PLUS:2.0, DARK_PULSE_PLUS:3.0, // all 15 Mega-exclusive "+" moves, by request
   AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
@@ -1745,6 +1745,7 @@ function buildFallbackData(){
     FUTURE_SIGHT_PLUS:{type:'psychic',power:140,energy:100,name:'Future Sight+'},
     DISCHARGE_PLUS:{type:'electric',power:150,energy:100,name:'Discharge+'},
     NIGHT_SHADE_PLUS:{type:'ghost',power:160,energy:100,name:'Night Shade+'},
+    OMINOUS_WIND_PLUS:{type:'ghost',power:145,energy:100,name:'Ominous Wind+'},
     LEAF_TORNADO:{type:'grass',power:45,energy:33},
     LEAF_BLADE:{type:'grass',power:70,energy:33},
     FELL_STINGER:{type:'bug',power:45,energy:33},
@@ -1951,7 +1952,7 @@ function buildFallbackData(){
     mk('camerupt_mega','Mega Camerupt',['fire','ground'],{atk:253,def:183,hp:172},['EMBER','ROCK_SMASH','INCINERATE'],['EARTHQUAKE','OVERHEAT','SOLAR_BEAM','EARTH_POWER','SCORCHING_SANDS','ROCK_TOMB']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('celesteela','Celesteela',['steel','flying'],{atk:207,def:199,hp:219},['AIR_SLASH','SMACK_DOWN'],['HEAVY_SLAM','BODY_SLAM','IRON_HEAD','BULLDOZE']), // added missing Bulldoze
     mk('chandelure','Chandelure',['ghost','fire'],{atk:271,def:145,hp:155},['FIRE_SPIN','HEX','INCINERATE','ASTONISH'],['SHADOW_BALL','OVERHEAT','ENERGY_BALL','FLAME_CHARGE','POLTERGEIST'],[],['POLTERGEIST']), // added Poltergeist (charge), legacy, by request — confirmed missing via direct GAME_MASTER.json comparison (user-provided) — added Astonish (fast) and Energy Ball/Flame Charge to charge moves, by request
-    mk('chandelure_mega','Mega Chandelure',['ghost','fire'],{atk:335,def:227,hp:155},['FIRE_SPIN','HEX','INCINERATE','ASTONISH'],['SHADOW_BALL','OVERHEAT','ENERGY_BALL','FLAME_CHARGE']), // added Astonish (fast) and Energy Ball/Flame Charge (charge), by request — was missing entirely despite base Chandelure having all three
+    mk('chandelure_mega','Mega Chandelure',['ghost','fire'],{atk:335,def:227,hp:155},['FIRE_SPIN','HEX','INCINERATE','ASTONISH'],['SHADOW_BALL','OVERHEAT','ENERGY_BALL','FLAME_CHARGE','OMINOUS_WIND_PLUS']), // added Astonish (fast) and Energy Ball/Flame Charge (charge), by request — was missing entirely despite base Chandelure having all three
     mk('charizard_mega_x','Mega Charizard X',['fire','dragon'],{atk:273,def:213,hp:186},['AIR_SLASH','FIRE_SPIN','DRAGON_BREATH','EMBER','WING_ATTACK'],['DRAGON_CLAW','FIRE_BLAST','OVERHEAT','BLAST_BURN','FLAMETHROWER','AIR_CUTTER'],['DRAGON_BREATH','EMBER','WING_ATTACK'],['BLAST_BURN','FLAMETHROWER']), // corrected — Draco Meteor and Crunch were fabricated/not real moves; Air Cutter confirmed real and added via PvPoke's raw gamemaster.json — legacy — legacy
     mk('charizard_mega_y','Mega Charizard Y',['fire','flying'],{atk:319,def:212,hp:186},['AIR_SLASH','FIRE_SPIN','DRAGON_BREATH','EMBER','WING_ATTACK'],['DRAGON_CLAW','FIRE_BLAST','OVERHEAT','BLAST_BURN','FLAMETHROWER','AIR_CUTTER'],['DRAGON_BREATH','EMBER','WING_ATTACK'],['BLAST_BURN','FLAMETHROWER']), // corrected — Fire Fang and Solar Beam were fabricated/not real moves; Air Cutter confirmed real and added via PvPoke's raw gamemaster.json — legacy — legacy
     mk('chesnaught','Chesnaught',['grass','fighting'],{atk:160,def:225,hp:204},['LOW_KICK','VINE_WHIP','SMACK_DOWN'],['THUNDER_PUNCH','SOLAR_BEAM','SUPERPOWER','FRENZY_PLANT','GYRO_BALL','ENERGY_BALL'],[],['FRENZY_PLANT']), // added Energy Ball (charge), by request — confirmed missing via direct GAME_MASTER.json comparison (user-provided) — moveset corrected — confirmed via db.pokemongohub.net; was missing Low Kick/Smack Down (fast) and Thunder Punch/Solar Beam (charge); Gyro Ball added back per explicit request — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
@@ -2572,7 +2573,7 @@ const ULTRA_BEAST_DEX_IDS = new Set([793,794,795,796,797,798,799,803,804,805,806
 // that specific request was "move to Upcoming Megas but keep in the attacker list."
 const UPCOMING_MEGA_SPECIES_IDS = new Set([
   'baxcalibur_mega','zygarde_mega','heatran_mega','zeraora_mega','lucario_mega_z',
-  'darkrai_mega','chandelure_mega','absol_mega_z','glimmora_mega','excadrill_mega','feraligatr_mega',
+  'darkrai_mega','absol_mega_z','glimmora_mega','excadrill_mega','feraligatr_mega',
   'hawlucha_mega','garchomp_mega_z','froslass_mega','meganium_mega','emboar_mega','golurk_mega','barbaracle_mega',
   'drampa_mega','eelektross_mega','clefable_mega','scrafty_mega','golisopod_mega',
   'crabominable_mega','meowstic_mega','pyroar_mega','tatsugiri_mega','scolipede_mega',
