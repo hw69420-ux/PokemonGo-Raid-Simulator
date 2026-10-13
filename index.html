@@ -679,7 +679,7 @@ const POGOAPI_MEGA_URL = 'https://pogoapi.net/api/v1/mega_pokemon.json';
  * sourced from Niantic's own GAME_MASTER data (damageWindowStartMs field). Moves not listed here
  * fall back to the move's full duration (i.e. damage assumed to land at the end) until confirmed. */
 const DAMAGE_WINDOW = {
-  ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0, BRAVE_BIRD_PLUS:1.0,
+  NIGHT_SHADE_PLUS:2.0, DISCHAGE_PLUS:1.7,ACID:0.6, ACID_SPRAY:2.1, ACID_SPRAY_PLUS:2.1, LIQUIDATION_PLUS:2.0, BRAVE_BIRD_PLUS:1.0,
   OUTRAGE_PLUS:2.6, DRILL_PECK_PLUS:1.9, SEED_BOMB_PLUS:1.1, MYSTICAL_FIRE_PLUS:1.3, SURF_PLUS:1.2,
   PSYBEAM_PLUS:1.1, BRICK_BREAK_PLUS:0.7, VOLT_TACKLE_PLUS:2.1, DYNAMIC_PUNCH_PLUS:1.0, ZAP_CANNON_PLUS:2.8,
   FUTURE_SIGHT_PLUS:1.2, FELL_STINGER_PLUS:1.6, DARK_PULSE_PLUS:1.4, // all 15 Mega-exclusive "+" moves, by request — value is each move's own Start timestamp
@@ -749,7 +749,7 @@ function damageWindowSec(moveId, fullDuration){
 // community-maintained mirror that can lag behind real game updates for individual moves. Anything
 // not listed here falls through to live API duration, then a rough estimate — see chargeDuration().
 const CHARGE_DURATION_OVERRIDES = {
-  ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5, BRAVE_BIRD_PLUS:2.0,
+  NIGHT_SHADE_PLUS:2.5, DISCHARGE_PLUS:2.5, ACID_SPRAY:3.0, ACID_SPRAY_PLUS:3.0, LIQUIDATION_PLUS:3.0, OUTRAGE_PLUS:4.0, DRILL_PECK_PLUS:2.5, BRAVE_BIRD_PLUS:2.0,
   SEED_BOMB_PLUS:2.0, MYSTICAL_FIRE_PLUS:2.0, SURF_PLUS:1.5, PSYBEAM_PLUS:3.0, BRICK_BREAK_PLUS:1.5,
   VOLT_TACKLE_PLUS:3.5, DYNAMIC_PUNCH_PLUS:2.5, ZAP_CANNON_PLUS:3.5, FUTURE_SIGHT_PLUS:2.5, FELL_STINGER_PLUS:2.0, DARK_PULSE_PLUS:3.0, // all 15 Mega-exclusive "+" moves, by request
   AERIAL_ACE:2.5, AEROBLAST:3.5, AIR_CUTTER:2.5, ANCIENT_POWER:3.5, AQUA_JET:2.5,
@@ -1743,6 +1743,8 @@ function buildFallbackData(){
     DYNAMIC_PUNCH_PLUS:{type:'fighting',power:130,energy:100,name:'Dynamic Punch+'},
     ZAP_CANNON_PLUS:{type:'electric',power:160,energy:100,name:'Zap Cannon+'},
     FUTURE_SIGHT_PLUS:{type:'psychic',power:140,energy:100,name:'Future Sight+'},
+    DISCHARGE_PLUS:{type:'electric',power:150,energy:100,name:'Discharge+'},
+    NIGHT_SHADE_PLUS:{type:'ghost',power:160,energy:100,name:'Night Shade+'},
     LEAF_TORNADO:{type:'grass',power:45,energy:33},
     LEAF_BLADE:{type:'grass',power:70,energy:33},
     FELL_STINGER:{type:'bug',power:45,energy:33},
@@ -2063,7 +2065,7 @@ function buildFallbackData(){
     mk('magnezone','Magnezone',['electric','steel'],{atk:238,def:205,hp:172},['SPARK','CHARGE_BEAM','VOLT_SWITCH','METAL_SOUND'],['WILD_CHARGE','MIRROR_SHOT','FLASH_CANNON','ZAP_CANNON']), // expanded to full GAME_MASTER moveset, by request (user-provided)
     mk('malamar_mega','Mega Malamar',['dark','psychic'],{atk:208,def:222,hp:200},['PECK','PSYCHO_CUT','PSYWAVE'],['PSYBEAM','FOUL_PLAY','SUPERPOWER','HYPER_BEAM','PSYBEAM_PLUS']), // added Psybeam+ (charge), by request — re-added after being found missing from the live file despite being confirmed correct — moveset corrected — was missing Peck and Psywave (fast) and Superpower/Hyper Beam (charge); Psychic was incorrectly included and isn't real
     mk('mamoswine','Mamoswine',['ice','ground'],{atk:247,def:146,hp:242},['MUD_SLAP','POWDER_SNOW'],['STONE_EDGE','ANCIENT_POWER','BULLDOZE','AVALANCHE','ICICLE_SPEAR','HIGH_HORSEPOWER']), // moveset corrected via deep-dive verification — Ice Punch was not real; was missing Stone Edge/Ancient Power/Icicle Spear/High Horsepower
-    mk('manectric_mega','Mega Manectric',['electric'],{atk:286,def:179,hp:172},['CHARGE_BEAM','SNARL','THUNDER_FANG'],['FLAME_BURST','THUNDER','WILD_CHARGE','OVERHEAT','PSYCHIC_FANGS']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('manectric_mega','Mega Manectric',['electric'],{atk:286,def:179,hp:172},['CHARGE_BEAM','SNARL','THUNDER_FANG'],['FLAME_BURST','THUNDER','WILD_CHARGE','OVERHEAT','PSYCHIC_FANGS','DISCHARGE_PLUS']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('maschiff','Maschiff',['dark'],{atk:140,def:108,hp:155},['SNARL','BITE'],['CRUNCH','PAYBACK','DIG']), // added, by request — confirmed directly via the real GAME_MASTER.json (user-provided, PokeMiners/game_masters source); NOTE: not a final-evolution Pokémon (evolves into Mabosstiff, now also added) — included anyway per explicit request
     mk('mawile_mega','Mega Mawile',['steel','fairy'],{atk:188,def:217,hp:137},['ASTONISH','BITE','FIRE_FANG','ICE_FANG','FAIRY_WIND'],['IRON_HEAD','PLAY_ROUGH','VISE_GRIP','POWER_UP_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('medicham_mega','Mega Medicham',['fighting','psychic'],{atk:205,def:179,hp:155},['COUNTER','PSYCHO_CUT'],['DYNAMIC_PUNCH','ICE_PUNCH','PSYCHIC','POWER_UP_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
@@ -2106,7 +2108,7 @@ function buildFallbackData(){
     mk('reshiram','Reshiram',['dragon','fire'],{atk:275,def:211,hp:205},['FIRE_FANG','DRAGON_BREATH'],['FUSION_FLARE','OVERHEAT','DRACO_METEOR','STONE_EDGE','CRUNCH'],[],['FUSION_FLARE']), // legacy — signature move, Elite Charged TM
     mk('rhyperior','Rhyperior',['ground','rock'],{atk:241,def:190,hp:251},['MUD_SHOT','SMACK_DOWN','MUD_SLAP'],['ROCK_WRECKER','EARTHQUAKE','STONE_EDGE','SURF','SUPERPOWER','BREAKING_SWIPE','DRILL_RUN','SKULL_BASH'],[],['ROCK_WRECKER']), // added Mud Slap (fast) and Breaking Swipe/Drill Run/Skull Bash (charge), by request — confirmed missing via direct GAME_MASTER.json comparison (user-provided) — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('rillaboom','Rillaboom',['grass'],{atk:239,def:168,hp:225},['SCRATCH','RAZOR_LEAF'],['EARTH_POWER','ENERGY_BALL','GRASS_KNOT','FRENZY_PLANT','DRUM_BEATING'],[],['FRENZY_PLANT']), // added Drum Beating (charge), by request — confirmed missing via direct GAME_MASTER.json comparison (user-provided) — legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
-    mk('sableye_mega','Mega Sableye',['dark','ghost'],{atk:151,def:216,hp:137},['FEINT_ATTACK','SHADOW_CLAW'],['FOUL_PLAY','POWER_GEM','SHADOW_SNEAK','DAZZLING_GLEAM','DRAIN_PUNCH']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
+    mk('sableye_mega','Mega Sableye',['dark','ghost'],{atk:151,def:216,hp:137},['FEINT_ATTACK','SHADOW_CLAW'],['FOUL_PLAY','POWER_GEM','SHADOW_SNEAK','DAZZLING_GLEAM','DRAIN_PUNCH','NIGHT_SHADE_PLUS']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file)
     mk('salamence_mega','Mega Salamence',['dragon','flying'],{atk:310,def:251,hp:216},['BITE','DRAGON_TAIL','FIRE_FANG'],['CRUNCH','BRUTAL_SWING','OUTRAGE','DRACO_METEOR','FIRE_BLAST','FLY','HYDRO_PUMP'],[],['OUTRAGE']), // confirmed via direct db.pokemongohub.net fetch — legacy — confirmed with an asterisk on gohub
     mk('sandslash_alolan','Sandslash (Alolan)',['ice','steel'],{atk:177,def:195,hp:181},['POWDER_SNOW','METAL_CLAW','SHADOW_CLAW'],['BLIZZARD','IRON_HEAD','AERIAL_ACE','BULLDOZE','DRILL_RUN','GYRO_BALL','ICE_PUNCH']), // expanded to full GAME_MASTER moveset, by request (user-provided); Iron Head kept (not in GM but user asked to leave existing moves alone)
     mk('sceptile_mega','Mega Sceptile',['grass','dragon'],{atk:320,def:186,hp:172},['BULLET_SEED','FURY_CUTTER'],['AERIAL_ACE','EARTHQUAKE','LEAF_BLADE','FRENZY_PLANT','DRAGON_CLAW','BREAKING_SWIPE'],[],['FRENZY_PLANT']), // confirmed directly via PvPoke's raw gamemaster.json (uploaded file) — legacy
