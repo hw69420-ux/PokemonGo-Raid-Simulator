@@ -3516,7 +3516,7 @@ async function rankAllAttackers(onProgress){
   // their simulated stats might look. Wishiwashi matched by prefix (covers both School and Solo
   // Form, since only a base name was given). Palafin (Hero) matched exactly — Palafin (Zero) was
   // not excluded and stays available.
-  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo','archaludon','dracozolt','arctozolt','dracovish','arctovish','alcremie','pyroar (female)','brambleghast','wo-chien','scovillain','rabsca']); // archaludon, alcremie, brambleghast, wo-chien, scovillain, rabsca, and the 4 Galar fossil combos (dex 880-883) unreleased in GO; pyroar (female) redundant with the kept Pyroar (Male) — confirmed no stat/moveset difference — by request
+  const ATTACKER_EXCLUDED_EXACT = new Set(['palafin (hero)','okidogi','manaphy','drednaw','keldeo (ordinary)','keldeo','archaludon','dracozolt','arctozolt','dracovish','arctovish','alcremie','pyroar (female)','wo-chien','scovillain','rabsca']); // archaludon, alcremie wo-chien, scovillain, rabsca, and the 4 Galar fossil combos (dex 880-883) unreleased in GO; pyroar (female) redundant with the kept Pyroar (Male) — confirmed no stat/moveset difference — by request
   const ATTACKER_EXCLUDED_PREFIX = ['wishiwashi','chi-yu','glastrier','munkidori','ogerpon','ting-lu','fezandipiti','spectrier'];
   function isAttackerExcluded(speciesName){
     const name = speciesName.toLowerCase();
