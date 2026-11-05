@@ -705,7 +705,7 @@ const DAMAGE_WINDOW = {
   LEAF_BLADE:1.35, LEAF_STORM:1.1, LEAF_TORNADO:1.9, LEECH_LIFE:1.15, LICK:0.2, LIQUIDATION:2.0, LOCK_ON:0.37, LOW_KICK:0.2,
   LOW_SWEEP:1.4, LUNGE:2.5, LUSTER_PURGE:0.5, MAGICAL_LEAF:0.85, MAGMA_STORM:1.3, MAGNET_BOMB:2.4, MEGAHORN:1.5, MEGA_DRAIN:0.85,
   METAL_CLAW:0.23, METAL_SOUND:0.2, METEOR_BEAM:1.1, METEOR_MASH:2.2, MIND_BLOWN:3.0, MIRROR_COAT:2.2, MIRROR_SHOT:1.9, MIST_BALL:1.2,
-  MOONBLAST:2.3, MOONGEIST_BEAM:2.2, MUDDY_WATER:1.0, MUD_BOMB:1.9, MUD_SHOT:0.25, MUD_SLAP:1.25, MYSTICAL_FIRE:1.3, NATURES_MADNESS:1.3,
+  MOONBLAST:2.3, MOONBLAST_PLUS:2.3, MOONGEIST_BEAM:2.2, MUDDY_WATER:1.0, MUD_BOMB:1.9, MUD_SHOT:0.25, MUD_SLAP:1.25, MYSTICAL_FIRE:1.3, NATURES_MADNESS:1.3,
   NIGHT_SHADE:2.0, NIGHT_SLASH:1.1, OBLIVION_WING:1.5, OBSTRUCT:0.3, OCTAZOOKA:1.5, OMINOUS_WIND:2.05, ORIGIN_PULSE:1.2, OUTRAGE:2.6,
   OVERHEAT:2.6, PARABOLIC_CHARGE:1.4, PAYBACK:0.9, PECK:0.45, PETAL_BLIZZARD:1.6, PLAY_ROUGH:1.4, POISON_FANG:0.7, POISON_JAB:0.4,
   POISON_STING:0.275, POLTERGEIST:2.7, POUND:0.24, POWDER_SNOW:0.85, POWER_GEM:2.05, POWER_UP_PUNCH:1.7, POWER_WHIP:1.15, PRECIPICE_BLADES:1.2,
@@ -723,7 +723,7 @@ const DAMAGE_WINDOW = {
   TRI_ATTACK:1.3, TWISTER:1.15, UPPER_HAND:2.3, VICE_GRIP:1.2, VINE_WHIP:0.25, VOLT_SWITCH:0.6, VOLT_TACKLE:2.1, V_CREATE:1.9,
   WATERFALL:0.75, WATER_GUN:0.3, WATER_GUN_FAST_BLASTOISE:0.3, WATER_PULSE:2.0, WATER_SHURIKEN:0.9, WEATHER_BALL_FIRE:1.25, WEATHER_BALL_ICE:1.25, WEATHER_BALL_NORMAL:1.25,
   WEATHER_BALL_ROCK:1.25, WEATHER_BALL_WATER:1.25, WILDBOLT_STORM:2.0, WILD_CHARGE:1.6, WING_ATTACK:0.75, WRAP:2.15, WRAP_GREEN:2.15, WRAP_PINK:2.15,
-  X_SCISSOR:1.1, YAWN:1.2, ZAP_CANNON:2.8, ZEN_HEADBUTT:0.75,
+  X_SCISSOR:1.1, YAWN:1.2, ZAP_CANNON:2.8, ZEN_HEADBUTT:0.75, KOWTOW_CLEAVE:1.3,
 };
 /** Normalizes a move identifier to the ALL_CAPS_UNDERSCORE key format DAMAGE_WINDOW uses.
  * Fallback-dataset moves already come in as IDs like 'ICE_FANG' (a no-op here). Live-fetched
@@ -771,7 +771,7 @@ const CHARGE_DURATION_OVERRIDES = {
   ICE_BEAM:3.5, ICE_BURN:2.0, ICE_PUNCH:2.0, ICICLE_SPEAR:2.0, ICY_WIND:3.5, IRON_HEAD:2.0,
   LEAF_BLADE:2.5, LEAF_STORM:2.5, LEAF_TORNADO:3.0, LIQUIDATION:3.0, LOW_SWEEP:2.0, LUNGE:3.0, LAST_RESORT:3.0, SPARKLING_ARIA:3.0, MIRROR_COAT:2.5, // all confirmed directly via the real GAME_MASTER.json (user-provided)
   LUSTER_PURGE:1.5, MAGMA_STORM:2.5, MAGNET_BOMB:3.0, MEGAHORN:2.0, MEGA_DRAIN:2.5, METEOR_BEAM:2.0,
-  METEOR_MASH:2.5, MIND_BLOWN:4.0, MIRROR_SHOT:2.5, MIST_BALL:2.0, MOONBLAST:4.0, MOONGEIST_BEAM:3.0,
+  METEOR_MASH:2.5, MIND_BLOWN:4.0, MIRROR_SHOT:2.5, MIST_BALL:2.0, MOONBLAST:4.0,MOONBLAST_PLUS:4.0, MOONGEIST_BEAM:3.0,
   MUDDY_WATER:2.0, MUD_BOMB:2.5, MYSTICAL_FIRE:2.0, NATURES_MADNESS:2.0, NIGHT_SHADE:2.5, NIGHT_SLASH:2.0,
   OBLIVION_WING:2.0, OCTAZOOKA:2.5, OMINOUS_WIND:2.5, ORIGIN_PULSE:1.5, OUTRAGE:4.0, OVERHEAT:4.0,
   PARABOLIC_CHARGE:3.0, PAYBACK:2.0, PETAL_BLIZZARD:2.5, PLASMA_FISTS:3.5, PLAY_ROUGH:3.0, POISON_FANG:1.5, POLTERGEIST:3.5,
@@ -786,7 +786,7 @@ const CHARGE_DURATION_OVERRIDES = {
   SWIFT:3.0, SYNCHRONOISE:2.5, TECHNO_BLAST_NORMAL:2.0, THUNDER:2.5, THUNDERBOLT:2.5, THUNDER_CAGE:3.5,
   THUNDER_PUNCH:2.0, TORCH_SONG:3.5, TRAILBLAZE:2.0, TRIPLE_AXEL:2.0, TRI_ATTACK:2.5, TWISTER:3.0,
   UPPER_HAND:2.0, VISE_GRIP:2.0, V_CREATE:3.0, WATER_PULSE:3.0, WEATHER_BALL_FIRE:1.5, WEATHER_BALL_ICE:1.5,
-  WILDBOLT_STORM:2.5, WILD_CHARGE:2.5, WRAP:3.0, X_SCISSOR:1.5, ZAP_CANNON:3.5,
+  WILDBOLT_STORM:2.5, WILD_CHARGE:2.5, WRAP:3.0, X_SCISSOR:1.5, ZAP_CANNON:3.5, KOWTOW_CLEAVE:2.0,
 };
 
 /**
@@ -1258,7 +1258,8 @@ async function loadGameMaster(){
       { speciesName:'Raichu (Alolan)', kind:'chargedMoves', moveId:'VOLT_TACKLE' },
       { speciesName:'Grimmsnarl', kind:'chargedMoves', moveId:'DRAINING_KISS' },
       { speciesName:'Aggron', kind:'chargedMoves', moveId:'BRICK_BREAK' },
-      { speciesName:'Kingambit', kind:'fastMoves', moveId:'LOW_KICK' },
+      { speciesName:'Kingambit', kind:'fastMoves', moveId:'LOW_KICK'},
+      { speciesName:'Kingambit', kind:'chargedMoves', moveId:'KOWTOW_CLEAVE'},
       { speciesName:'Gallade', kind:'chargedMoves', moveId:'SACRED_SWORD' },
       { speciesName:'Houndoom', kind:'fastMoves', moveId:'INCINERATE' },
       { speciesName:'Houndoom', kind:'chargedMoves', moveId:'TRAILBLAZE' },
@@ -1745,6 +1746,7 @@ function buildFallbackData(){
     FUTURE_SIGHT_PLUS:{type:'psychic',power:140,energy:100,name:'Future Sight+'},
     DISCHARGE_PLUS:{type:'electric',power:150,energy:100,name:'Discharge+'},
     NIGHT_SHADE_PLUS:{type:'ghost',power:160,energy:100,name:'Night Shade+'},
+    MOONBLAST_PLUS:{type:'fairy',power:160,energy:100,name:'Moonlast+'},
     OMINOUS_WIND_PLUS:{type:'ghost',power:145,energy:100,name:'Ominous Wind+'},
     LEAF_TORNADO:{type:'grass',power:45,energy:33},
     LEAF_BLADE:{type:'grass',power:70,energy:33},
@@ -1753,6 +1755,7 @@ function buildFallbackData(){
     GUNK_SHOT:{type:'poison',power:130,energy:100},
     DISCHARGE:{type:'electric',power:65,energy:33},
     BRAVE_BIRD_PLUS:{type:'flying',power:150,energy:100,name:'Brave Bird+'},
+    KOWTOW_CLEAVE:{type:'dark',power:85,energy:50,name:'Kowtow Cleave'},
     // NOTE: the following four are less rigorously confirmed than most of this session's values —
     // no clean current citation found despite searching; from well-established general knowledge.
     POWER_WHIP:{type:'grass',power:90,energy:50},
@@ -1960,7 +1963,7 @@ function buildFallbackData(){
     mk('chimecho','Chimecho',['psychic'],{atk:139,def:200,hp:172},['ASTONISH','EXTRASENSORY'],['PSYSHOCK','SHADOW_BALL','ENERGY_BALL']), // moveset corrected — confirmed via db.pokemongohub.net; Psychic was not real, should be Psyshock
     mk('chimecho_mega','Mega Chimecho',['psychic','steel'],{atk:244,def:228,hp:181},['ASTONISH','EXTRASENSORY'],['PSYSHOCK','SHADOW_BALL','ENERGY_BALL']), // type corrected — gains Steel on Mega Evolution (confirmed via official PokeBeach reveal), not pure Psychic like its base form; moveset corrected to match base Chimecho's confirmed real kit
     mk('clefable','Clefable',['fairy'],{atk:178,def:176,hp:216},['POUND','ZEN_HEADBUTT','CHARGE_BEAM','CHARM','FAIRY_WIND'],['DRAINING_KISS','DAZZLING_GLEAM','MOONBLAST','PSYCHIC','SWIFT','METEOR_MASH'],['POUND']), // moveset corrected — confirmed via db.pokemongohub.net; was missing Pound/Charge Beam/Fairy Wind (fast) and Draining Kiss/Dazzling Gleam/Swift (charge) — legacy, by request
-    mk('clefable_mega','Mega Clefable',['fairy','flying'],{atk:253,def:205,hp:216},['POUND','ZEN_HEADBUTT','CHARGE_BEAM','CHARM','FAIRY_WIND'],['DRAINING_KISS','DAZZLING_GLEAM','MOONBLAST','PSYCHIC','SWIFT','METEOR_MASH'],['POUND']), // type corrected — gains Flying on Mega Evolution (grows wings, confirmed via official coverage), not pure Fairy like its base form; moveset corrected to match base Clefable's confirmed real kit — inherited from base form's legacy flags, by request
+    mk('clefable_mega','Mega Clefable',['fairy','flying'],{atk:253,def:205,hp:216},['POUND','ZEN_HEADBUTT','CHARGE_BEAM','CHARM','FAIRY_WIND'],['DRAINING_KISS','DAZZLING_GLEAM','MOONBLAST','PSYCHIC','SWIFT','METEOR_MASH','MOONBLAST_PLUS'],['POUND']), // type corrected — gains Flying on Mega Evolution (grows wings, confirmed via official coverage), not pure Fairy like its base form; moveset corrected to match base Clefable's confirmed real kit — inherited from base form's legacy flags, by request
     mk('cloyster','Cloyster',['water','ice'],{atk:186,def:256,hp:137},['ICE_SHARD','FROST_BREATH'],['BLIZZARD','HYDRO_PUMP','ICY_WIND','AURORA_BEAM','AVALANCHE','RAZOR_SHELL','LIQUIDATION'],[],['BLIZZARD']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('cobalion','Cobalion',['steel','fighting'],{atk:192,def:229,hp:209},['METAL_CLAW','ZEN_HEADBUTT','DOUBLE_KICK'],['SACRED_SWORD','STONE_EDGE','CLOSE_COMBAT','IRON_HEAD'],[],['SACRED_SWORD']), // legacy — confirmed via cross-referencing PvPoke's raw gamemaster.json against direct verification
     mk('crabominable','Crabominable',['ice','fighting'],{atk:207,def:135,hp:225},['BUBBLE','ROCK_SMASH'],['ICE_PUNCH','BRICK_BREAK','CRABHAMMER','POWER_UP_PUNCH','PAYBACK']), // moveset corrected — confirmed via db.pokemongohub.net; Ice Shard/Close Combat/Dynamic Punch were not real, should be Bubble (fast) and Brick Break/Crabhammer/Power-Up Punch/Payback (charge)
@@ -2575,7 +2578,7 @@ const UPCOMING_MEGA_SPECIES_IDS = new Set([
   'baxcalibur_mega','zygarde_mega','heatran_mega','zeraora_mega','lucario_mega_z',
   'darkrai_mega','absol_mega_z','glimmora_mega','excadrill_mega','feraligatr_mega',
   'hawlucha_mega','garchomp_mega_z','froslass_mega','meganium_mega','emboar_mega','golurk_mega','barbaracle_mega',
-  'drampa_mega','eelektross_mega','clefable_mega','scrafty_mega','golisopod_mega',
+  'drampa_mega','eelektross_mega','scrafty_mega','golisopod_mega',
   'crabominable_mega','meowstic_mega','pyroar_mega','tatsugiri_mega','scolipede_mega',
   'chimecho_mega','dragalge_mega','greninja_mega','chesnaught_mega','delphox_mega'
 ]);
